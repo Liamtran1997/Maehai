@@ -85,7 +85,7 @@ def _ensure_superuser_profiles() -> None:
     """A superuser made with `createsuperuser` is an owner (see role_of) but has no profile yet.
     Give each one a profile, so the staff list and the last-owner guard both see them."""
     for u in get_user_model().objects.filter(is_superuser=True, staff_profile__isnull=True):
-        StaffProfile.objects.create(user=u, role="owner", display_name=u.get_username(), created_by="createsuperuser")
+        StaffProfile.objects.create(user=u, role="owner", display_name=ROLES["owner"]["label"], created_by="createsuperuser")
 
 
 def _active_owners() -> int:
