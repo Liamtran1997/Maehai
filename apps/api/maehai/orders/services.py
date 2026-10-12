@@ -3,6 +3,7 @@ from collections import Counter
 from datetime import date
 
 from django.db import transaction
+from django.utils import timezone
 from ninja.errors import HttpError
 
 from maehai.catalog.models import ProductVariant
@@ -41,7 +42,10 @@ def _validate_postal(code: str) -> str:
 
 @transaction.atomic
 def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str, shipping_code: str,
-                 requested_date: date, address: dict, note: str = "", coupon_code: str = "") -> Order:
+                 requested_date: date, address: dict, note: str = "", coupon_code: str = "",
+                 accepted_terms: bool = False) -> Order:
+    if not accepted_terms:
+        raise HttpError(422, "กรุณายอมรับนโยบายความเป็นส่วนตัวและเงื่อนไขการสั่งซื้อก่อน")
     if not items or len(items) > MAX_LINES:
         raise HttpError(422, "ตะกร้าว่างหรือมีรายการมากเกินไป")
     qty = Counter()
@@ -79,15 +83,18 @@ def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str
     if coupon_code.strip():
         lines = [coupon_services.Line(sku=s, quantity=q, unit_satang=prices[variants[s].id].satang,
                                       promoted=prices[variants[s].id].discounted) for s, q in qty.items()]
-        evaluation = coupon_services.evaluate(coupon_code, lines, phone=phone, lock=True)   # re-checked now, under a lock
+        evaluation = coupon_services.evaluate(coupon_code, lines, phone=phone, lock=True,   # re-checked now, under a lock
+                                              shipping_applies=method.fee_is_quoted)
     coupon_off = evaluation.discount_satang if evaluation else 0
     goods_total = subtotal - coupon_off
-    quoted = method.fee_is_quoted
+    waived = bool(evaluation and evaluation.shipping_waived)
+    quoted = method.fee_is_quoted and not waived          # free shipping: no fee to quote, straight to payment
     order = Order.objects.create(
         customer_name=customer_name.strip(), phone=phone, shipping_method=method,
         requested_date=requested_date, note=note.strip(), subtotal_satang=subtotal,
         coupon_code=evaluation.coupon.code if evaluation else "", coupon_discount_satang=coupon_off,
-        shipping_fee_satang=None if quoted else 0,
+        terms_accepted_at=timezone.now(),
+        shipping_fee_satang=None if quoted else 0, shipping_waived=waived,
         vat_satang=0 if quoted else vat_included(goods_total),
         status=OrderStatus.PENDING_QUOTE if quoted else OrderStatus.WAITING_PAYMENT,
         **address,
@@ -97,7 +104,8 @@ def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str
                   variant_label=variants[s].label, sku=s, quantity=q,
                   unit_price_satang=prices[variants[s].id].satang,
                   list_price_satang=prices[variants[s].id].list_satang,
-                  promotion_name=prices[variants[s].id].promotion.name if prices[variants[s].id].discounted else "")
+                  promotion_name=prices[variants[s].id].promotion.name if prices[variants[s].id].discounted else "",
+                  promotion=prices[variants[s].id].promotion if prices[variants[s].id].discounted else None)
         for s, q in qty.items()
     ])
     if evaluation:
@@ -129,6 +137,8 @@ def quote_fee(order: Order, fee_satang: int, actor: str) -> Order:
     order = Order.objects.select_for_update().get(pk=order.pk)
     if order.status not in (OrderStatus.PENDING_QUOTE, OrderStatus.WAITING_PAYMENT):
         raise HttpError(409, "แก้ค่าจัดส่งไม่ได้แล้ว")
+    if order.shipping_waived:
+        raise HttpError(409, "คำสั่งซื้อนี้ใช้โค้ดส่งฟรี จึงไม่มีค่าจัดส่งให้แจ้ง")
     if order.payments.filter(status=PaymentStatus.SLIP_SUBMITTED).exists():
         raise HttpError(409, "ลูกค้าแนบสลิปแล้ว ตรวจสลิปก่อนจึงจะแก้ค่าจัดส่งได้")
     order.payments.filter(status=PaymentStatus.PENDING).update(status=PaymentStatus.EXPIRED)

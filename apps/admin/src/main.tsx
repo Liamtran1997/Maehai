@@ -11,6 +11,7 @@ import { Inventory } from "./pages/Inventory";
 import { Promotions } from "./pages/Promotions";
 import { Staff } from "./pages/Staff";
 import { RequirePermission } from "./components/RequirePermission";
+import { Campaigns } from "./pages/Campaigns";
 import { Coupons } from "./pages/Coupons";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
@@ -36,6 +37,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="categories" element={<RequirePermission perm="catalog.view"><Categories /></RequirePermission>} />
               <Route path="promotions" element={<RequirePermission perm="catalog.view"><Promotions /></RequirePermission>} />
               <Route path="coupons" element={<RequirePermission perm="coupons.view"><Coupons /></RequirePermission>} />
+              <Route path="campaigns" element={<RequirePermission perm="reports.view"><Campaigns /></RequirePermission>} />
               <Route path="staff" element={<RequirePermission perm="staff.manage"><Staff /></RequirePermission>} />
               <Route path="account" element={<Account />} />
             </Route>

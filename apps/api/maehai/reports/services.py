@@ -72,3 +72,83 @@ def todo() -> dict:
         "to_pack": by_status.get(OrderStatus.PAID, 0),
         "low_stock": low_stock_count(),
     }
+
+
+# ---------------------------------------------------------------- campaign effectiveness
+COUNTED_STATUSES = ("paid", "packing", "shipped", "done")   # money is in: paid, and not cancelled since
+
+
+def _variant_ids(promo) -> list[int]:
+    from maehai.catalog.models import Promotion, ProductVariant
+
+    qs = ProductVariant.objects.filter(is_active=True)
+    if promo.scope == Promotion.Scope.PRODUCTS:
+        qs = qs.filter(product__in=promo.products.all())
+    elif promo.scope == Promotion.Scope.CATEGORIES:
+        qs = qs.filter(product__category__in=promo.categories.all())
+    return list(qs.values_list("id", flat=True))
+
+
+def _units(variant_ids, start, end) -> int:
+    from maehai.orders.models import OrderItem
+
+    return OrderItem.objects.filter(variant_id__in=variant_ids, order__status__in=COUNTED_STATUSES,
+                                    order__created_at__gte=start, order__created_at__lt=end).aggregate(q=Sum("quantity"))["q"] or 0
+
+
+def campaign_report(days: int = 30) -> dict:
+    """How well each promotion and coupon did in the last `days` days.
+
+    Promotions: units sold during the promotion per day, against the same number of days just before it started,
+    for the same products. The change between the two is the lift. Only paid orders count.
+    Coupons: uses, goods sold with them, discount given, and cancelled uses (which give the use back).
+    """
+    from maehai.catalog.models import Promotion
+    from maehai.coupons.models import Coupon, CouponRedemption
+    from maehai.orders.models import Order, OrderItem
+
+    now = timezone.now()
+    start, end, _ = _window(days)
+    promotions = []
+    for promo in Promotion.objects.prefetch_related("products", "categories").order_by("-starts_at"):
+        p_from = max(promo.starts_at, start)
+        p_to = min(promo.ends_at or now, end, now)
+        if p_to <= p_from:
+            continue                                   # not running in this window
+        items = OrderItem.objects.filter(promotion=promo, order__status__in=COUNTED_STATUSES,
+                                         order__created_at__gte=start, order__created_at__lt=end)
+        rows = list(items.values_list("unit_price_satang", "list_price_satang", "quantity", "order_id"))
+        orders = len({r[3] for r in rows})
+        units = sum(r[2] for r in rows)
+        revenue = sum(r[0] * r[2] for r in rows)
+        discount = sum(((r[1] or r[0]) - r[0]) * r[2] for r in rows)
+
+        length = p_to - p_from
+        ids = _variant_ids(promo)
+        per_day = _units(ids, p_from, p_to) / (length.total_seconds() / 86400)
+        before = _units(ids, p_from - length, p_from) / (length.total_seconds() / 86400)
+        promotions.append({
+            "id": promo.id, "name": promo.name, "label": promo.label, "scope": promo.scope,
+            "starts_at": promo.starts_at, "ends_at": promo.ends_at, "orders": orders, "units": units,
+            "revenue_satang": revenue, "discount_satang": discount,
+            "units_per_day": round(per_day, 2), "units_per_day_before": round(before, 2),
+            "lift_percent": round((per_day - before) / before * 100) if before > 0 else None,
+        })
+
+    coupons = []
+    for coupon in Coupon.objects.order_by("-created_at"):
+        reds = CouponRedemption.objects.filter(coupon=coupon, created_at__gte=start, created_at__lt=end)
+        if not reds.exists():
+            continue
+        active = reds.filter(released_at__isnull=True)
+        counted = Order.objects.filter(coupon_redemption__in=active, status__in=COUNTED_STATUSES)
+        goods = [(o.subtotal_satang, o.coupon_discount_satang, o.shipping_waived) for o in counted]
+        discount = sum(g[1] for g in goods)
+        coupons.append({
+            "id": coupon.id, "code": coupon.code, "name": coupon.name, "label": coupon.label,
+            "uses": active.count(), "cancelled": reds.filter(released_at__isnull=False).count(),
+            "orders": len(goods), "revenue_satang": sum(g[0] - g[1] for g in goods),
+            "discount_satang": discount, "average_discount_satang": discount // len(goods) if goods else 0,
+            "free_shipping_orders": sum(1 for g in goods if g[2]),
+        })
+    return {"days": days, "promotions": promotions, "coupons": coupons}

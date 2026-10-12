@@ -93,10 +93,7 @@ export default async function Home() {
         ))}
       </section>
 
-      <footer className="footer">
-        <p className="bold">ร้านหมูยอแม่ฮาย</p>
-        <p className="sm">สั่งออนไลน์ทาง LINE @maehai</p>
-      </footer>
+
     </>
   );
 }

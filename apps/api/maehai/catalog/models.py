@@ -93,6 +93,20 @@ class ProductImage(models.Model):
         ordering = ["sort_order", "id"]
 
 
+class PriceChange(models.Model):
+    """One change to a size's list price. Append-only: written by the catalog service, never edited afterwards."""
+
+    variant = models.ForeignKey("catalog.ProductVariant", on_delete=models.CASCADE, related_name="price_changes")
+    old_price_satang = models.PositiveIntegerField(null=True, blank=True, help_text="Empty when the size was just created")
+    new_price_satang = models.PositiveIntegerField()
+    actor = models.CharField(max_length=150, default="system")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-id"]
+        indexes = [models.Index(fields=["variant", "-id"])]
+
+
 class ProductVariant(models.Model):
     """A sellable size/pack of a product. Price is integer satang (1 THB = 100)."""
 

@@ -101,9 +101,9 @@ Xếp theo mức ưu tiên đề xuất:
 
 1. ~~Nhiều ảnh cho một sản phẩm~~ đã làm (xem mục 1.1).
 2. **Mã giảm giá (coupon)** áp trên cả đơn, ví dụ "ลด 50 บาท เมื่อซื้อครบ 500". Cần thêm ô nhập mã ở checkout và quy tắc kết hợp với khuyến mãi theo sản phẩm.
-3. **Lịch sử đổi giá** (ai đổi, khi nào, từ bao nhiêu). Hiện chỉ có lịch sử tồn kho.
+3. ~~Lịch sử đổi giá~~ (đã làm: mọi lần đổi giá ghi lại giá cũ, giá mới, người đổi, thời điểm)
 4. **Giới hạn số lượng mua** mỗi đơn cho hàng khuyến mãi.
 5. **SEO**: tiêu đề và mô tả riêng cho từng trang sản phẩm, ảnh chia sẻ mạng xã hội.
 6. **Nội dung tiếng Anh** cho shop (đã có tên tiếng Anh, chưa có giao diện).
-7. **Báo cáo hiệu quả khuyến mãi** (doanh thu và số đơn trong thời gian chạy).
+7. ~~Báo cáo hiệu quả khuyến mãi~~ (đã làm: báo cáo “รายงานโปรโมชัน”)
 8. **Phân quyền nhân viên**: hiện mọi nhân viên đều sửa được giá và khuyến mãi. Nên tách quyền "chủ tiệm" và "nhân viên bán hàng".

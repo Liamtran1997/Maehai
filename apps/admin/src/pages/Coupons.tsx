@@ -46,7 +46,7 @@ function toPayload(f: Form): CouponIn | string {
   const code = f.code.trim().toUpperCase();
   if (!/^[A-Z0-9][A-Z0-9-]{1,23}$/.test(code)) return "โค้ดใช้ตัวอักษร A-Z ตัวเลข และขีดกลาง ยาว 2 ถึง 24 ตัว";
   if (!f.name.trim()) return "ตั้งชื่อโค้ด (สำหรับจำภายในร้าน)";
-  const value = f.kind === "percent" ? posInt(f.value) : bahtToSatang(f.value);
+  const value = f.kind === "free_shipping" ? 1 : f.kind === "percent" ? posInt(f.value) : bahtToSatang(f.value);
   if (f.kind === "percent" && (value === null || value > 90)) return "ลดได้ 1 ถึง 90 เปอร์เซ็นต์";
   if (f.kind === "amount" && (value === null || value === 0)) return "กรอกจำนวนเงินที่ลด";
   const max = f.max_discount.trim() ? bahtToSatang(f.max_discount) : null;
@@ -140,8 +140,8 @@ export function Coupons() {
               </div>
               <div className="mh-field"><label className="mh-label" htmlFor="cn">ชื่อ (ใช้ภายในร้าน)</label><input className="mh-input" id="cn" maxLength={100} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="เช่น แจกลูกค้าเก่า ต.ค." /></div>
               <div className="form-grid">
-                <div className="mh-field"><label className="mh-label" htmlFor="ck">ลดแบบ</label><select className="mh-select" id="ck" value={form.kind} onChange={(e) => set("kind", e.target.value)}><option value="percent">เปอร์เซ็นต์</option><option value="amount">จำนวนเงินต่อออเดอร์</option></select></div>
-                <div className="mh-field"><label className="mh-label" htmlFor="cv">{form.kind === "percent" ? "ลดกี่ % (1 ถึง 90)" : "ลดกี่บาท"}</label><input className="mh-input num" id="cv" inputMode="decimal" value={form.value} onChange={(e) => set("value", e.target.value)} /></div>
+                <div className="mh-field"><label className="mh-label" htmlFor="ck">ลดแบบ</label><select className="mh-select" id="ck" value={form.kind} onChange={(e) => set("kind", e.target.value)}><option value="percent">เปอร์เซ็นต์</option><option value="amount">จำนวนเงินต่อออเดอร์</option><option value="free_shipping">ส่งฟรี (ยกเว้นค่าจัดส่ง)</option></select></div>
+                {form.kind !== "free_shipping" && <div className="mh-field"><label className="mh-label" htmlFor="cv">{form.kind === "percent" ? "ลดกี่ % (1 ถึง 90)" : "ลดกี่บาท"}</label><input className="mh-input num" id="cv" inputMode="decimal" value={form.value} onChange={(e) => set("value", e.target.value)} /></div>}
               </div>
               {form.kind === "percent" && <div className="mh-field"><label className="mh-label" htmlFor="cm">ลดสูงสุดไม่เกิน (บาท, ไม่บังคับ)</label><input className="mh-input num" id="cm" inputMode="decimal" value={form.max_discount} onChange={(e) => set("max_discount", e.target.value)} placeholder="เช่น 100" /></div>}
               <div className="mh-field"><label className="mh-label" htmlFor="cmin">ยอดสินค้าขั้นต่ำ (บาท)</label><input className="mh-input num" id="cmin" inputMode="decimal" value={form.min_subtotal} onChange={(e) => set("min_subtotal", e.target.value)} placeholder="ไม่มีขั้นต่ำ" /><span className="mh-help">นับจากยอดสินค้าหลังโปรโมชัน ไม่รวมค่าจัดส่ง</span></div>

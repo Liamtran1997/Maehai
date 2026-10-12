@@ -25,6 +25,7 @@ class OrderIn(Schema):
     address: AddressIn = AddressIn()
     note: str = Field(default="", max_length=300)
     coupon_code: str = Field(default="", max_length=24)
+    accepted_terms: bool = False      # the customer ticked the privacy notice and terms
 
 
 class ItemOut(Schema):
@@ -89,6 +90,7 @@ class OrderOut(Schema):
     discount_satang: int = 0
     coupon_code: str = ""
     coupon_discount_satang: int = 0
+    shipping_waived: bool = False
     shipping_fee_satang: int | None
     vat_satang: int
     total_satang: int | None

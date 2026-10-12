@@ -39,6 +39,7 @@ class Evaluation:
     discount_satang: int
     subtotal_satang: int
     goods_total_satang: int   # subtotal - discount
+    shipping_waived: bool = False   # a free-shipping code: the delivery fee is not charged
 
 
 def normalize(code: str) -> str:
@@ -54,7 +55,7 @@ def _active_uses(coupon: Coupon, phone: str | None = None) -> int:
 
 
 def evaluate(code: str, lines: list[Line], *, phone: str | None = None, at: datetime | None = None,
-             lock: bool = False) -> Evaluation:
+             lock: bool = False, shipping_applies: bool = True) -> Evaluation:
     """Raises CouponError with a customer-facing message when the code cannot be used.
     lock=True takes a row lock on the coupon so two simultaneous orders cannot both take its last use (call inside a transaction)."""
     code = normalize(code)
@@ -77,6 +78,11 @@ def evaluate(code: str, lines: list[Line], *, phone: str | None = None, at: date
     if eligible < coupon.min_subtotal_satang:
         short = coupon.min_subtotal_satang - eligible
         raise CouponError(f"ซื้อครบ {format_thb(coupon.min_subtotal_satang)} เพื่อใช้โค้ดนี้ (ขาดอีก {format_thb(short)})")
+
+    if coupon.kind == Coupon.Kind.FREE_SHIPPING:
+        if not shipping_applies:
+            raise CouponError("โค้ดส่งฟรีใช้กับการจัดส่งถึงที่หรือฝากขนส่งเท่านั้น รับที่ร้านไม่มีค่าจัดส่งอยู่แล้ว")
+        return Evaluation(coupon, 0, subtotal, subtotal, shipping_waived=True)
 
     if coupon.kind == Coupon.Kind.PERCENT:
         off = (eligible * coupon.value + 50) // 100

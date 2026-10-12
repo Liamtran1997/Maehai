@@ -20,11 +20,12 @@ class Coupon(models.Model):
     class Kind(models.TextChoices):
         PERCENT = "percent", "ลดเป็นเปอร์เซ็นต์"
         AMOUNT = "amount", "ลดเป็นจำนวนเงิน"
+        FREE_SHIPPING = "free_shipping", "ส่งฟรี (ยกเว้นค่าจัดส่ง)"
 
     code = models.CharField(max_length=24, unique=True, help_text="Stored upper-case; customers may type any case")
     name = models.CharField(max_length=100, help_text="Internal note and the label shown on the order")
-    kind = models.CharField(max_length=10, choices=Kind.choices)
-    value = models.PositiveIntegerField(help_text="Percent (1-90) or satang off the order")
+    kind = models.CharField(max_length=20, choices=Kind.choices)
+    value = models.PositiveIntegerField(help_text="Percent (1-90), satang off the order, or 1 for free shipping (unused)")
     max_discount_satang = models.PositiveIntegerField(null=True, blank=True, help_text="Cap for percent coupons")
     min_subtotal_satang = models.PositiveIntegerField(default=0, help_text="Goods total needed to use the code")
     exclude_discounted_items = models.BooleanField(default=False, help_text="Items already on promotion do not count and are not discounted again")
@@ -47,6 +48,8 @@ class Coupon(models.Model):
 
     @property
     def label(self) -> str:
+        if self.kind == self.Kind.FREE_SHIPPING:
+            return "ส่งฟรี"
         if self.kind == self.Kind.PERCENT:
             return f"ลด {self.value}%" + (f" (สูงสุด ฿{self.max_discount_satang / 100:,.0f})" if self.max_discount_satang else "")
         baht = self.value / 100

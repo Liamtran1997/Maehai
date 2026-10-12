@@ -92,6 +92,8 @@ def _validate(data: CouponIn) -> str:
         raise HttpError(422, "ลดได้ 1 ถึง 90 เปอร์เซ็นต์")
     if data.kind == Coupon.Kind.AMOUNT and data.max_discount_satang is not None:
         raise HttpError(422, "เพดานส่วนลดใช้กับโค้ดแบบเปอร์เซ็นต์เท่านั้น")
+    if data.kind == Coupon.Kind.FREE_SHIPPING and data.max_discount_satang is not None:
+        raise HttpError(422, "โค้ดส่งฟรีไม่มีเพดานส่วนลด")
     if data.ends_at and data.ends_at <= data.starts_at:
         raise HttpError(422, "วันสิ้นสุดต้องอยู่หลังวันเริ่ม")
     return code

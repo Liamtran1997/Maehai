@@ -112,3 +112,14 @@ def test_admin_list_filters_and_paginates(staff_client, place):
     r = staff_client.get("/api/admin/orders", {"status": "pending_quote"})
     assert r.status_code == 200 and r.json()["count"] == 1
     assert staff_client.get("/api/admin/orders", {"q": "081-234"}).json()["count"] == 2
+
+
+def test_order_needs_the_privacy_consent(place):
+    r = place(accepted_terms=False)
+    assert r.status_code == 422 and "ยอมรับ" in r.json()["detail"]
+    assert Order.objects.count() == 0
+
+
+def test_consent_time_is_recorded(place):
+    o = place().json()
+    assert Order.objects.get(number=o["number"]).terms_accepted_at is not None

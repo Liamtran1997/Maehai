@@ -4,6 +4,7 @@ from ninja.errors import HttpError
 
 from maehai.catalog.models import ProductVariant
 from maehai.catalog.pricing import prices_for
+from maehai.shipping.models import ShippingMethod
 from maehai.core import ratelimit
 from maehai.orders.schemas import ItemIn
 from maehai.orders.services import MAX_LINES, normalize_phone
@@ -18,6 +19,7 @@ class ValidateIn(Schema):
     code: str
     items: list[ItemIn]
     phone: str = ""        # optional here; the per-phone limit is always enforced when the order is placed
+    shipping_method: str = ""   # needed to tell whether a free-shipping code applies
 
 
 class ValidateOut(Schema):
@@ -26,6 +28,7 @@ class ValidateOut(Schema):
     subtotal_satang: int
     discount_satang: int
     goods_total_satang: int
+    shipping_waived: bool = False
 
 
 @router.post("/validate", response=ValidateOut)
@@ -54,10 +57,17 @@ def validate(request, data: ValidateIn):
             phone = normalize_phone(data.phone)
         except HttpError:
             phone = None                                   # a half-typed phone must not block the preview
+    shipping_applies = True
+    if data.shipping_method:
+        method = ShippingMethod.objects.filter(code=data.shipping_method, is_active=True).first()
+        if method is None:
+            raise HttpError(422, "วิธีรับสินค้าไม่ถูกต้อง")
+        shipping_applies = method.fee_is_quoted
     try:
-        ev = services.evaluate(data.code, lines, phone=phone)
+        ev = services.evaluate(data.code, lines, phone=phone, shipping_applies=shipping_applies)
     except CouponError:
         ratelimit.failed("coupon_fail_ip", ip)
         raise
     return {"code": ev.coupon.code, "label": ev.coupon.label, "subtotal_satang": ev.subtotal_satang,
-            "discount_satang": ev.discount_satang, "goods_total_satang": ev.goods_total_satang}
+            "discount_satang": ev.discount_satang, "goods_total_satang": ev.goods_total_satang,
+            "shipping_waived": ev.shipping_waived}

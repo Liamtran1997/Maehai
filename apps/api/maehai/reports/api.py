@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from ninja import Query, Router, Schema
 from pydantic import Field
 
@@ -61,3 +63,44 @@ def summary(request, params: Query[SummaryQuery]):
 def todo(request):
     """Counts of things waiting for action. Visible to every staff member (no money figures)."""
     return services.todo()
+
+
+class PromotionReportOut(Schema):
+    id: int
+    name: str
+    label: str
+    scope: str
+    starts_at: datetime
+    ends_at: datetime | None
+    orders: int
+    units: int
+    revenue_satang: int
+    discount_satang: int
+    units_per_day: float
+    units_per_day_before: float
+    lift_percent: int | None
+
+
+class CouponReportOut(Schema):
+    id: int
+    code: str
+    name: str
+    label: str
+    uses: int
+    cancelled: int
+    orders: int
+    revenue_satang: int
+    discount_satang: int
+    average_discount_satang: int
+    free_shipping_orders: int
+
+
+class CampaignsOut(Schema):
+    days: int
+    promotions: list[PromotionReportOut]
+    coupons: list[CouponReportOut]
+
+
+@router.get("/campaigns", response=CampaignsOut, auth=requires("reports.view"))
+def campaigns(request, params: Query[SummaryQuery]):
+    return services.campaign_report(params.days)

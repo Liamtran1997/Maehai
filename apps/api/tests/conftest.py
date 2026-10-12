@@ -66,7 +66,7 @@ def order_payload():
         base = {
             "items": [{"sku": "moo-yo-black-pepper-2", "quantity": 1}, {"sku": "naem-pork-1", "quantity": 2}],
             "customer_name": "สมชาย ใจดี", "phone": "081-234-5678", "shipping_method": "pickup-srinarong",
-            "requested_date": earliest_fulfillment_date().isoformat(),
+            "requested_date": earliest_fulfillment_date().isoformat(), "accepted_terms": True,
         }
         return {**base, **over}
     return make

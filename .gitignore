@@ -16,3 +16,14 @@ next-env.d.ts
 
 # deployment
 deploy/backups/
+
+# Photos copied from the old site: kept out of git (owner's images, not ours to republish)
+apps/api/data/site_import/images/
+
+# end-to-end tests: local database and run output
+e2e/e2e.sqlite3
+e2e/test-results/
+e2e/playwright-report/
+
+# payment slips kept on disk in local development
+apps/api/private_media/

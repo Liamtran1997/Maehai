@@ -15,8 +15,9 @@ export default function CheckoutPage() {
   const [loadError, setLoadError] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [terms, setTerms] = useState(false);
   const [couponInput, setCouponInput] = useState("");
-  const [coupon, setCoupon] = useState<{ code: string; label: string; discount: number; goodsTotal: number } | null>(null);
+  const [coupon, setCoupon] = useState<{ code: string; label: string; discount: number; goodsTotal: number; shippingWaived: boolean } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponBusy, setCouponBusy] = useState(false);
   const phoneRef = useRef<HTMLInputElement>(null);
@@ -37,17 +38,17 @@ export default function CheckoutPage() {
 
   const chosen = methods.find((m) => m.code === method);
   const cartKey = cart.lines.map((l) => `${l.sku}:${l.quantity}`).join(",");
-  useEffect(() => { setCoupon(null); }, [cartKey]);
+  useEffect(() => { setCoupon(null); }, [cartKey, method]);   // a code is checked again when the cart or delivery changes
 
   async function applyCoupon() {
     const code = couponInput.trim();
     if (!code) return;
     setCouponBusy(true); setCouponError(null);
     const res = await api.POST("/api/coupons/validate", {
-      body: { code, items: cart.lines.map((l) => ({ sku: l.sku, quantity: l.quantity })), phone: phoneRef.current?.value ?? "" },
+      body: { code, items: cart.lines.map((l) => ({ sku: l.sku, quantity: l.quantity })), phone: phoneRef.current?.value ?? "", shipping_method: method },
     }).catch(() => null);
     setCouponBusy(false);
-    if (res?.data) setCoupon({ code: res.data.code, label: res.data.label, discount: res.data.discount_satang, goodsTotal: res.data.goods_total_satang });
+    if (res?.data) setCoupon({ code: res.data.code, label: res.data.label, discount: res.data.discount_satang, goodsTotal: res.data.goods_total_satang, shippingWaived: res.data.shipping_waived });
     else { setCoupon(null); setCouponError(res ? errorText(res.error) : "เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง"); }
   }
 
@@ -61,7 +62,7 @@ export default function CheckoutPage() {
       body: {
         items: cart.lines.map((l) => ({ sku: l.sku, quantity: l.quantity })),
         customer_name: str("name"), phone: str("phone"), shipping_method: method, requested_date: str("date"), note: str("note"),
-        coupon_code: coupon?.code ?? "",
+        coupon_code: coupon?.code ?? "", accepted_terms: terms,
         address: { address_line: str("address_line"), subdistrict: str("subdistrict"), district: str("district"), province: str("province"), postal_code: str("postal_code") },
       },
     }).catch(() => null);
@@ -140,7 +141,7 @@ export default function CheckoutPage() {
             <h2 style={{ font: "600 18px/1.6 var(--font-sans)" }}>โค้ดส่วนลด</h2>
             {coupon ? (
               <div className="notice notice--ok" role="status" style={{ justifyContent: "space-between", alignItems: "center" }}>
-                <p><b className="mh-code">{coupon.code}</b> {coupon.label} · ลด {formatTHB(coupon.discount)}</p>
+                <p><b className="mh-code">{coupon.code}</b> {coupon.label}{coupon.shippingWaived ? "" : ` · ลด ${formatTHB(coupon.discount)}`}</p>
                 <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { setCoupon(null); setCouponInput(""); }}>เอาออก</button>
               </div>
             ) : (
@@ -164,12 +165,16 @@ export default function CheckoutPage() {
             ))}
             <hr className="hr" />
             {coupon && <div className="rowline"><span>ส่วนลดโค้ด {coupon.code}</span><span className="num" style={{ color: "var(--band-red)" }}>−{formatTHB(coupon.discount)}</span></div>}
-            <div className="rowline"><span>ค่าจัดส่ง</span><span className="ink-muted">{chosen?.fee_is_quoted ? "ร้านแจ้งภายหลัง" : "ไม่มี"}</span></div>
+            <div className="rowline"><span>ค่าจัดส่ง</span><span className="ink-muted">{coupon?.shippingWaived ? "ส่งฟรี (โค้ด)" : chosen?.fee_is_quoted ? "ร้านแจ้งภายหลัง" : "ไม่มี"}</span></div>
             <div className="rowline"><span className="bold">ยอดสินค้า</span><span className="mh-price num">{coupon ? formatTHB(coupon.goodsTotal) : formatTHB(cart.subtotalSatang, { hideZeroSatang: true })}</span></div>
           </div>
 
+          <label className="mh-row" style={{ gap: 10, alignItems: "flex-start" }}>
+            <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} required style={{ width: 20, height: 20, marginTop: 2, accentColor: "var(--leaf)", flex: "none" }} />
+            <span className="sm">ฉันยอมรับ <a href="/terms" target="_blank" rel="noreferrer" className="bold">เงื่อนไขการสั่งซื้อ</a> และ <a href="/privacy" target="_blank" rel="noreferrer" className="bold">นโยบายความเป็นส่วนตัว</a> และยินยอมให้ร้านใช้ข้อมูลที่กรอกเพื่อดำเนินการสั่งซื้อ</span>
+          </label>
           {error && <div className="notice notice--warn" role="alert"><p>{error}</p></div>}
-          <button className="mh-btn mh-btn--primary btn-block" type="submit" disabled={busy || !chosen}>{busy ? "กำลังส่งคำสั่งซื้อ…" : "ยืนยันคำสั่งซื้อ"}</button>
+          <button className="mh-btn mh-btn--primary btn-block" type="submit" disabled={busy || !chosen || !terms}>{busy ? "กำลังส่งคำสั่งซื้อ…" : "ยืนยันคำสั่งซื้อ"}</button>
         </form>
       )}
     </>

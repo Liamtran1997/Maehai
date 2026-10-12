@@ -39,7 +39,7 @@ def _order_body():
     from maehai.shipping.schedule import earliest_fulfillment_date
 
     return {"items": [{"sku": "moo-yo-black-pepper-2", "quantity": 1}], "customer_name": "ทดสอบ", "phone": "0812345678",
-            "shipping_method": "pickup-srinarong", "requested_date": earliest_fulfillment_date().isoformat()}
+            "shipping_method": "pickup-srinarong", "requested_date": earliest_fulfillment_date().isoformat(), "accepted_terms": True}
 
 
 def test_size_limit_comes_from_settings(staff_client, seeded, settings):

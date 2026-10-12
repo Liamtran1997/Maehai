@@ -37,6 +37,7 @@ def _create(data):
         items=[(i.sku, i.quantity) for i in data.items], customer_name=data.customer_name, phone=data.phone,
         shipping_code=data.shipping_method, requested_date=data.requested_date,
         address=data.address.dict(), note=data.note, coupon_code=data.coupon_code,
+        accepted_terms=data.accepted_terms,
     )
     return order
 

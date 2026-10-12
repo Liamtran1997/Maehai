@@ -1,7 +1,7 @@
 from django.db import transaction
 from ninja.errors import HttpError
 
-from .models import Band, Badge, Category, Product, ProductVariant
+from .models import Badge, Band, Category, PriceChange, Product, ProductVariant
 from .schemas import ProductIn
 
 
@@ -22,7 +22,7 @@ def _validate(data: ProductIn) -> Category:
 
 
 @transaction.atomic
-def save_product(data: ProductIn, product: Product | None = None) -> Product:
+def save_product(data: ProductIn, product: Product | None = None, actor: str = "system") -> Product:
     category = _validate(data)
     fields = data.model_dump(exclude={"category_slug", "variants"})
     if product is None:
@@ -43,11 +43,15 @@ def save_product(data: ProductIn, product: Product | None = None) -> Product:
         values = {"label": v.label, "price_satang": v.price_satang, "weight_grams": v.weight_grams,
                   "is_active": v.is_active, "sort_order": i}
         if v.sku in existing:
+            row = existing[v.sku]
+            if row.price_satang != v.price_satang:
+                PriceChange.objects.create(variant=row, old_price_satang=row.price_satang, new_price_satang=v.price_satang, actor=actor)
             for k, val in values.items():
-                setattr(existing[v.sku], k, val)
-            existing[v.sku].save()
+                setattr(row, k, val)
+            row.save()
         else:
-            ProductVariant.objects.create(product=product, sku=v.sku, **values)
+            new = ProductVariant.objects.create(product=product, sku=v.sku, **values)
+            PriceChange.objects.create(variant=new, old_price_satang=None, new_price_satang=v.price_satang, actor=actor)
     incoming = {v.sku for v in data.variants}
     product.variants.exclude(sku__in=incoming).update(is_active=False)
     return product

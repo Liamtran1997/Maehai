@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { ErrorNotice } from "../components/Notice";
 import { api, bahtToSatang, unwrap, uploadFile, type AdminProduct, type ProductImage, type ProductIn } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { PriceHistory } from "../components/PriceHistory";
 
 type VariantForm = { sku: string; label: string; price: string; weight: string; existing: boolean };
 type Form = Omit<ProductIn, "variants"> & { variants: VariantForm[]; id?: number; images?: ProductImage[] };
@@ -257,6 +258,7 @@ export function Products() {
             </div>
 
             </fieldset>
+            {form.id && <PriceHistory productId={form.id} />}
             {formError && <div className="notice notice--warn" role="alert"><p>{formError}</p></div>}
             {save.isSuccess && !formError && <div className="notice notice--ok" role="status"><p>บันทึกแล้ว</p></div>}
             <div className="mh-row" style={{ justifyContent: "flex-end" }}>

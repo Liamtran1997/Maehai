@@ -63,6 +63,8 @@ class Order(models.Model):
     subtotal_satang = models.PositiveIntegerField(help_text="Goods total after per-product promotions, before any coupon")
     coupon_code = models.CharField(max_length=24, blank=True)
     coupon_discount_satang = models.PositiveIntegerField(default=0)
+    shipping_waived = models.BooleanField(default=False, help_text="A free-shipping coupon covers the delivery fee")
+    terms_accepted_at = models.DateTimeField(null=True, blank=True, help_text="When the customer agreed to the privacy notice and terms")
     shipping_fee_satang = models.PositiveIntegerField(null=True, blank=True, help_text="null = not quoted yet")
     vat_satang = models.PositiveIntegerField(default=0)
     tracking_ref = models.CharField("เลขพัสดุ/ใบฝากส่ง", max_length=60, blank=True)
@@ -108,6 +110,7 @@ class OrderItem(models.Model):
     unit_price_satang = models.PositiveIntegerField(help_text="What the customer paid per unit, after any promotion")
     list_price_satang = models.PositiveIntegerField(null=True, blank=True, help_text="Catalog price before promotion")
     promotion_name = models.CharField(max_length=100, blank=True)
+    promotion = models.ForeignKey("catalog.Promotion", null=True, blank=True, on_delete=models.SET_NULL, related_name="order_items", help_text="The promotion that priced this line (for reports)")
     quantity = models.PositiveSmallIntegerField()
 
     class Meta:

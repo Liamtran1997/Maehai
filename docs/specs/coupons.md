@@ -72,9 +72,9 @@ Mã không tồn tại, bị tắt, chưa bắt đầu và đã hết hạn đ�
 
 ## 8. Chưa làm (đề xuất)
 
-1. **Miễn phí ship** làm loại mã riêng (hiện mã chỉ giảm tiền hàng, và phí ship do tiệm báo sau đặt đơn).
+1. ~~Miễn phí ship~~ (đã làm: loại mã “ส่งฟรี”, đơn không cần chờ báo phí)
 2. **Mã dành cho một khách** (gắn với số điện thoại hoặc tài khoản) và **đơn đầu tiên**.
 3. **Mã chỉ cho một số sản phẩm hoặc danh mục.**
-4. **Báo cáo hiệu quả mã**: doanh thu, số đơn, tỷ lệ chuyển đổi, chi phí giảm giá theo mã (hiện chỉ có tổng đã giảm và số lần dùng).
+4. ~~Báo cáo hiệu quả mã~~ (đã làm: báo cáo “รายงานโปรโมชัน”, phần โค้ดส่วนลด)
 5. **Tạo hàng loạt** mã dùng một lần để gửi riêng từng khách.
 6. **Chặn nhờ tài khoản**: yêu cầu đăng nhập LINE để mã dùng một lần thật sự một người.

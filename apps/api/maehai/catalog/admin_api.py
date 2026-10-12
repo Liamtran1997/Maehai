@@ -17,7 +17,7 @@ from maehai.core.models import audit
 from maehai.core.permissions import check
 
 from .api import serialize_detail
-from .models import Category, Product, ProductImage, ProductVariant, Promotion
+from .models import Category, PriceChange, Product, ProductImage, ProductVariant, Promotion
 from .schemas import AdminProductOut, ProductIn
 from .services import save_product
 
@@ -56,7 +56,7 @@ def list_products(request):
 @router.post("/products", response={201: AdminProductOut}, auth=requires("catalog.edit"))
 def create_product(request, data: ProductIn):
     check(request, "pricing.manage")        # a new product always sets prices
-    p = save_product(data)
+    p = save_product(data, actor=request.user.get_username())
     audit(request, "product.create", p.slug, ", ".join(f"{v.sku}={v.price_satang / 100:g}" for v in data.variants))
     return 201, _admin_out(request, _qs().get(pk=p.pk))
 
@@ -67,10 +67,28 @@ def update_product(request, product_id: int, data: ProductIn):
     changes = _price_changes(product, data)
     if changes:
         check(request, "pricing.manage")    # editing text and images is catalog.edit; touching a price is pricing.manage
-    p = save_product(data, product)
+    p = save_product(data, product, actor=request.user.get_username())
     if changes:
         audit(request, "price.change", p.slug, "; ".join(changes))
     return _admin_out(request, _qs().get(pk=p.pk))
+
+
+class PriceChangeOut(Schema):
+    sku: str
+    label: str
+    old_price_satang: int | None
+    new_price_satang: int
+    actor: str
+    created_at: datetime
+
+
+@router.get("/products/{product_id}/price-history", response=list[PriceChangeOut], auth=requires("pricing.manage"))
+def price_history(request, product_id: int):
+    """Every price change of this product's sizes, newest first. Who changed it and when."""
+    p = get_object_or_404(Product, pk=product_id)
+    rows = PriceChange.objects.filter(variant__product=p).select_related("variant").order_by("-id")[:200]
+    return [{"sku": r.variant.sku, "label": r.variant.label, "old_price_satang": r.old_price_satang,
+             "new_price_satang": r.new_price_satang, "actor": r.actor, "created_at": r.created_at} for r in rows]
 
 
 @router.delete("/products/{product_id}", response={204: None}, auth=requires("catalog.edit"))
