@@ -87,6 +87,9 @@
 .mh-table th { text-align: left; padding: 10px var(--space-4); background: var(--surface-300);
   font: 600 14px/1.4 var(--font-sans); white-space: nowrap; }
 .mh-table td { padding: 10px var(--space-4); border-top: 1px solid var(--line); white-space: nowrap; }
+/* A cell that also has .mh-row would become a flex box, and its height would stop following the row, so row lines drift. */
+.mh-table td.mh-row { display: table-cell; }
+.mh-table td.mh-row > * + * { margin-left: 8px; }
 .mh-table .r { text-align: right; font-variant-numeric: tabular-nums; }
 .mh-table tbody tr:hover { background: var(--surface-100); }
 .mh-code { font: 500 13px/1.5 var(--font-mono); }

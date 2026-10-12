@@ -125,6 +125,8 @@ a { color: var(--leaf); }
 .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
 .cols--2-1 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
 @media (min-width: 1100px) { .cols--2-1 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } }
+/* No side panel open (its column is empty or missing): the list takes the full width. */
+.cols--2-1:not(:has(> :nth-child(2):not(:empty))) { grid-template-columns: minmax(0, 1fr); }
 .apanel { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 20px; background: var(--surface-200); border: 1px solid var(--line); border-radius: var(--radius-lg); }
 .apanel h2 { font: 600 18px/1.6 var(--font-sans); }
 .apanel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
