@@ -140,7 +140,7 @@ export function Products() {
       </div>
       <ErrorNotice error={products.error ?? toggle.error} />
 
-      <div className="cols cols--2-1" style={{ alignItems: "start" }}>
+      <div className={form ? "cols cols--2-1" : "cols"} style={{ alignItems: "start" }}>
         <div className="mh-tablewrap">
           <table className="mh-table">
             <thead><tr><th>สินค้า</th><th>หมวดหมู่</th><th className="r">ราคา (ก่อนลด)</th><th>แสดงบนร้าน</th><th><span style={{ position: "absolute", left: -9999 }}>แก้ไข</span></th></tr></thead>
