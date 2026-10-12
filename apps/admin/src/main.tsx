@@ -19,6 +19,16 @@ import { OrderDetail } from "./pages/OrderDetail";
 import { Orders } from "./pages/Orders";
 import { Products } from "./pages/Products";
 
+// The icon path depends on the base (/admin/ in Docker), so the link is added here rather than in index.html.
+for (const [rel, sizes, file] of [["icon", "32x32", "icon-32.png"], ["apple-touch-icon", "192x192", "icon-192.png"]] as const) {
+  const link = document.createElement("link");
+  link.rel = rel;
+  link.sizes = sizes;
+  link.type = "image/png";
+  link.href = `${import.meta.env.BASE_URL}brand/${file}`;
+  document.head.appendChild(link);
+}
+
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 10_000, refetchOnWindowFocus: true } } });
 
 createRoot(document.getElementById("root")!).render(
