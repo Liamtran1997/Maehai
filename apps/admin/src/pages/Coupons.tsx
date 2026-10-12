@@ -134,7 +134,7 @@ export function Coupons() {
                 <label className="mh-label" htmlFor="cc">โค้ด</label>
                 <div className="mh-row" style={{ gap: 8, flexWrap: "nowrap" }}>
                   <input className="mh-input mh-code" id="cc" style={{ textTransform: "uppercase" }} maxLength={24} value={form.code} onChange={(e) => set("code", e.target.value)} disabled={!!editing && editing.used_count > 0} />
-                  {!form.id && <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => set("code", randomCode())}>สุ่มใหม่</button>}
+                  {!form.id && <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" style={{ whiteSpace: "nowrap" }} onClick={() => set("code", randomCode())}>สุ่มใหม่</button>}
                 </div>
                 <span className="mh-help">{editing && editing.used_count > 0 ? "โค้ดที่ถูกใช้แล้วเปลี่ยนตัวโค้ดไม่ได้" : "ลูกค้าพิมพ์ตัวเล็กตัวใหญ่ก็ได้ ตัวอักษร A-Z ตัวเลข และขีดกลาง"}</span>
               </div>
