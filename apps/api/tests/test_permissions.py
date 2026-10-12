@@ -329,3 +329,15 @@ def test_roles_endpoint_describes_every_role_for_the_ui(staff_client):
 def test_password_errors_are_in_thai(staff_client, pw, expected):
     r = new_staff(staff_client, password=pw)
     assert r.status_code == 422 and expected in r.json()["detail"]
+
+
+def test_superuser_without_a_profile_is_listed_and_counts_for_the_last_owner_guard(staff_client):
+    get_user_model().objects.create_superuser("root", password="pw-test-123")
+    listed = {s["username"]: s for s in staff_client.get("/api/admin/staff").json()}
+    assert listed["root"]["role"] == "owner" and listed["root"]["is_active"] is True
+    # root is an active owner, so the only other owner can step down while root remains
+    root_id = listed["root"]["id"]
+    assert staff_client.put(f"/api/admin/staff/{root_id}", '{"role":"manager","is_active":true,"display_name":""}', content_type=JSON).status_code == 200
+    # now the owner is the last active owner and cannot be demoted
+    me = next(s for s in staff_client.get("/api/admin/staff").json() if s["username"] == "owner")
+    assert staff_client.put(f"/api/admin/staff/{me['id']}", '{"role":"manager","is_active":true,"display_name":""}', content_type=JSON).status_code == 409

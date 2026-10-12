@@ -81,7 +81,15 @@ def _out(p: StaffProfile) -> dict:
             "last_login": u.last_login.isoformat() if u.last_login else None, "created_at": p.created_at.isoformat()}
 
 
+def _ensure_superuser_profiles() -> None:
+    """A superuser made with `createsuperuser` is an owner (see role_of) but has no profile yet.
+    Give each one a profile, so the staff list and the last-owner guard both see them."""
+    for u in get_user_model().objects.filter(is_superuser=True, staff_profile__isnull=True):
+        StaffProfile.objects.create(user=u, role="owner", display_name=u.get_username(), created_by="createsuperuser")
+
+
 def _active_owners() -> int:
+    _ensure_superuser_profiles()
     return StaffProfile.objects.filter(role="owner", user__is_active=True).count()
 
 
@@ -93,6 +101,7 @@ def roles(request):
 
 @router.get("/staff", auth=MANAGE, response=list[StaffOut])
 def list_staff(request):
+    _ensure_superuser_profiles()
     return [_out(p) for p in StaffProfile.objects.select_related("user").order_by("user__username")]
 
 
