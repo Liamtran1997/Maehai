@@ -24,13 +24,39 @@ def seeded(db):
     call_command("seed_inventory")
 
 
+def make_staff(username="owner", role="owner", password="pw-test-123", must_change=False):
+    from maehai.core.models import StaffProfile
+
+    u = get_user_model().objects.create_user(username, password=password, is_staff=True)
+    StaffProfile.objects.create(user=u, role=role, must_change_password=must_change)
+    return u
+
+
+def login_as(username, password="pw-test-123"):
+    c = Client()
+    r = c.post("/api/auth/login", {"username": username, "password": password}, content_type="application/json")
+    assert r.status_code == 200, r.content
+    return c
+
+
 @pytest.fixture
 def staff_client(db):
-    get_user_model().objects.create_user("owner", password="pw-test-123", is_staff=True)
-    c = Client()
-    r = c.post("/api/auth/login", {"username": "owner", "password": "pw-test-123"}, content_type="application/json")
-    assert r.status_code == 200
-    return c
+    """Logged in as the owner: can do everything. Role-specific tests use `as_role`."""
+    make_staff("owner", "owner")
+    return login_as("owner")
+
+
+@pytest.fixture
+def as_role(db):
+    """as_role("sales") -> a client logged in as a new staff member with that role."""
+    made = {}
+
+    def go(role):
+        if role not in made:                      # asking for the same role twice returns the same person
+            make_staff(f"user-{role}", role)
+            made[role] = login_as(f"user-{role}")
+        return made[role]
+    return go
 
 
 @pytest.fixture

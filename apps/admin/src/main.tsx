@@ -5,9 +5,12 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { AuthProvider } from "./lib/auth";
+import { Account } from "./pages/Account";
 import { Categories } from "./pages/Categories";
 import { Inventory } from "./pages/Inventory";
 import { Promotions } from "./pages/Promotions";
+import { Staff } from "./pages/Staff";
+import { RequirePermission } from "./components/RequirePermission";
 import { Coupons } from "./pages/Coupons";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
@@ -26,13 +29,15 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/login" element={<Login />} />
             <Route element={<Layout />}>
               <Route index element={<Dashboard />} />
-              <Route path="orders" element={<Orders />} />
-              <Route path="orders/:number" element={<OrderDetail />} />
-              <Route path="products" element={<Products />} />
-              <Route path="inventory" element={<Inventory />} />
-              <Route path="categories" element={<Categories />} />
-              <Route path="promotions" element={<Promotions />} />
-              <Route path="coupons" element={<Coupons />} />
+              <Route path="orders" element={<RequirePermission perm="orders.view"><Orders /></RequirePermission>} />
+              <Route path="orders/:number" element={<RequirePermission perm="orders.view"><OrderDetail /></RequirePermission>} />
+              <Route path="products" element={<RequirePermission perm="catalog.view"><Products /></RequirePermission>} />
+              <Route path="inventory" element={<RequirePermission perm="inventory.view"><Inventory /></RequirePermission>} />
+              <Route path="categories" element={<RequirePermission perm="catalog.view"><Categories /></RequirePermission>} />
+              <Route path="promotions" element={<RequirePermission perm="catalog.view"><Promotions /></RequirePermission>} />
+              <Route path="coupons" element={<RequirePermission perm="coupons.view"><Coupons /></RequirePermission>} />
+              <Route path="staff" element={<RequirePermission perm="staff.manage"><Staff /></RequirePermission>} />
+              <Route path="account" element={<Account />} />
             </Route>
           </Routes>
         </BrowserRouter>

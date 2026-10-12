@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ErrorNotice } from "../components/Notice";
 import { api, bahtToSatang, unwrap, type Order } from "../lib/api";
+import { useAuth } from "../lib/auth";
 import { CAN_CANCEL, NEXT_STATUS, PILL } from "../lib/status";
 
 export function OrderDetail() {
   const { number = "" } = useParams();
   const qc = useQueryClient();
+  const { can } = useAuth();
   const key = ["order", number];
   const q = useQuery({ queryKey: key, refetchInterval: 15_000, queryFn: async () => unwrap(await api.GET("/api/admin/orders/{number}", { params: { path: { number } } })) });
 
@@ -17,7 +19,7 @@ export function OrderDetail() {
   const [tracking, setTracking] = useState("");
   const [rejectReason, setRejectReason] = useState("");
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const branches = useQuery({ queryKey: ["branches"], queryFn: async () => unwrap(await api.GET("/api/admin/inventory/branches")) });
+  const branches = useQuery({ queryKey: ["branches"], enabled: can("inventory.view"), queryFn: async () => unwrap(await api.GET("/api/admin/inventory/branches")) });
   const moveBranch = useMutation({
     mutationFn: async (branch: string) => unwrap(await api.POST("/api/admin/orders/{number}/branch", { params: { path: { number } }, body: { branch } })),
     onSuccess: (o) => { qc.setQueryData(key, o); done(); },
@@ -44,10 +46,11 @@ export function OrderDetail() {
   if (q.error || !q.data) return <><Link to="/orders">← กลับ</Link><ErrorNotice error={q.error ?? new Error("ไม่พบคำสั่งซื้อ")} /></>;
   const o: Order = q.data;
   const p = o.payment;
-  const quoteOpen = o.status === "pending_quote" || o.status === "waiting_payment";
+  const quoteOpen = can("orders.quote") && (o.status === "pending_quote" || o.status === "waiting_payment");
+  const mayCancel = CAN_CANCEL.has(o.status) && can(o.status === "paid" || o.status === "packing" ? "orders.cancel_paid" : "orders.cancel");
   const feeSatang = bahtToSatang(feeText);
   const mutationError = fee.error ?? status.error ?? confirmPay.error ?? rejectPay.error ?? moveBranch.error;
-  const canMoveBranch = !["pickup"].includes(o.shipping_method.kind) && ["pending_quote", "waiting_payment", "paid", "packing"].includes(o.status);
+  const canMoveBranch = can("orders.fulfil") && can("inventory.view") && !["pickup"].includes(o.shipping_method.kind) && ["pending_quote", "waiting_payment", "paid", "packing"].includes(o.status);
 
   return (
     <>
@@ -108,13 +111,14 @@ export function OrderDetail() {
           <section className="apanel">
             <h2>การชำระเงิน</h2>
             {!p && <p className="ink-muted">ยังไม่มีการชำระเงิน</p>}
+            {p && !can("payments.review") && <p className="xs ink-muted">ตำแหน่งของคุณไม่เห็นสลิปและไม่ยืนยันการชำระเงิน</p>}
             {p && (
               <>
                 <div className="rowline"><span className="ink-muted">ยอด</span><span className="num bold">{formatTHB(p.amount_satang)}</span></div>
                 <div className="rowline"><span className="ink-muted">สถานะ</span><span className="bold">{{ pending: "รอชำระ", slip_submitted: "รอตรวจสลิป", confirmed: "ยืนยันแล้ว", rejected: "ไม่ผ่าน", expired: "QR หมดอายุ" }[p.status] ?? p.status}</span></div>
                 {p.slip_url && <a href={p.slip_url} target="_blank" rel="noreferrer"><img src={p.slip_url} alt="สลิปการโอน" style={{ width: "100%", maxHeight: 360, objectFit: "contain", borderRadius: 12, background: "var(--surface-300)" }} /></a>}
                 {p.reject_reason && <p className="sm ink-muted">เหตุผลที่ไม่ผ่าน: {p.reject_reason}</p>}
-                {(p.status === "slip_submitted" || p.status === "pending") && o.status === "waiting_payment" && (
+                {can("payments.review") && (p.status === "slip_submitted" || p.status === "pending") && o.status === "waiting_payment" && (
                   <>
                     <p className="xs ink-muted">เทียบยอดและบัญชีผู้รับในสลิป กับ {formatTHB(p.amount_satang)} ก่อนกดยืนยัน</p>
                     <button className="mh-btn mh-btn--primary" disabled={confirmPay.isPending} onClick={() => confirmPay.mutate(p.id)}>{confirmPay.isPending ? "กำลังยืนยัน…" : "ยืนยันการชำระเงิน"}</button>
@@ -133,15 +137,15 @@ export function OrderDetail() {
 
           <section className="apanel">
             <h2>ดำเนินการ</h2>
-            {(NEXT_STATUS[o.status] ?? []).map((n) => (
+            {(can("orders.fulfil") ? NEXT_STATUS[o.status] ?? [] : []).map((n) => (
               <div key={n.to} className="mh-field">
                 {n.askTracking && (<><label className="mh-label" htmlFor="trk">เลขใบฝากส่ง / เลขพัสดุ (ถ้ามี)</label><input className="mh-input" id="trk" value={tracking} onChange={(e) => setTracking(e.target.value)} maxLength={60} /></>)}
                 <button className="mh-btn mh-btn--primary" disabled={status.isPending} onClick={() => status.mutate({ to: n.to, tracking: n.askTracking ? tracking : undefined })}>{n.label}</button>
               </div>
             ))}
-            {!(NEXT_STATUS[o.status]?.length) && !CAN_CANCEL.has(o.status) && <p className="ink-muted">คำสั่งซื้อนี้ปิดแล้ว</p>}
+            {!(can("orders.fulfil") && NEXT_STATUS[o.status]?.length) && !mayCancel && <p className="ink-muted">{CAN_CANCEL.has(o.status) || NEXT_STATUS[o.status]?.length ? "ไม่มีการดำเนินการที่ตำแหน่งของคุณทำได้ในขั้นตอนนี้" : "คำสั่งซื้อนี้ปิดแล้ว"}</p>}
             {o.tracking_ref && <p className="sm">เลขพัสดุ: <span className="mh-code">{o.tracking_ref}</span></p>}
-            {CAN_CANCEL.has(o.status) && (confirmCancel ? (
+            {mayCancel && (confirmCancel ? (
               <div className="notice notice--warn" role="alert" style={{ flexDirection: "column" }}>
                 <p>{o.status === "paid" || o.status === "packing" ? "ลูกค้าชำระเงินแล้ว ระบบไม่คืนเงินให้ ต้องโอนคืนเองนอกระบบ " : ""}ยืนยันยกเลิก {o.number}? ย้อนกลับไม่ได้</p>
                 <div className="mh-row"><button className="mh-btn mh-btn--danger mh-btn--sm" disabled={status.isPending} onClick={() => status.mutate({ to: "cancelled" })}>ยืนยันยกเลิก</button><button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setConfirmCancel(false)}>ไม่ยกเลิก</button></div>

@@ -19,6 +19,7 @@ def health(request):
 
 
 api.add_router("/auth/", "maehai.core.api.router")
+api.add_router("/admin/", "maehai.core.staff_api.router")
 api.add_router("/catalog/", "maehai.catalog.api.router")
 api.add_router("/admin/catalog/", "maehai.catalog.admin_api.router")
 api.add_router("/admin/", "maehai.coupons.admin_api.router")

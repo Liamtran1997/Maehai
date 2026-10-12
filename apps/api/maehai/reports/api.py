@@ -1,11 +1,11 @@
 from ninja import Query, Router, Schema
 from pydantic import Field
 
-from maehai.core.auth import staff_auth
+from maehai.core.auth import requires
 
 from . import services
 
-router = Router(tags=["admin-reports"], auth=staff_auth)
+router = Router(tags=["admin-reports"])
 
 
 class Period(Schema):
@@ -52,6 +52,12 @@ class SummaryQuery(Schema):
     days: int = Field(default=7, ge=1, le=90)
 
 
-@router.get("/summary", response=SummaryOut)
+@router.get("/summary", response=SummaryOut, auth=requires("reports.view"))
 def summary(request, params: Query[SummaryQuery]):
     return services.summary(params.days)
+
+
+@router.get("/todo", response=Todo, auth=requires(None))
+def todo(request):
+    """Counts of things waiting for action. Visible to every staff member (no money figures)."""
+    return services.todo()

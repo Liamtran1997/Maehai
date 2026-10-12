@@ -2,6 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from maehai.core import ratelimit
+from tests.conftest import make_staff
 
 pytestmark = pytest.mark.django_db
 JSON = "application/json"
@@ -110,7 +111,7 @@ def test_wrong_tokens_are_throttled_but_right_token_from_other_ip_is_fine(client
 
 
 def test_login_brute_force_is_throttled(client, db):
-    get_user_model().objects.create_user("owner", password="pw-test-123", is_staff=True)
+    make_staff("owner", "owner")
     bad = {"username": "owner", "password": "nope"}
     assert post(client, "/api/auth/login", bad, ip="10.0.5.1").status_code == 401
     assert post(client, "/api/auth/login", bad, ip="10.0.5.2").status_code == 401
@@ -126,7 +127,7 @@ def test_login_ip_limit_applies_across_usernames(client, db):
 
 
 def test_login_success_clears_user_failures(client, db):
-    get_user_model().objects.create_user("owner", password="pw-test-123", is_staff=True)
+    make_staff("owner", "owner")
     post(client, "/api/auth/login", {"username": "Owner", "password": "bad"}, ip="10.0.7.1")   # case-insensitive counter
     assert post(client, "/api/auth/login", {"username": "owner", "password": "pw-test-123"}, ip="10.0.7.2").status_code == 200
     assert post(client, "/api/auth/login", {"username": "owner", "password": "bad"}, ip="10.0.7.3").status_code == 401

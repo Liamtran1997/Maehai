@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { ErrorNotice } from "../components/Notice";
 import { api, unwrap, type AdminCategory } from "../lib/api";
+import { useAuth } from "../lib/auth";
 
 type Form = { id?: number; name: string; slug: string; sort_order: number; is_active: boolean };
 const blank: Form = { name: "", slug: "", sort_order: 0, is_active: true };
 
 export function Categories() {
   const qc = useQueryClient();
+  const canEdit = useAuth().can("catalog.edit");
   const cats = useQuery({ queryKey: ["admin-categories"], queryFn: async () => unwrap(await api.GET("/api/admin/catalog/categories")) });
   const [form, setForm] = useState<Form | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<AdminCategory | null>(null);
@@ -35,7 +37,7 @@ export function Categories() {
 
   return (
     <>
-      <div className="topbar"><h1>หมวดหมู่สินค้า</h1><button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => { save.reset(); setForm({ ...blank }); }}>เพิ่มหมวดหมู่</button></div>
+      <div className="topbar"><h1>หมวดหมู่สินค้า</h1>{canEdit && <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => { save.reset(); setForm({ ...blank }); }}>เพิ่มหมวดหมู่</button>}</div>
       <p className="sm ink-muted">หมวดหมู่ที่ซ่อนจะหายจากหน้าร้านพร้อมสินค้าทั้งหมดในหมวด และลูกค้าสั่งสินค้าในหมวดนั้นไม่ได้ ลบได้เฉพาะหมวดที่ไม่มีสินค้า</p>
       <ErrorNotice error={cats.error ?? toggle.error ?? remove.error} />
       <div className="cols cols--2-1" style={{ alignItems: "start" }}>
@@ -48,10 +50,10 @@ export function Categories() {
                   <td className="num">{c.sort_order}</td>
                   <td><span className="bold">{c.name}</span><br /><span className="xs ink-muted">{c.slug}</span></td>
                   <td className="r">{c.product_count}</td>
-                  <td><button className="mh-chip" style={{ minHeight: 32 }} aria-pressed={c.is_active} disabled={toggle.isPending} onClick={() => toggle.mutate(c)}>{c.is_active ? "แสดง" : "ซ่อน"}</button></td>
+                  <td><button className="mh-chip" style={{ minHeight: 32 }} aria-pressed={c.is_active} disabled={toggle.isPending || !canEdit} onClick={() => toggle.mutate(c)}>{c.is_active ? "แสดง" : "ซ่อน"}</button></td>
                   <td className="mh-row" style={{ gap: 8 }}>
-                    <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { save.reset(); setForm({ ...c }); }}>แก้ไข</button>
-                    {c.product_count === 0 && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setConfirmDelete(c)}>ลบ</button>}
+                    {canEdit && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { save.reset(); setForm({ ...c }); }}>แก้ไข</button>}
+                    {canEdit && c.product_count === 0 && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setConfirmDelete(c)}>ลบ</button>}
                   </td>
                 </tr>
               ))}

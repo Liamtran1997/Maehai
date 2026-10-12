@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { ErrorNotice } from "../components/Notice";
 import { RevenueChart } from "../components/RevenueChart";
 import { api, unwrap } from "../lib/api";
+import { useAuth } from "../lib/auth";
 import { PILL } from "../lib/status";
 
 const RANGES = [{ days: 1, label: "วันนี้" }, { days: 7, label: "7 วัน" }, { days: 30, label: "30 วัน" }];
@@ -18,9 +19,12 @@ function delta(cur: number, prev: number, higherIsBetter = true) {
 }
 
 export function Dashboard() {
+  const { can } = useAuth();
   const [days, setDays] = useState(7);
-  const q = useQuery({ queryKey: ["summary", days], queryFn: async () => unwrap(await api.GET("/api/admin/reports/summary", { params: { query: { days } } })) });
-  const recent = useQuery({ queryKey: ["orders", "recent"], queryFn: async () => unwrap(await api.GET("/api/admin/orders", { params: { query: { limit: 5 } } })) });
+  const showMoney = can("reports.view");
+  const todoOnly = useQuery({ queryKey: ["todo"], enabled: !showMoney, queryFn: async () => unwrap(await api.GET("/api/admin/reports/todo")) });
+  const q = useQuery({ queryKey: ["summary", days], enabled: showMoney, queryFn: async () => unwrap(await api.GET("/api/admin/reports/summary", { params: { query: { days } } })) });
+  const recent = useQuery({ queryKey: ["orders", "recent"], enabled: can("orders.view"), queryFn: async () => unwrap(await api.GET("/api/admin/orders", { params: { query: { limit: 5 } } })) });
   const s = q.data;
   const maxQty = Math.max(1, ...(s?.top_products.map((p) => p.quantity) ?? [1]));
   const maxShip = Math.max(1, ...(s?.by_shipping.map((p) => p.revenue_satang) ?? [1]));
@@ -29,10 +33,21 @@ export function Dashboard() {
     <>
       <div className="topbar">
         <h1>ภาพรวม</h1>
-        <div className="seg" role="group" aria-label="ช่วงเวลา">
+        {showMoney && <div className="seg" role="group" aria-label="ช่วงเวลา">
           {RANGES.map((r) => <button key={r.days} aria-pressed={days === r.days} onClick={() => setDays(r.days)}>{r.label}</button>)}
-        </div>
+        </div>}
       </div>
+      {!showMoney && todoOnly.data && (
+        <section className="apanel">
+          <h2>ต้องจัดการ</h2>
+          <ul className="todo">
+            {can("payments.review") && <li><span className="n num">{todoOnly.data.slips_to_check}</span><span className="grow">สลิปรอตรวจ</span></li>}
+            {can("orders.quote") && <li><span className="n num">{todoOnly.data.pending_quote}</span><span className="grow">รอร้านแจ้งค่าจัดส่ง</span></li>}
+            {can("orders.fulfil") && <li><span className="n num">{todoOnly.data.to_pack}</span><span className="grow">ชำระแล้ว รอจัดเตรียม</span></li>}
+            {can("inventory.view") && <li><span className="n num">{todoOnly.data.low_stock}</span><span className="grow">สินค้าใกล้หมด (ตามสาขา)</span></li>}
+          </ul>
+        </section>
+      )}
       <ErrorNotice error={q.error} />
       {q.isLoading && <p className="ink-muted">กำลังโหลด…</p>}
       {s && (
@@ -80,7 +95,7 @@ export function Dashboard() {
         </>
       )}
 
-      <section className="apanel">
+      {can("orders.view") && <section className="apanel">
         <div className="apanel-head"><h2>คำสั่งซื้อล่าสุด</h2><Link className="sm bold" to="/orders">ดูทั้งหมด</Link></div>
         <div className="mh-tablewrap" style={{ border: 0 }}>
           <table className="mh-table">
@@ -96,7 +111,7 @@ export function Dashboard() {
             </tbody>
           </table>
         </div>
-      </section>
+      </section>}
     </>
   );
 }

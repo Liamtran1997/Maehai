@@ -12,6 +12,9 @@ export type Category = Schemas["CategoryOut"];
 export type AdminCategory = Schemas["AdminCategoryOut"];
 export type Promotion = Schemas["PromotionOut"];
 export type Coupon = Schemas["CouponOut"];
+export type Me = Schemas["MeOut"];
+export type StaffMember = Schemas["StaffOut"];
+export type AuditEntry = Schemas["AuditOut"];
 export type CouponIn = Schemas["CouponIn"];
 export type PromotionIn = Schemas["PromotionIn"];
 

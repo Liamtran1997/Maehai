@@ -3,12 +3,12 @@ from django.shortcuts import get_object_or_404
 from ninja import Field, Router, Schema
 
 from maehai.catalog.models import ProductVariant
-from maehai.core.auth import staff_auth
+from maehai.core.auth import requires
 
 from . import services
 from .models import Branch, StockLevel, StockMovement
 
-router = Router(tags=["admin-inventory"], auth=staff_auth)
+router = Router(tags=["admin-inventory"])
 
 
 class BranchOut(Schema):
@@ -74,12 +74,12 @@ def _variant(sku: str) -> ProductVariant:
     return get_object_or_404(ProductVariant.objects.select_related("product"), sku=sku)
 
 
-@router.get("/branches", response=list[BranchOut])
+@router.get("/branches", response=list[BranchOut], auth=requires("inventory.view"))
 def branches(request):
     return Branch.objects.filter(is_active=True)
 
 
-@router.get("/stock", response=list[StockRowOut])
+@router.get("/stock", response=list[StockRowOut], auth=requires("inventory.view"))
 def stock(request, q: str | None = None, tracked_only: bool = False):
     qs = ProductVariant.objects.filter(is_active=True, product__is_active=True).select_related("product").prefetch_related("stock_levels__branch")
     if q:
@@ -99,21 +99,21 @@ def stock(request, q: str | None = None, tracked_only: bool = False):
     return rows
 
 
-@router.post("/adjust", response=LevelOut)
+@router.post("/adjust", response=LevelOut, auth=requires("inventory.adjust"))
 def adjust(request, data: AdjustIn):
     lv = services.adjust(branch=_branch(data.branch), variant=_variant(data.sku), reason=data.reason,
                          quantity=data.quantity, note=data.note, actor=request.user.get_username())
     return {"branch": data.branch, "on_hand": lv.on_hand, "reserved": lv.reserved, "available": lv.available}
 
 
-@router.post("/transfer")
+@router.post("/transfer", auth=requires("inventory.adjust"))
 def transfer(request, data: TransferIn):
     services.transfer(source=_branch(data.from_branch), dest=_branch(data.to_branch), variant=_variant(data.sku),
                       quantity=data.quantity, note=data.note, actor=request.user.get_username())
     return {"ok": True}
 
 
-@router.post("/variants/{sku}/track", response=StockRowOut)
+@router.post("/variants/{sku}/track", response=StockRowOut, auth=requires("inventory.adjust"))
 def set_tracking(request, sku: str, data: TrackIn):
     v = _variant(sku)
     v.track_stock = data.track
@@ -121,7 +121,7 @@ def set_tracking(request, sku: str, data: TrackIn):
     return next(r for r in stock(request, q=None) if r["sku"] == sku)
 
 
-@router.get("/movements", response=list[MovementOut])
+@router.get("/movements", response=list[MovementOut], auth=requires("inventory.view"))
 def movements(request, sku: str | None = None, branch: str | None = None, limit: int = 50):
     limit = max(1, min(limit, 200))
     qs = StockMovement.objects.select_related("branch", "variant__product", "order")

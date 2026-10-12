@@ -1,14 +1,6 @@
-from ninja.security import SessionAuth
+from .permissions import PermissionAuth, account_auth, requires
 
+# Kept for the few callers that only need "any logged-in staff member".
+staff_auth = requires(None)
 
-class StaffAuth(SessionAuth):
-    """Django session cookie + CSRF, restricted to staff users (shop owners and employees)."""
-
-    def authenticate(self, request, key):
-        user = getattr(request, "user", None)
-        if user is not None and user.is_authenticated and user.is_staff and user.is_active:
-            return user
-        return None
-
-
-staff_auth = StaffAuth()
+__all__ = ["PermissionAuth", "account_auth", "requires", "staff_auth"]

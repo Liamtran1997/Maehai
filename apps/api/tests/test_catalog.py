@@ -24,7 +24,9 @@ def payload(**over):
 @pytest.fixture
 def staff_client():
     User = get_user_model()
-    User.objects.create_user("owner", password="pw-test-123", is_staff=True)
+    from tests.conftest import make_staff
+
+    make_staff("owner", "owner")
     c = Client(enforce_csrf_checks=False)
     assert c.post("/api/auth/login", {"username": "owner", "password": "pw-test-123"}, content_type="application/json").status_code == 200
     return c

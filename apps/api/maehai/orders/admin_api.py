@@ -5,23 +5,25 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from maehai.core.auth import staff_auth
+from maehai.core.auth import requires
+from maehai.core.models import audit
+from maehai.core.permissions import check, has
 from maehai.payments import services as payment_services
 from maehai.payments.models import Payment
 
 from . import services
-from .models import Order
+from .models import Order, OrderStatus
 from .schemas import BranchIn, FeeIn, OrderOut, OrderSummaryOut, PaymentOut, RejectIn, StatusIn
 from .serializers import order_out, payment_out
 
-router = Router(tags=["admin-orders"], auth=staff_auth)
+router = Router(tags=["admin-orders"])
 
 
 def _qs():
     return Order.objects.select_related("shipping_method", "fulfillment_branch").prefetch_related("items", "events", "payments")
 
 
-@router.get("/orders", response=list[OrderSummaryOut])
+@router.get("/orders", response=list[OrderSummaryOut], auth=requires("orders.view"))
 @paginate(LimitOffsetPagination)
 def list_orders(request, status: str | None = None, q: str | None = None):
     qs = Order.objects.select_related("shipping_method")
@@ -40,37 +42,45 @@ def order_out_summary(o: Order) -> dict:
             "requested_date": o.requested_date, "total_satang": o.total_satang, "created_at": o.created_at}
 
 
-@router.get("/orders/{number}", response=OrderOut)
+@router.get("/orders/{number}", response=OrderOut, auth=requires("orders.view"))
 def get_order(request, number: str):
-    return order_out(request, get_object_or_404(_qs(), number=number), staff=True)
+    return order_out(request, get_object_or_404(_qs(), number=number), staff=True, can_see_slips=has(request.user, "payments.review"))
 
 
-@router.post("/orders/{number}/fee", response=OrderOut)
+@router.post("/orders/{number}/fee", response=OrderOut, auth=requires("orders.quote"))
 def set_fee(request, number: str, data: FeeIn):
     order = services.quote_fee(get_object_or_404(Order, number=number), data.fee_satang, actor=request.user.get_username())
-    return order_out(request, _qs().get(pk=order.pk), staff=True)
+    return order_out(request, _qs().get(pk=order.pk), staff=True, can_see_slips=has(request.user, "payments.review"))
 
 
-@router.post("/orders/{number}/status", response=OrderOut)
+@router.post("/orders/{number}/status", response=OrderOut, auth=requires("orders.view"))
 def set_status(request, number: str, data: StatusIn):
-    order = services.staff_set_status(get_object_or_404(Order, number=number), data.status,
-                                      actor=request.user.get_username(), tracking_ref=data.tracking_ref)
-    return order_out(request, _qs().get(pk=order.pk), staff=True)
+    order = get_object_or_404(Order, number=number)
+    if data.status == OrderStatus.CANCELLED:
+        # Cancelling after payment means the shop owes money back, so it needs the stronger permission.
+        paid = order.status in (OrderStatus.PAID, OrderStatus.PACKING)
+        check(request, "orders.cancel_paid" if paid else "orders.cancel")
+        if paid:
+            audit(request, "order.cancel_paid", order.number, f"สถานะก่อนยกเลิก: {order.status}")
+    else:
+        check(request, "orders.fulfil")
+    order = services.staff_set_status(order, data.status, actor=request.user.get_username(), tracking_ref=data.tracking_ref)
+    return order_out(request, _qs().get(pk=order.pk), staff=True, can_see_slips=has(request.user, "payments.review"))
 
 
-@router.post("/payments/{payment_id}/confirm", response=PaymentOut)
+@router.post("/payments/{payment_id}/confirm", response=PaymentOut, auth=requires("payments.review"))
 def confirm_payment(request, payment_id: int):
     p = payment_services.confirm(get_object_or_404(Payment, pk=payment_id), actor=request.user.get_username())
     return payment_out(request, p, include_qr=False, staff=True)
 
 
-@router.post("/payments/{payment_id}/reject", response=PaymentOut)
+@router.post("/payments/{payment_id}/reject", response=PaymentOut, auth=requires("payments.review"))
 def reject_payment(request, payment_id: int, data: RejectIn):
     p = payment_services.reject(get_object_or_404(Payment, pk=payment_id), actor=request.user.get_username(), reason=data.reason)
     return payment_out(request, p, include_qr=False, staff=True)
 
 
-@router.post("/orders/{number}/branch", response=OrderOut)
+@router.post("/orders/{number}/branch", response=OrderOut, auth=requires("orders.fulfil"))
 def set_branch(request, number: str, data: BranchIn):
     """Choose which branch's stock fills a delivery order. Pickup orders always use the branch the customer picked."""
     from ninja.errors import HttpError
@@ -87,10 +97,10 @@ def set_branch(request, number: str, data: BranchIn):
     branch = get_object_or_404(Branch, code=data.branch, is_active=True)
     stock.reassign_branch(order, branch)
     services.log(order, "branch", f"จัดจากสาขา {branch.name}", actor=request.user.get_username())
-    return order_out(request, _qs().get(pk=order.pk), staff=True)
+    return order_out(request, _qs().get(pk=order.pk), staff=True, can_see_slips=has(request.user, "payments.review"))
 
 
-@router.get("/payments/{payment_id}/slip")
+@router.get("/payments/{payment_id}/slip", auth=requires("payments.review"))
 def download_slip(request, payment_id: int):
     """Payment slips are private. They are stored outside the public /media paths and only served here to logged-in staff."""
     p = get_object_or_404(Payment, pk=payment_id)

@@ -27,7 +27,7 @@ def line_link_url(o: Order) -> str:
     return f"https://line.me/R/oaMessage/{settings.LINE_OA_ID}/?{quote(text)}"
 
 
-def order_out(request, o: Order, *, staff: bool = False) -> dict:
+def order_out(request, o: Order, *, staff: bool = False, can_see_slips: bool = True) -> dict:
     payments = list(o.payments.all())
     latest = payments[0] if payments else None  # Payment.Meta.ordering is newest first
     if latest and latest.status == PaymentStatus.PENDING and latest.expires_at <= timezone.now():
@@ -48,7 +48,7 @@ def order_out(request, o: Order, *, staff: bool = False) -> dict:
         "vat_satang": o.vat_satang, "total_satang": o.total_satang, "tracking_ref": o.tracking_ref,
         "created_at": o.created_at,
         "events": [{"created_at": e.created_at, "kind": e.kind, "detail": e.detail} for e in o.events.all()],
-        "payment": payment_out(request, latest, include_qr=not staff, staff=staff),
+        "payment": payment_out(request, latest, include_qr=not staff, staff=staff and can_see_slips),
         "fulfillment_branch": o.fulfillment_branch,
         "line_linked": bool(o.line_user_id),
         "line_link_url": None if o.line_user_id or not settings.LINE_OA_ID else line_link_url(o),

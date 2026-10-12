@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { ErrorNotice } from "../components/Notice";
 import { api, bahtToSatang, unwrap, type Coupon, type CouponIn } from "../lib/api";
+import { useAuth } from "../lib/auth";
 
 const STATE: Record<string, { label: string; cls: string; glyph: string }> = {
   running: { label: "ใช้ได้", cls: "done", glyph: "●" },
@@ -65,6 +66,7 @@ function toPayload(f: Form): CouponIn | string {
 
 export function Coupons() {
   const qc = useQueryClient();
+  const canManage = useAuth().can("pricing.manage");
   const list = useQuery({ queryKey: ["coupons"], queryFn: async () => unwrap(await api.GET("/api/admin/coupons")) });
   const [form, setForm] = useState<Form | null>(null);
   const [historyOf, setHistoryOf] = useState<Coupon | null>(null);
@@ -97,7 +99,7 @@ export function Coupons() {
 
   return (
     <>
-      <div className="topbar"><h1>โค้ดส่วนลด</h1><button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open({ ...blank(), code: randomCode() })}>สร้างโค้ด</button></div>
+      <div className="topbar"><h1>โค้ดส่วนลด</h1>{canManage && <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open({ ...blank(), code: randomCode() })}>สร้างโค้ด</button>}</div>
       <p className="sm ink-muted">ลูกค้ากรอกโค้ดตอนสั่งซื้อ ส่วนลดคิดจากยอดสินค้าหลังหักโปรโมชันรายสินค้าแล้ว ไม่รวมค่าจัดส่ง ใช้ร่วมกับโปรโมชันรายสินค้าได้ (หรือเลือกไม่ให้ใช้กับสินค้าที่ลดอยู่แล้ว) ยกเลิกคำสั่งซื้อจะคืนสิทธิ์การใช้โค้ด</p>
       <ErrorNotice error={list.error ?? end.error} />
       <div className="cols cols--2-1" style={{ alignItems: "start" }}>
@@ -114,7 +116,7 @@ export function Coupons() {
                   <td className="xs">{show(c.starts_at)}<br />ถึง {show(c.ends_at)}</td>
                   <td><span className={`mh-status mh-status--${STATE[c.state].cls}`} data-glyph={STATE[c.state].glyph}>{STATE[c.state].label}</span></td>
                   <td className="mh-row" style={{ gap: 8 }}>
-                    <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => open(fromCoupon(c))}>แก้ไข</button>
+                    {canManage && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => open(fromCoupon(c))}>แก้ไข</button>}
                     {c.used_count > 0 && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setHistoryOf(c)}>ประวัติ</button>}
                   </td>
                 </tr>

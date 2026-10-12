@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { ErrorNotice } from "../components/Notice";
 import { api, bahtToSatang, unwrap, type Promotion, type PromotionIn } from "../lib/api";
+import { useAuth } from "../lib/auth";
 
 const STATE: Record<string, { label: string; cls: string; glyph: string }> = {
   running: { label: "กำลังใช้", cls: "done", glyph: "●" },
@@ -40,6 +41,7 @@ function toPayload(f: Form): PromotionIn | string {
 
 export function Promotions() {
   const qc = useQueryClient();
+  const canManage = useAuth().can("pricing.manage");
   const promos = useQuery({ queryKey: ["promotions"], queryFn: async () => unwrap(await api.GET("/api/admin/catalog/promotions")) });
   const products = useQuery({ queryKey: ["admin-products"], queryFn: async () => unwrap(await api.GET("/api/admin/catalog/products")) });
   const cats = useQuery({ queryKey: ["admin-categories"], queryFn: async () => unwrap(await api.GET("/api/admin/catalog/categories")) });
@@ -68,7 +70,7 @@ export function Promotions() {
 
   return (
     <>
-      <div className="topbar"><h1>โปรโมชัน</h1><button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => { save.reset(); setForm(blank()); }}>สร้างโปรโมชัน</button></div>
+      <div className="topbar"><h1>โปรโมชัน</h1>{canManage && <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => { save.reset(); setForm(blank()); }}>สร้างโปรโมชัน</button>}</div>
       <p className="sm ink-muted">ส่วนลดไม่ซ้อนกัน ถ้าสินค้าอยู่ในหลายโปรโมชันพร้อมกัน ลูกค้าได้ส่วนลดที่มากที่สุดเพียงอันเดียว ราคาในคำสั่งซื้อจะถูกบันทึกตอนสั่ง ปิดโปรโมชันภายหลังไม่กระทบคำสั่งซื้อเก่า</p>
       <ErrorNotice error={promos.error ?? end.error} />
       <div className="cols cols--2-1" style={{ alignItems: "start" }}>
@@ -84,8 +86,8 @@ export function Promotions() {
                   <td className="xs">{show(p.starts_at)}<br />ถึง {show(p.ends_at)}</td>
                   <td><span className={`mh-status mh-status--${STATE[p.state].cls}`} data-glyph={STATE[p.state].glyph}>{STATE[p.state].label}</span></td>
                   <td className="mh-row" style={{ gap: 8 }}>
-                    <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { save.reset(); setForm(fromPromo(p)); }}>แก้ไข</button>
-                    {(p.state === "running" || p.state === "scheduled") && <button className="mh-btn mh-btn--secondary mh-btn--sm" disabled={end.isPending} onClick={() => end.mutate(p.id)}>ปิดตอนนี้</button>}
+                    {canManage && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { save.reset(); setForm(fromPromo(p)); }}>แก้ไข</button>}
+                    {canManage && (p.state === "running" || p.state === "scheduled") && <button className="mh-btn mh-btn--secondary mh-btn--sm" disabled={end.isPending} onClick={() => end.mutate(p.id)}>ปิดตอนนี้</button>}
                   </td>
                 </tr>
               ))}

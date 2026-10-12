@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ErrorNotice } from "../components/Notice";
 import { api, bahtToSatang, unwrap, uploadFile, type AdminProduct, type ProductIn } from "../lib/api";
+import { useAuth } from "../lib/auth";
 
 type VariantForm = { sku: string; label: string; price: string; weight: string; existing: boolean };
 type Form = Omit<ProductIn, "variants"> & { variants: VariantForm[]; id?: number; image_url?: string | null };
@@ -50,6 +51,9 @@ function priceRange(p: AdminProduct) {
 
 export function Products() {
   const qc = useQueryClient();
+  const { can } = useAuth();
+  const canEdit = can("catalog.edit");
+  const canPrice = can("pricing.manage");
   const products = useQuery({ queryKey: ["admin-products"], queryFn: async () => unwrap(await api.GET("/api/admin/catalog/products")) });
   const cats = useQuery({ queryKey: ["admin-categories"], queryFn: async () => unwrap(await api.GET("/api/admin/catalog/categories")) });
   const [form, setForm] = useState<Form | null>(null);
@@ -107,7 +111,7 @@ export function Products() {
         <h1>สินค้า</h1>
         <Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/categories">จัดการหมวดหมู่</Link>
         <Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/promotions">โปรโมชัน</Link>
-        <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open(blank(cats.data?.[0]?.slug ?? ""))}>เพิ่มสินค้า</button>
+        {canEdit && canPrice && <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open(blank(cats.data?.[0]?.slug ?? ""))}>เพิ่มสินค้า</button>}
       </div>
       <div className="toolbar">
         <div className="searchbox">
@@ -143,8 +147,8 @@ export function Products() {
                   </td>
                   <td>{p.category.name}</td>
                   <td className="r">{priceRange(p)}</td>
-                  <td><button className="mh-chip" style={{ minHeight: 32 }} aria-pressed={p.is_active} disabled={toggle.isPending} onClick={() => toggle.mutate(p)}>{p.is_active ? "แสดง" : "ซ่อน"}</button></td>
-                  <td><button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => open(fromProduct(p))}>แก้ไข</button></td>
+                  <td><button className="mh-chip" style={{ minHeight: 32 }} aria-pressed={p.is_active} disabled={toggle.isPending || !canEdit} onClick={() => toggle.mutate(p)}>{p.is_active ? "แสดง" : "ซ่อน"}</button></td>
+                  <td><button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => open(fromProduct(p))}>{canEdit ? "แก้ไข" : "ดู"}</button></td>
                 </tr>
               ))}
               {products.data && shown.length === 0 && <tr><td colSpan={5} className="ink-muted">ไม่พบสินค้าตามที่กรอง</td></tr>}
@@ -154,6 +158,9 @@ export function Products() {
 
         {form && (
           <form className="apanel" onSubmit={onSubmit}>
+            {!canEdit && <div className="notice notice--info"><p>ตำแหน่งของคุณดูสินค้าได้อย่างเดียว</p></div>}
+            {canEdit && !canPrice && <div className="notice notice--info"><p>ตำแหน่งของคุณแก้ข้อมูลสินค้าได้ แต่แก้ราคาไม่ได้</p></div>}
+            <fieldset disabled={!canEdit} style={{ border: 0, margin: 0, padding: 0, display: "contents" }}>
             <div className="apanel-head"><h2>{form.id ? "แก้ไขสินค้า" : "เพิ่มสินค้า"}</h2><button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setForm(null)}>ปิด</button></div>
 
             <div className="mh-field">
@@ -203,7 +210,7 @@ export function Products() {
                       <tr key={i}>
                         <td><input className="mh-input" aria-label="ชื่อขนาด" style={{ minWidth: 90 }} value={v.label} onChange={(e) => setVariant(i, { label: e.target.value })} /></td>
                         <td><input className="mh-input" aria-label="SKU" style={{ minWidth: 120 }} value={v.sku} disabled={v.existing} title={v.existing ? "SKU ของขนาดที่มีอยู่แล้วแก้ไม่ได้ เพราะผูกกับคำสั่งซื้อและสต็อก" : undefined} onChange={(e) => setVariant(i, { sku: e.target.value })} /></td>
-                        <td><input className="mh-input num" aria-label="ราคา" style={{ minWidth: 90, textAlign: "right" }} inputMode="decimal" value={v.price} onChange={(e) => setVariant(i, { price: e.target.value })} /></td>
+                        <td><input className="mh-input num" aria-label="ราคา" style={{ minWidth: 90, textAlign: "right" }} inputMode="decimal" disabled={!canPrice || !canEdit} title={canPrice ? undefined : "ต้องมีสิทธิ์แก้ราคา"} value={v.price} onChange={(e) => setVariant(i, { price: e.target.value })} /></td>
                         <td><input className="mh-input num" aria-label="น้ำหนัก" style={{ minWidth: 90, textAlign: "right" }} inputMode="numeric" value={v.weight} onChange={(e) => setVariant(i, { weight: e.target.value })} /></td>
                         <td><button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" disabled={form.variants.length === 1} aria-label={`ลบขนาด ${v.label}`} onClick={() => set("variants", form.variants.filter((_, j) => j !== i))}>ลบ</button></td>
                       </tr>
@@ -215,11 +222,12 @@ export function Products() {
               <p className="xs ink-muted" style={{ marginTop: 8 }}>ใส่ราคาปกติเสมอ ส่วนลดตั้งที่หน้า “โปรโมชัน” ขนาดที่ลบออกจะหยุดขาย แต่ไม่หายจากคำสั่งซื้อเก่า สต็อกจัดการที่หน้า “สต็อก”</p>
             </div>
 
+            </fieldset>
             {formError && <div className="notice notice--warn" role="alert"><p>{formError}</p></div>}
             {save.isSuccess && !formError && <div className="notice notice--ok" role="status"><p>บันทึกแล้ว</p></div>}
             <div className="mh-row" style={{ justifyContent: "flex-end" }}>
               <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setForm(null)}>ปิด</button>
-              <button type="submit" className="mh-btn mh-btn--primary mh-btn--sm" disabled={save.isPending}>{save.isPending ? "กำลังบันทึก…" : "บันทึก"}</button>
+              {canEdit && <button type="submit" className="mh-btn mh-btn--primary mh-btn--sm" disabled={save.isPending}>{save.isPending ? "กำลังบันทึก…" : "บันทึก"}</button>}
             </div>
           </form>
         )}

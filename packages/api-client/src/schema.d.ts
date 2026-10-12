@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change Password */
+        post: operations["maehai_core_api_change_password"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/csrf": {
         parameters: {
             query?: never;
@@ -84,6 +101,92 @@ export interface paths {
          * @description Sets the csrftoken cookie. The admin app sends its value back in the X-CSRFToken header on every write.
          */
         get: operations["maehai_core_api_csrf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Roles */
+        get: operations["maehai_core_staff_api_roles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Staff */
+        get: operations["maehai_core_staff_api_list_staff"];
+        put?: never;
+        /** Create Staff */
+        post: operations["maehai_core_staff_api_create_staff"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/staff/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Staff */
+        put: operations["maehai_core_staff_api_update_staff"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/staff/{user_id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset Password */
+        post: operations["maehai_core_staff_api_reset_password"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Audit Log */
+        get: operations["maehai_core_staff_api_audit_log"];
         put?: never;
         post?: never;
         delete?: never;
@@ -791,6 +894,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/reports/todo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Todo
+         * @description Counts of things waiting for action. Visible to every staff member (no money figures).
+         */
+        get: operations["maehai_reports_api_todo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -799,8 +922,16 @@ export interface components {
         MeOut: {
             /** Username */
             username: string;
-            /** Is Staff */
-            is_staff: boolean;
+            /** Display Name */
+            display_name: string;
+            /** Role */
+            role: string;
+            /** Role Label */
+            role_label: string;
+            /** Permissions */
+            permissions: string[];
+            /** Must Change Password */
+            must_change_password: boolean;
         };
         /** LoginIn */
         LoginIn: {
@@ -808,6 +939,105 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /** PasswordIn */
+        PasswordIn: {
+            /** Current Password */
+            current_password: string;
+            /** New Password */
+            new_password: string;
+        };
+        /** PermissionOut */
+        PermissionOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+        };
+        /** RoleOut */
+        RoleOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string;
+            /** Permissions */
+            permissions: string[];
+        };
+        /** RolesOut */
+        RolesOut: {
+            /** Roles */
+            roles: components["schemas"]["RoleOut"][];
+            /** Permissions */
+            permissions: components["schemas"]["PermissionOut"][];
+        };
+        /** StaffOut */
+        StaffOut: {
+            /** Id */
+            id: number;
+            /** Username */
+            username: string;
+            /** Display Name */
+            display_name: string;
+            /** Role */
+            role: string;
+            /** Role Label */
+            role_label: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Must Change Password */
+            must_change_password: boolean;
+            /** Last Login */
+            last_login: string | null;
+            /** Created At */
+            created_at: string;
+        };
+        /** StaffIn */
+        StaffIn: {
+            /** Username */
+            username: string;
+            /**
+             * Display Name
+             * @default
+             */
+            display_name: string;
+            /** Role */
+            role: string;
+            /** Password */
+            password: string;
+        };
+        /** StaffUpdate */
+        StaffUpdate: {
+            /**
+             * Display Name
+             * @default
+             */
+            display_name: string;
+            /** Role */
+            role: string;
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** ResetIn */
+        ResetIn: {
+            /** Password */
+            password: string;
+        };
+        /** AuditOut */
+        AuditOut: {
+            /** Created At */
+            created_at: string;
+            /** Actor */
+            actor: string;
+            /** Action */
+            action: string;
+            /** Target */
+            target: string;
+            /** Detail */
+            detail: string;
+            /** Ip */
+            ip: string;
         };
         /** CategoryOut */
         CategoryOut: {
@@ -1841,6 +2071,52 @@ export interface operations {
             };
         };
     };
+    maehai_core_api_change_password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     maehai_core_api_csrf: {
         parameters: {
             query?: never;
@@ -1856,6 +2132,145 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    maehai_core_staff_api_roles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolesOut"];
+                };
+            };
+        };
+    };
+    maehai_core_staff_api_list_staff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffOut"][];
+                };
+            };
+        };
+    };
+    maehai_core_staff_api_create_staff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffOut"];
+                };
+            };
+        };
+    };
+    maehai_core_staff_api_update_staff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffOut"];
+                };
+            };
+        };
+    };
+    maehai_core_staff_api_reset_password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffOut"];
+                };
+            };
+        };
+    };
+    maehai_core_staff_api_audit_log: {
+        parameters: {
+            query?: {
+                action?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditOut"][];
+                };
             };
         };
     };
@@ -2967,6 +3382,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SummaryOut"];
+                };
+            };
+        };
+    };
+    maehai_reports_api_todo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Todo"];
                 };
             };
         };

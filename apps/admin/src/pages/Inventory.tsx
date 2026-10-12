@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ErrorNotice } from "../components/Notice";
 import { api, unwrap } from "../lib/api";
+import { useAuth } from "../lib/auth";
 
 const REASONS = [
   { v: "receive", l: "รับของเข้า (+)", hint: "จำนวนที่เพิ่ม" },
@@ -13,6 +14,7 @@ const REASONS = [
 
 export function Inventory() {
   const qc = useQueryClient();
+  const canAdjust = useAuth().can("inventory.adjust");
   const [q, setQ] = useState("");
   const [sku, setSku] = useState<string | null>(null);
   const [mode, setMode] = useState<"adjust" | "transfer">("adjust");
@@ -69,8 +71,8 @@ export function Inventory() {
                       {r.track_stock || l.on_hand > 0 ? <span style={r.track_stock ? undefined : { opacity: 0.55 }}><span className={r.track_stock && l.available <= 5 ? "stock-low" : "bold"}>{l.available}</span> <span className="xs ink-muted">/ {l.on_hand}{l.reserved ? ` (${l.reserved})` : ""}</span></span> : <span className="ink-muted">—</span>}
                     </td>
                   ))}
-                  <td><button className="mh-chip" style={{ minHeight: 32 }} aria-pressed={r.track_stock} disabled={track.isPending} onClick={() => track.mutate({ sku: r.sku, track: !r.track_stock })}>{r.track_stock ? "เปิด" : "ปิด"}</button></td>
-                  <td><button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { setSku(r.sku); save.reset(); }}>ปรับสต็อก</button></td>
+                  <td><button className="mh-chip" style={{ minHeight: 32 }} aria-pressed={r.track_stock} disabled={track.isPending || !canAdjust} onClick={() => track.mutate({ sku: r.sku, track: !r.track_stock })}>{r.track_stock ? "เปิด" : "ปิด"}</button></td>
+                  <td><button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { setSku(r.sku); save.reset(); }}>{canAdjust ? "ปรับสต็อก" : "ประวัติ"}</button></td>
                 </tr>
               ))}
               {stock.data?.length === 0 && <tr><td colSpan={5} className="ink-muted">ไม่พบสินค้า</td></tr>}
@@ -79,7 +81,7 @@ export function Inventory() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
-          {row ? (
+          {row && canAdjust ? (
             <form className="apanel" onSubmit={onSubmit}>
               <div className="apanel-head"><h2>{row.product_name} ({row.variant_label})</h2><button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setSku(null)}>ปิด</button></div>
               {!row.track_stock && <div className="notice notice--info"><p>สินค้านี้ยังไม่เปิดนับสต็อก ลูกค้าสั่งได้ไม่จำกัด กรอกจำนวนแล้วกด “เปิด” ในตารางเพื่อเริ่มตัดสต็อก</p></div>}

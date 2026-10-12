@@ -11,14 +11,16 @@ from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from PIL import Image, UnidentifiedImageError
 
-from maehai.core.auth import staff_auth
+from maehai.core.auth import requires
+from maehai.core.models import audit
+from maehai.core.permissions import check
 
 from .api import serialize_detail
-from .models import Category, Product, Promotion
+from .models import Category, Product, ProductVariant, Promotion
 from .schemas import AdminProductOut, ProductIn
 from .services import save_product
 
-router = Router(tags=["admin-catalog"], auth=staff_auth)
+router = Router(tags=["admin-catalog"])
 
 IMAGE_TYPES = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}
 IMAGE_MAX_BYTES = 5 * 1024 * 1024
@@ -34,30 +36,51 @@ def _admin_out(request, p: Product) -> dict:
 
 
 # ---------------------------------------------------------------- products
-@router.get("/products", response=list[AdminProductOut])
+def _price_changes(product: Product, data: ProductIn) -> list[str]:
+    """Human-readable list of price changes this edit would make (new sizes count as a change)."""
+    old = {v.sku: v.price_satang for v in ProductVariant.objects.filter(product=product)}
+    out = []
+    for v in data.variants:
+        if v.sku not in old:
+            out.append(f"{v.sku}: เพิ่มขนาด {v.price_satang / 100:g}")
+        elif old[v.sku] != v.price_satang:
+            out.append(f"{v.sku}: {old[v.sku] / 100:g} → {v.price_satang / 100:g}")
+    return out
+
+
+@router.get("/products", response=list[AdminProductOut], auth=requires("catalog.view"))
 def list_products(request):
     return [_admin_out(request, p) for p in _qs()]
 
 
-@router.post("/products", response={201: AdminProductOut})
+@router.post("/products", response={201: AdminProductOut}, auth=requires("catalog.edit"))
 def create_product(request, data: ProductIn):
-    return 201, _admin_out(request, _qs().get(pk=save_product(data).pk))
+    check(request, "pricing.manage")        # a new product always sets prices
+    p = save_product(data)
+    audit(request, "product.create", p.slug, ", ".join(f"{v.sku}={v.price_satang / 100:g}" for v in data.variants))
+    return 201, _admin_out(request, _qs().get(pk=p.pk))
 
 
-@router.put("/products/{product_id}", response=AdminProductOut)
+@router.put("/products/{product_id}", response=AdminProductOut, auth=requires("catalog.edit"))
 def update_product(request, product_id: int, data: ProductIn):
-    p = save_product(data, get_object_or_404(Product, pk=product_id))
+    product = get_object_or_404(Product, pk=product_id)
+    changes = _price_changes(product, data)
+    if changes:
+        check(request, "pricing.manage")    # editing text and images is catalog.edit; touching a price is pricing.manage
+    p = save_product(data, product)
+    if changes:
+        audit(request, "price.change", p.slug, "; ".join(changes))
     return _admin_out(request, _qs().get(pk=p.pk))
 
 
-@router.delete("/products/{product_id}", response={204: None})
+@router.delete("/products/{product_id}", response={204: None}, auth=requires("catalog.edit"))
 def archive_product(request, product_id: int):
     """Soft delete: hide from the shop, keep rows so past orders still resolve."""
     Product.objects.filter(pk=product_id).update(is_active=False)
     return 204, None
 
 
-@router.post("/products/{product_id}/image", response=AdminProductOut)
+@router.post("/products/{product_id}/image", response=AdminProductOut, auth=requires("catalog.edit"))
 def upload_image(request, product_id: int, image: File[UploadedFile]):
     """Replace the product photo. The file is opened with Pillow, so a renamed non-image is refused."""
     p = get_object_or_404(Product, pk=product_id)
@@ -79,7 +102,7 @@ def upload_image(request, product_id: int, image: File[UploadedFile]):
     return _admin_out(request, _qs().get(pk=p.pk))
 
 
-@router.delete("/products/{product_id}/image", response=AdminProductOut)
+@router.delete("/products/{product_id}/image", response=AdminProductOut, auth=requires("catalog.edit"))
 def delete_image(request, product_id: int):
     p = get_object_or_404(Product, pk=product_id)
     if p.image:
@@ -110,21 +133,21 @@ def _cat_out(c: Category) -> dict:
             "product_count": n if n is not None else c.products.count()}
 
 
-@router.get("/categories", response=list[AdminCategoryOut])
+@router.get("/categories", response=list[AdminCategoryOut], auth=requires("catalog.view"))
 def list_categories(request):
     """Every category, hidden ones and empty ones included (the public list hides those)."""
     # order_by is explicit: Django drops Meta.ordering from GROUP BY (annotate + Count) queries.
     return [_cat_out(c) for c in Category.objects.annotate(n=Count("products")).order_by("sort_order", "name")]
 
 
-@router.post("/categories", response={201: AdminCategoryOut})
+@router.post("/categories", response={201: AdminCategoryOut}, auth=requires("catalog.edit"))
 def create_category(request, data: CategoryIn):
     if Category.objects.filter(slug=data.slug).exists():
         raise HttpError(409, "slug นี้ถูกใช้แล้ว")
     return 201, _cat_out(Category.objects.create(**data.dict()))
 
 
-@router.put("/categories/{category_id}", response=AdminCategoryOut)
+@router.put("/categories/{category_id}", response=AdminCategoryOut, auth=requires("catalog.edit"))
 def update_category(request, category_id: int, data: CategoryIn):
     c = get_object_or_404(Category, pk=category_id)
     if Category.objects.filter(slug=data.slug).exclude(pk=c.pk).exists():
@@ -135,7 +158,7 @@ def update_category(request, category_id: int, data: CategoryIn):
     return _cat_out(c)
 
 
-@router.delete("/categories/{category_id}", response={204: None})
+@router.delete("/categories/{category_id}", response={204: None}, auth=requires("catalog.edit"))
 def delete_category(request, category_id: int):
     c = get_object_or_404(Category, pk=category_id)
     if c.products.exists():
@@ -233,23 +256,26 @@ def _save_promotion(data: PromotionIn, p: Promotion | None, actor: str) -> Promo
     return p
 
 
-@router.get("/promotions", response=list[PromotionOut])
+@router.get("/promotions", response=list[PromotionOut], auth=requires("catalog.view"))
 def list_promotions(request):
     return [_promo_out(p) for p in Promotion.objects.prefetch_related("products", "categories")]
 
 
-@router.post("/promotions", response={201: PromotionOut})
+@router.post("/promotions", response={201: PromotionOut}, auth=requires("pricing.manage"))
 def create_promotion(request, data: PromotionIn):
-    return 201, _promo_out(_save_promotion(data, None, request.user.get_username()))
+    p = _save_promotion(data, None, request.user.get_username())
+    audit(request, "promotion.create", p.name, p.label)
+    return 201, _promo_out(p)
 
 
-@router.put("/promotions/{promotion_id}", response=PromotionOut)
+@router.put("/promotions/{promotion_id}", response=PromotionOut, auth=requires("pricing.manage"))
 def update_promotion(request, promotion_id: int, data: PromotionIn):
-    p = get_object_or_404(Promotion, pk=promotion_id)
-    return _promo_out(_save_promotion(data, p, request.user.get_username()))
+    p = _save_promotion(data, get_object_or_404(Promotion, pk=promotion_id), request.user.get_username())
+    audit(request, "promotion.update", p.name, p.label)
+    return _promo_out(p)
 
 
-@router.post("/promotions/{promotion_id}/end", response=PromotionOut)
+@router.post("/promotions/{promotion_id}/end", response=PromotionOut, auth=requires("pricing.manage"))
 def end_promotion(request, promotion_id: int):
     """Stop a running promotion now. Keeps the record (orders already store the name and price they were sold at)."""
     p = get_object_or_404(Promotion, pk=promotion_id)
@@ -259,14 +285,16 @@ def end_promotion(request, promotion_id: int):
     elif not p.ends_at or p.ends_at > now:
         p.ends_at = now
     p.save()
+    audit(request, "promotion.end", p.name)
     return _promo_out(p)
 
 
-@router.delete("/promotions/{promotion_id}", response={204: None})
+@router.delete("/promotions/{promotion_id}", response={204: None}, auth=requires("pricing.manage"))
 def delete_promotion(request, promotion_id: int):
     p = get_object_or_404(Promotion, pk=promotion_id)
     if p.starts_at <= timezone.now() and p.is_active:
         raise HttpError(409, "โปรโมชันนี้เริ่มแล้ว ใช้ “ปิดโปรโมชัน” แทนการลบ เพื่อเก็บประวัติไว้")
+    audit(request, "promotion.delete", p.name)
     p.delete()
     return 204, None
 

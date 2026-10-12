@@ -65,10 +65,24 @@ alias dc='docker compose -f deploy/docker-compose.yml --env-file deploy/.env'
 dc exec api python manage.py seed_shipping      # các cách nhận hàng của tiệm
 dc exec api python manage.py seed_inventory     # 2 chi nhánh, gắn với cách nhận tại tiệm
 dc exec api python manage.py seed_catalog       # 22 sản phẩm từ site cũ. GIÁ LÀ GIÁ MẪU, phải sửa trong admin
-dc exec api python manage.py createsuperuser    # tài khoản đăng nhập /admin
+dc exec api python manage.py createsuperuser    # tài khoản CHỦ TIỆM đầu tiên, đăng nhập /admin
 ```
 
 `seed_catalog` là tùy chọn. Nếu nhập sản phẩm tay trong `/admin` thì bỏ qua.
+
+## Nhân viên và phân quyền
+
+Tài khoản tạo bằng `createsuperuser` là **เจ้าของร้าน** (toàn quyền). Từ đó, chủ tiệm vào `/admin`, mục **พนักงานและสิทธิ์** để thêm nhân viên, chọn vị trí, khóa tài khoản và đặt lại mật khẩu. **Không dùng `createsuperuser` để tạo nhân viên thường**: Django admin (`/django-admin/`) chỉ nên dành cho chủ tiệm.
+
+| Vị trí | Làm được |
+|---|---|
+| เจ้าของร้าน | Mọi thứ, kể cả quản lý nhân viên và xem ประวัติการใช้งาน |
+| ผู้จัดการ | Mọi thứ trừ quản lý nhân viên |
+| พนักงานขาย | Nhận đơn, báo phí ship, kiểm tra slip, giao hàng, hủy đơn chưa trả tiền; xem (không sửa) sản phẩm và mã giảm giá |
+| พนักงานคลัง | Đóng gói, giao hàng, quản lý tồn kho. Không thấy tiền, slip, mã giảm giá |
+| พนักงานดูแลสินค้า | Thêm và sửa sản phẩm, ảnh, danh mục. Không sửa giá, không làm khuyến mãi |
+
+Nhân viên mới nhận mật khẩu tạm và **phải đổi ngay lần đăng nhập đầu**. Khóa tài khoản hoặc đặt lại mật khẩu sẽ đẩy người đó ra khỏi mọi thiết bị lập tức. Chi tiết: `docs/specs/staff-permissions.md`.
 
 ## Cập nhật phiên bản mới
 

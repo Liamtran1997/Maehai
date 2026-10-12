@@ -7,11 +7,12 @@ from django.utils import timezone
 from ninja import Field, Router, Schema
 from ninja.errors import HttpError
 
-from maehai.core.auth import staff_auth
+from maehai.core.auth import requires
+from maehai.core.models import audit
 
 from .models import CODE_RE, Coupon, CouponRedemption
 
-router = Router(tags=["admin-coupons"], auth=staff_auth)
+router = Router(tags=["admin-coupons"])
 
 
 class CouponIn(Schema):
@@ -96,23 +97,25 @@ def _validate(data: CouponIn) -> str:
     return code
 
 
-@router.get("/coupons", response=list[CouponOut])
+@router.get("/coupons", response=list[CouponOut], auth=requires("coupons.view"))
 def list_coupons(request):
     stats = {r["coupon_id"]: r for r in CouponRedemption.objects.filter(released_at__isnull=True)
              .values("coupon_id").annotate(n=Count("id"), d=Sum("discount_satang")).order_by("coupon_id")}
     return [_out(c, stats.get(c.id, {"n": 0, "d": 0})) for c in Coupon.objects.order_by("-created_at", "-id")]
 
 
-@router.post("/coupons", response={201: CouponOut})
+@router.post("/coupons", response={201: CouponOut}, auth=requires("pricing.manage"))
 def create_coupon(request, data: CouponIn):
     code = _validate(data)
     if Coupon.objects.filter(code=code).exists():
         raise HttpError(409, "โค้ดนี้มีอยู่แล้ว")
     fields = data.dict(exclude={"code"})
-    return 201, _out(Coupon.objects.create(code=code, created_by=request.user.get_username(), **fields))
+    c = Coupon.objects.create(code=code, created_by=request.user.get_username(), **fields)
+    audit(request, "coupon.create", c.code, c.label)
+    return 201, _out(c)
 
 
-@router.put("/coupons/{coupon_id}", response=CouponOut)
+@router.put("/coupons/{coupon_id}", response=CouponOut, auth=requires("pricing.manage"))
 def update_coupon(request, coupon_id: int, data: CouponIn):
     c = get_object_or_404(Coupon, pk=coupon_id)
     code = _validate(data)
@@ -125,10 +128,11 @@ def update_coupon(request, coupon_id: int, data: CouponIn):
         setattr(c, k, v)
     c.code = code
     c.save()
+    audit(request, "coupon.update", c.code, c.label)
     return _out(c)
 
 
-@router.post("/coupons/{coupon_id}/end", response=CouponOut)
+@router.post("/coupons/{coupon_id}/end", response=CouponOut, auth=requires("pricing.manage"))
 def end_coupon(request, coupon_id: int):
     """Stop the code now. Orders that already used it keep their discount."""
     c = get_object_or_404(Coupon, pk=coupon_id)
@@ -138,19 +142,21 @@ def end_coupon(request, coupon_id: int):
     elif not c.ends_at or c.ends_at > now:
         c.ends_at = now
     c.save()
+    audit(request, "coupon.end", c.code)
     return _out(c)
 
 
-@router.delete("/coupons/{coupon_id}", response={204: None})
+@router.delete("/coupons/{coupon_id}", response={204: None}, auth=requires("pricing.manage"))
 def delete_coupon(request, coupon_id: int):
     c = get_object_or_404(Coupon, pk=coupon_id)
     if c.redemptions.exists():
         raise HttpError(409, "โค้ดนี้ถูกใช้แล้ว ลบไม่ได้ ใช้ “ปิดโค้ด” แทนเพื่อเก็บประวัติ")
+    audit(request, "coupon.delete", c.code)
     c.delete()
     return 204, None
 
 
-@router.get("/coupons/{coupon_id}/redemptions", response=list[RedemptionOut])
+@router.get("/coupons/{coupon_id}/redemptions", response=list[RedemptionOut], auth=requires("coupons.view"))
 def redemptions(request, coupon_id: int):
     get_object_or_404(Coupon, pk=coupon_id)
     rows = CouponRedemption.objects.filter(coupon_id=coupon_id).select_related("order").order_by("-id")[:200]
