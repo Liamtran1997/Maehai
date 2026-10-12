@@ -1,4 +1,4 @@
-import { LogMark } from "@maehai/ui";
+import { BrandLogo } from "@maehai/ui";
 import { useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
@@ -22,7 +22,7 @@ export function Login() {
 
   return (
     <form onSubmit={onSubmit} className="panel" style={{ maxWidth: 380, margin: "10vh auto", gap: 16 }}>
-      <div className="brand" style={{ marginRight: 0 }}><LogMark /> แม่ฮาย <span className="tag">หลังบ้าน</span></div>
+      <div className="brand" style={{ marginRight: 0 }}><BrandLogo src={`${import.meta.env.BASE_URL}brand/logo.png`} height={48} /> <span className="tag">หลังบ้าน</span></div>
       <h1 style={{ font: "500 24px/1.4 var(--font-display)" }}>เข้าสู่ระบบ</h1>
       <div className="mh-field"><label className="mh-label" htmlFor="u">ชื่อผู้ใช้</label><input className="mh-input" id="u" name="u" autoComplete="username" required autoFocus /></div>
       <div className="mh-field"><label className="mh-label" htmlFor="p">รหัสผ่าน</label><input className="mh-input" id="p" name="p" type="password" autoComplete="current-password" required /></div>

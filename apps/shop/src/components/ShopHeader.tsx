@@ -1,12 +1,11 @@
-import { LogMark } from "@maehai/ui";
+import { BrandLogo } from "@maehai/ui";
 import { CartLink } from "./CartLink";
 
 export function ShopHeader() {
   return (
     <header className="m-hdr">
-      <a className="brand" href="/">
-        <LogMark />
-        แม่ฮาย
+      <a className="brand" href="/" aria-label="หน้าแรก หมูยอแม่ฮาย">
+        <BrandLogo height={40} />
       </a>
       <a className="icon-btn" href="/products" aria-label="ค้นหาสินค้า">
         <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>

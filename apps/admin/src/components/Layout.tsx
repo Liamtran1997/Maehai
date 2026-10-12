@@ -1,4 +1,4 @@
-import { LogMark } from "@maehai/ui";
+import { BrandLogo } from "@maehai/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, NavLink, Outlet } from "react-router-dom";
 import { api, unwrap } from "../lib/api";
@@ -35,7 +35,7 @@ export function Layout() {
   return (
     <div className="adm">
       <nav className="side" aria-label="เมนูหลัก">
-        <Link className="brand" to="/"><LogMark /> แม่ฮาย <span className="tag">หลังบ้าน</span></Link>
+        <Link className="brand" to="/" aria-label="ภาพรวม"><BrandLogo src={`${import.meta.env.BASE_URL}brand/logo.png`} height={40} /> <span className="tag">หลังบ้าน</span></Link>
         {NAV.filter((n) => n.perm === null || can(n.perm)).map((n) => {
           const count = "badge" in n ? badges[n.badge] : 0;
           return (
