@@ -13,7 +13,7 @@ Phạm vi: trang quản trị (`/admin`) và cách thông tin hiện ra ở webs
 | Tên tiếng Anh | Không | ≤150 ký tự | Chưa dùng (dành cho bản tiếng Anh) |
 | slug | Có | `a-z`, `0-9`, `-`; duy nhất | Đường dẫn `/products/<slug>`. Đổi slug làm link cũ hỏng |
 | Danh mục | Có | Một danh mục | Bộ lọc và breadcrumb |
-| Ảnh | Không | JPG/PNG/WebP, ≤5 MB, kiểm tra đúng là ảnh thật | Ảnh chính. Thiếu ảnh thì hiện hình cây หมูยอ vẽ sẵn |
+| Ảnh | Không | Tối đa 10 ảnh mỗi sản phẩm. JPG/PNG/WebP, ≤5 MB mỗi ảnh, kiểm tra đúng là ảnh thật. Thêm nhiều ảnh cùng lúc, đổi thứ tự bằng ‹ ›, xóa từng ảnh | Ảnh đầu tiên là ảnh chính (lưới sản phẩm). Trang chi tiết có thư viện ảnh với ảnh nhỏ bên dưới. Thiếu ảnh thì hiện hình cây หมูยอ vẽ sẵn |
 | Mô tả ngắn, mô tả, số อย., cách bảo quản | Không | | Trang chi tiết |
 | Màu dây thun | Không | vàng / đỏ / xanh | Hình minh họa khi chưa có ảnh |
 | Nhãn | Không | ขายดี / ใหม่ | Góc thẻ sản phẩm |
@@ -99,7 +99,7 @@ Trang Sản phẩm: tìm theo tên/tên tiếng Anh/slug; lọc theo danh mục;
 
 Xếp theo mức ưu tiên đề xuất:
 
-1. **Nhiều ảnh cho một sản phẩm** (gallery). Hiện chỉ một ảnh chính.
+1. ~~Nhiều ảnh cho một sản phẩm~~ đã làm (xem mục 1.1).
 2. **Mã giảm giá (coupon)** áp trên cả đơn, ví dụ "ลด 50 บาท เมื่อซื้อครบ 500". Cần thêm ô nhập mã ở checkout và quy tắc kết hợp với khuyến mãi theo sản phẩm.
 3. **Lịch sử đổi giá** (ai đổi, khi nào, từ bao nhiêu). Hiện chỉ có lịch sử tồn kho.
 4. **Giới hạn số lượng mua** mỗi đơn cho hàng khuyến mãi.

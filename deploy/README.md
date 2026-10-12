@@ -152,3 +152,16 @@ HTTPS_PORT=8443
 ```
 
 Rồi `dc up -d --build` và mở http://localhost:8080 (shop) và http://localhost:8080/admin.
+
+## Lưu trữ ảnh
+
+Chọn nơi lưu bằng `STORAGE_BACKEND` trong `deploy/.env`:
+
+- **`local`** (mặc định): ảnh sản phẩm nằm trên máy chủ trong `media/products/<mã sản phẩm>/<năm>/<tháng>/`. Ảnh slip nằm trong volume riêng `private`, không mount vào container web nên không ai truy cập được qua đường web.
+- **`s3`**: ảnh sản phẩm lên bucket S3 (public, qua `AWS_S3_CUSTOM_DOMAIN` nếu có CDN). Slip vẫn nằm trong bucket nhưng dưới tiền tố riêng và chỉ xem được qua link có hạn 5 phút, do API cấp cho nhân viên.
+
+Giới hạn: mỗi ảnh tối đa `IMAGE_MAX_MB` (mặc định 5 MB), mỗi sản phẩm tối đa 10 ảnh.
+
+Khi dùng `s3`, bucket cần: quyền đọc công khai cho tiền tố `products/`, và không cấp quyền công khai cho `private/`. Tài khoản IAM chỉ cần `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, `s3:ListBucket` trên bucket này.
+
+Sao lưu (`deploy/backup.sh`) gồm cả ba: database, ảnh sản phẩm, và slip. Khi chuyển sang `s3`, ảnh cũ trên đĩa không tự chuyển: cần copy thủ công lên bucket.

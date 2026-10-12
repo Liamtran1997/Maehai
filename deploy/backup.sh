@@ -13,8 +13,10 @@ echo "[$STAMP] dumping database"
 "${COMPOSE[@]}" exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom' > "$DIR/db-$STAMP.dump"
 echo "[$STAMP] archiving uploads"
 "${COMPOSE[@]}" exec -T api tar -C /data/media -czf - . > "$DIR/media-$STAMP.tar.gz"
+echo "[$STAMP] archiving payment slips"
+"${COMPOSE[@]}" exec -T api tar -C /data/private -czf - . > "$DIR/private-$STAMP.tar.gz"
 
 # A zero-size file means the dump failed silently: fail loudly instead.
-for f in "$DIR/db-$STAMP.dump" "$DIR/media-$STAMP.tar.gz"; do [ -s "$f" ] || { echo "empty backup: $f" >&2; exit 1; }; done
-find "$DIR" -type f \( -name 'db-*.dump' -o -name 'media-*.tar.gz' \) -mtime +"$KEEP_DAYS" -delete
+for f in "$DIR/db-$STAMP.dump" "$DIR/media-$STAMP.tar.gz" "$DIR/private-$STAMP.tar.gz"; do [ -s "$f" ] || { echo "empty backup: $f" >&2; exit 1; }; done
+find "$DIR" -type f \( -name 'db-*.dump' -o -name 'media-*.tar.gz' -o -name 'private-*.tar.gz' \) -mtime +"$KEEP_DAYS" -delete
 echo "[$STAMP] done: $(ls -1 "$DIR" | wc -l) files kept"

@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from PIL import Image
 
-from maehai.catalog.models import Category, Product, ProductVariant, Promotion
+from maehai.catalog.models import Category, Product, ProductImage, ProductVariant, Promotion
 from maehai.inventory.models import RestockRequest
 from maehai.notifications.models import Outbox
 from maehai.orders.models import Order
@@ -176,30 +176,68 @@ def img(fmt="PNG", name="p.png", ctype="image/png"):
     return SimpleUploadedFile(name, b.getvalue(), content_type=ctype)
 
 
-def test_upload_replace_and_delete_image(client, staff_client, seeded, settings):
+def gallery(pid):
+    return f"/api/admin/catalog/products/{pid}/images"
+
+
+def test_gallery_add_reorder_and_delete(client, staff_client, seeded, settings):
     pid = Product.objects.get(slug=PEPPER).id
-    url = f"/api/admin/catalog/products/{pid}/image"
-    first = staff_client.post(url, {"image": img()}).json()["image_url"]
-    assert "/media/products/" in first and not first.endswith("p.png")          # random file name
-    assert detail(client)["image_url"] == first
-    old_file = settings.MEDIA_ROOT / Product.objects.get(pk=pid).image.name
-    second = staff_client.post(url, {"image": img("JPEG", "x.jpg", "image/jpeg")}).json()["image_url"]
-    assert second != first and second.endswith(".jpg") and not old_file.exists()  # old file cleaned up
-    assert staff_client.delete(url).json()["image_url"] is None
+    assert staff_client.post(gallery(pid), {"image": img()}).status_code == 200
+    r = staff_client.post(gallery(pid), {"image": img("JPEG", "x.jpg", "image/jpeg")})
+    imgs = r.json()["images"]
+    assert [i["url"][-4:] for i in imgs] == [".png", ".jpg"]                       # random names, real formats kept
+    first_url = detail(client)["image_url"]
+    assert first_url == imgs[0]["url"] and [i["url"] for i in detail(client)["images"]] == [i["url"] for i in imgs]
+
+    # reorder: the second photo becomes the main one everywhere
+    a, b = imgs[0]["id"], imgs[1]["id"]
+    r = staff_client.put(f"/api/admin/catalog/products/{pid}/image-order", {"ids": [b, a]}, content_type=JSON)
+    assert r.status_code == 200 and [i["id"] for i in r.json()["images"]] == [b, a]
+    assert detail(client)["image_url"] == imgs[1]["url"]
+
+    # delete the main photo: the file is removed from disk and the other becomes main
+    path = settings.MEDIA_ROOT / ProductImage.objects.get(pk=b).image.name
+    assert path.exists()
+    r = staff_client.delete(f"{gallery(pid)}/{b}")
+    assert r.status_code == 200 and [i["id"] for i in r.json()["images"]] == [a]
+    assert not path.exists()
+    assert detail(client)["image_url"] == imgs[0]["url"]
 
 
-@pytest.mark.parametrize("f", [
-    SimpleUploadedFile("fake.png", b"not really an image", content_type="image/png"),
-    SimpleUploadedFile("huge.png", b"0" * (5 * 1024 * 1024 + 1), content_type="image/png"),
+def test_gallery_is_capped_at_ten(staff_client, seeded):
+    pid = Product.objects.get(slug=PEPPER).id
+    for _ in range(10):
+        assert staff_client.post(gallery(pid), {"image": img()}).status_code == 200
+    r = staff_client.post(gallery(pid), {"image": img()})
+    assert r.status_code == 422 and "10 รูป" in r.json()["detail"]
+
+
+def test_reorder_must_list_every_photo_exactly_once(staff_client, seeded):
+    pid = Product.objects.get(slug=PEPPER).id
+    ids = [staff_client.post(gallery(pid), {"image": img()}).json()["images"][-1]["id"] for _ in range(2)]
+    put = lambda body: staff_client.put(f"/api/admin/catalog/products/{pid}/image-order", body, content_type=JSON)
+    assert put({"ids": ids[:1]}).status_code == 422                # missing one
+    assert put({"ids": [ids[0], ids[0]]}).status_code == 422       # duplicate
+    other = Product.objects.get(slug=NAEM).id
+    foreign = staff_client.post(gallery(other), {"image": img()}).json()["images"][0]["id"]
+    assert put({"ids": [ids[0], foreign]}).status_code == 422      # another product's photo
+
+
+def test_deleting_a_photo_of_another_product_is_404(staff_client, seeded):
+    pid, other = Product.objects.get(slug=PEPPER).id, Product.objects.get(slug=NAEM).id
+    foreign = staff_client.post(gallery(other), {"image": img()}).json()["images"][0]["id"]
+    assert staff_client.delete(f"{gallery(pid)}/{foreign}").status_code == 404
+
+
+@pytest.mark.parametrize("make", [
+    lambda: SimpleUploadedFile("fake.png", b"not really an image", content_type="image/png"),
+    lambda: SimpleUploadedFile("huge.png", b"0" * (5 * 1024 * 1024 + 1), content_type="image/png"),
+    lambda: img("GIF", "a.gif", "image/gif"),
 ])
-def test_bad_images_are_refused(staff_client, seeded, f):
+def test_bad_images_are_refused(staff_client, seeded, make):
     pid = Product.objects.get(slug=PEPPER).id
-    assert staff_client.post(f"/api/admin/catalog/products/{pid}/image", {"image": f}).status_code == 422
-
-
-def test_gif_is_refused(staff_client, seeded):
-    pid = Product.objects.get(slug=PEPPER).id
-    assert staff_client.post(f"/api/admin/catalog/products/{pid}/image", {"image": img("GIF", "a.gif", "image/gif")}).status_code == 422
+    assert staff_client.post(gallery(pid), {"image": make()}).status_code == 422
+    assert Product.objects.get(pk=pid).images.count() == 0
 
 
 def test_featured_filter_and_sort_order(client, staff_client, seeded):

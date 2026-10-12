@@ -13,6 +13,7 @@ def _isolate(settings, tmp_path):
     cache.clear()
     settings.RATE_LIMIT_ENABLED = False   # most tests place many orders from one address; rate limit tests switch it on
     settings.MEDIA_ROOT = tmp_path
+    settings.PRIVATE_MEDIA_ROOT = tmp_path / "private"
     settings.PROMPTPAY_ID = "0812345678"
     settings.NON_WORKING_DATES = []
 

@@ -13,12 +13,13 @@ x-api: &api
     DATABASE_URL: postgres://${POSTGRES_USER:-maehai}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-maehai}
     REDIS_URL: redis://redis:6379/0
     MEDIA_ROOT: /data/media
+    PRIVATE_MEDIA_ROOT: /data/private
     TRUSTED_PROXY_COUNT: "1"            # Caddy is the one proxy in front of the API
     ALLOWED_HOSTS: ${PUBLIC_HOST},api,localhost
     CORS_ORIGINS: ${PUBLIC_ORIGIN}
     PUBLIC_SHOP_URL: ${PUBLIC_ORIGIN}
     ADMIN_URL: ${PUBLIC_ORIGIN}/admin
-  volumes: [media:/data/media]
+  volumes: [media:/data/media, private:/data/private]
   depends_on:
     migrate: { condition: service_completed_successfully }
     redis: { condition: service_healthy }
@@ -51,7 +52,7 @@ services:
     environment:
       <<: *api-env
     command: ["python", "manage.py", "migrate", "--noinput"]
-    volumes: [media:/data/media]
+    volumes: [media:/data/media, private:/data/private]
     depends_on:
       db: { condition: service_healthy }
     restart: "no"
@@ -113,5 +114,6 @@ services:
 volumes:
   pgdata:
   media:
+  private:      # payment slips: never mounted into the web container
   caddy_data:
   caddy_config:

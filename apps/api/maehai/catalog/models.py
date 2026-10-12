@@ -1,5 +1,10 @@
+import uuid
+from pathlib import Path
+
 from django.db import models
 from django.db.models import F, Min, Q
+
+from maehai.core.storage import product_storage
 
 
 class Category(models.Model):
@@ -50,7 +55,6 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     bands = models.JSONField(default=list, blank=True, help_text="List of Band values, e.g. ['yellow','red']")
     badge = models.CharField(max_length=20, choices=Badge.choices, blank=True, default=Badge.NONE)
-    image = models.ImageField(upload_to="products/", blank=True)
     fda_number = models.CharField("เลข อย.", max_length=40, blank=True)
     storage_note = models.CharField(max_length=200, blank=True)
     is_active = models.BooleanField(default=True)
@@ -66,6 +70,27 @@ class Product(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+def product_image_path(instance, filename: str) -> str:
+    """products/<product id>/<year>/<month>/<random>.<ext>: one folder per product, and per month within it,
+    so no folder ever holds more than a product's own photos for a month."""
+    from django.utils import timezone
+
+    now = timezone.now()
+    return f"products/{instance.product_id}/{now:%Y}/{now:%m}/{uuid.uuid4().hex}{Path(filename).suffix.lower()[:5]}"
+
+
+class ProductImage(models.Model):
+    """A photo of a product. The first one by sort_order is the main photo shown in the shop's grid."""
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to=product_image_path, storage=product_storage)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
 
 
 class ProductVariant(models.Model):

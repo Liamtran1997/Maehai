@@ -285,7 +285,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/catalog/products/{product_id}/image": {
+    "/api/admin/catalog/products/{product_id}/images": {
         parameters: {
             query?: never;
             header?: never;
@@ -295,12 +295,48 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Upload Image
-         * @description Replace the product photo. The file is opened with Pillow, so a renamed non-image is refused.
+         * Add Image
+         * @description Adds a photo at the end of the gallery. The first photo is the one customers see in the grid.
          */
-        post: operations["maehai_catalog_admin_api_upload_image"];
+        post: operations["maehai_catalog_admin_api_add_image"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/products/{product_id}/images/{image_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
         /** Delete Image */
         delete: operations["maehai_catalog_admin_api_delete_image"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/products/{product_id}/image-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Reorder Images
+         * @description Set the gallery order. Must list every photo of this product exactly once; the first one becomes the main photo.
+         */
+        put: operations["maehai_catalog_admin_api_reorder_images"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1073,6 +1109,13 @@ export interface components {
              */
             in_stock: boolean;
         };
+        /** ProductImageOut */
+        ProductImageOut: {
+            /** Id */
+            id: number;
+            /** Url */
+            url: string;
+        };
         /** ProductOut */
         ProductOut: {
             /** Slug */
@@ -1107,6 +1150,11 @@ export interface components {
             storage_note: string;
             /** Variants */
             variants: components["schemas"]["VariantOut"][];
+            /**
+             * Images
+             * @default []
+             */
+            images: components["schemas"]["ProductImageOut"][];
             promotion?: components["schemas"]["PromotionBrief"] | null;
         };
         /** PromotionBrief */
@@ -1173,6 +1221,11 @@ export interface components {
             storage_note: string;
             /** Variants */
             variants: components["schemas"]["VariantOut"][];
+            /**
+             * Images
+             * @default []
+             */
+            images: components["schemas"]["ProductImageOut"][];
             promotion?: components["schemas"]["PromotionBrief"] | null;
             /** Id */
             id: number;
@@ -1261,6 +1314,11 @@ export interface components {
              * @default true
              */
             is_active: boolean;
+        };
+        /** ImageOrderIn */
+        ImageOrderIn: {
+            /** Ids */
+            ids: number[];
         };
         /** AdminCategoryOut */
         AdminCategoryOut: {
@@ -2430,7 +2488,7 @@ export interface operations {
             };
         };
     };
-    maehai_catalog_admin_api_upload_image: {
+    maehai_catalog_admin_api_add_image: {
         parameters: {
             query?: never;
             header?: never;
@@ -2468,10 +2526,37 @@ export interface operations {
             header?: never;
             path: {
                 product_id: number;
+                image_id: number;
             };
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProductOut"];
+                };
+            };
+        };
+    };
+    maehai_catalog_admin_api_reorder_images: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImageOrderIn"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

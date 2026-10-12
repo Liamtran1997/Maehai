@@ -1,4 +1,5 @@
-import { LogMark, formatThaiDate } from "@maehai/ui";
+import { formatThaiDate } from "@maehai/ui";
+import { Gallery } from "../../../components/Gallery";
 import { AddToCart } from "../../../components/AddToCart";
 import { notFound } from "next/navigation";
 import { ShopHeader } from "../../../components/ShopHeader";
@@ -18,10 +19,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <>
       <ShopHeader />
       <p className="crumbs" style={{ padding: "12px 16px" }}>สินค้า › {p.category.name}</p>
-      <div className="pdp-media">
-        {badge && <span className="mh-badge">{badge.label}</span>}
-        {p.image_url ? <img src={p.image_url} alt={p.name} /> : <LogMark bands={toBands(p.bands)} />}
-      </div>
+      <Gallery images={p.images} name={p.name} bands={toBands(p.bands)} badge={badge?.label} />
       <section className="sec" style={{ gap: 20 }}>
         <div>
           <h1 style={{ font: "500 32px/1.4 var(--font-display)" }}>{p.name}</h1>

@@ -16,8 +16,13 @@ router = Router(tags=["catalog"])
 RESTOCK_PREFIX = "แจ้งเตือนสินค้า"   # the LINE webhook recognises "<prefix> <sku>"
 
 
-def _image_url(request, product: Product) -> str | None:
-    return request.build_absolute_uri(product.image.url) if product.image else None
+def _image_urls(request, product: Product) -> list[dict]:
+    return [{"id": im.id, "url": request.build_absolute_uri(im.image.url)} for im in product.images.all()]
+
+
+def _primary_url(request, product: Product) -> str | None:
+    imgs = _image_urls(request, product)
+    return imgs[0]["url"] if imgs else None
 
 
 def restock_alert_url(sku: str) -> str | None:
@@ -38,7 +43,7 @@ def serialize_list(request, p: Product, amap: dict, prices: dict[int, Price]) ->
     return {
         "in_stock": any(amap.get(v.id) is None or amap[v.id] > 0 for v in variants),
         "slug": p.slug, "name": p.name, "subtitle": p.subtitle, "category": p.category,
-        "badge": p.badge, "bands": p.bands, "image_url": _image_url(request, p),
+        "badge": p.badge, "bands": p.bands, "image_url": _primary_url(request, p),
         "price_from_satang": cp.satang if cp else 0,
         "original_price_from_satang": cp.list_satang if cp and cp.discounted else None,
         "promotion_label": best.promotion.label if best and best.discounted else None,
@@ -64,7 +69,7 @@ def serialize_detail(request, p: Product, *, admin: bool = False) -> dict:
     return {
         **serialize_list(request, p, amap, prices),
         "description": p.description, "fda_number": p.fda_number, "storage_note": p.storage_note,
-        "variants": out_variants,
+        "variants": out_variants, "images": _image_urls(request, p),
         "promotion": {"name": promo.name, "label": promo.label, "ends_at": promo.ends_at.isoformat() if promo.ends_at else None} if promo else None,
     }
 
@@ -76,7 +81,7 @@ def list_categories(request):
 
 @router.get("/products", response=list[ProductListOut])
 def list_products(request, category: str | None = None, q: str | None = None, featured: bool = False):
-    qs = Product.objects.visible().with_price_from().select_related("category").prefetch_related("variants")
+    qs = Product.objects.visible().with_price_from().select_related("category").prefetch_related("variants", "images")
     if category:
         qs = qs.filter(category__slug=category)
     if q:
@@ -92,7 +97,7 @@ def list_products(request, category: str | None = None, q: str | None = None, fe
 
 @router.get("/products/{slug}", response=ProductOut)
 def get_product(request, slug: str):
-    p = Product.objects.visible().select_related("category").prefetch_related("variants").filter(slug=slug).first()
+    p = Product.objects.visible().select_related("category").prefetch_related("variants", "images").filter(slug=slug).first()
     if p is None:
         raise Http404
     return serialize_detail(request, p)

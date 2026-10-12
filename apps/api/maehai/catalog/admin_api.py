@@ -2,8 +2,9 @@
 import uuid
 from datetime import datetime
 
+from django.conf import settings
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Max
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Field, File, Router, Schema
@@ -16,18 +17,17 @@ from maehai.core.models import audit
 from maehai.core.permissions import check
 
 from .api import serialize_detail
-from .models import Category, Product, ProductVariant, Promotion
+from .models import Category, Product, ProductImage, ProductVariant, Promotion
 from .schemas import AdminProductOut, ProductIn
 from .services import save_product
 
 router = Router(tags=["admin-catalog"])
 
 IMAGE_TYPES = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}
-IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 
 def _qs():
-    return Product.objects.select_related("category").prefetch_related("variants").order_by("sort_order", "name")
+    return Product.objects.select_related("category").prefetch_related("variants", "images").order_by("sort_order", "name")
 
 
 def _admin_out(request, p: Product) -> dict:
@@ -80,12 +80,13 @@ def archive_product(request, product_id: int):
     return 204, None
 
 
-@router.post("/products/{product_id}/image", response=AdminProductOut, auth=requires("catalog.edit"))
-def upload_image(request, product_id: int, image: File[UploadedFile]):
-    """Replace the product photo. The file is opened with Pillow, so a renamed non-image is refused."""
-    p = get_object_or_404(Product, pk=product_id)
-    if image.size > IMAGE_MAX_BYTES:
-        raise HttpError(422, "รูปใหญ่เกิน 5 MB")
+MAX_IMAGES = 10
+
+
+def _check_image(image: UploadedFile) -> str:
+    """Refuses anything that is not a real JPG, PNG or WebP within the size limit. Returns the file extension to store."""
+    if image.size > settings.IMAGE_MAX_BYTES:
+        raise HttpError(422, f"รูปใหญ่เกิน {settings.IMAGE_MAX_MB} MB")
     try:
         with Image.open(image) as im:
             fmt = im.format
@@ -95,18 +96,46 @@ def upload_image(request, product_id: int, image: File[UploadedFile]):
     if fmt not in IMAGE_TYPES:
         raise HttpError(422, "รองรับเฉพาะ JPG, PNG หรือ WebP")
     image.seek(0)
-    old = p.image.name if p.image else None
-    p.image.save(f"{uuid.uuid4().hex}{IMAGE_TYPES[fmt]}", image, save=True)
-    if old:
-        p.image.storage.delete(old)
+    return IMAGE_TYPES[fmt]
+
+
+@router.post("/products/{product_id}/images", response=AdminProductOut, auth=requires("catalog.edit"))
+def add_image(request, product_id: int, image: File[UploadedFile]):
+    """Adds a photo at the end of the gallery. The first photo is the one customers see in the grid."""
+    p = get_object_or_404(Product, pk=product_id)
+    if p.images.count() >= MAX_IMAGES:
+        raise HttpError(422, f"เพิ่มรูปได้สูงสุด {MAX_IMAGES} รูปต่อสินค้า")
+    ext = _check_image(image)
+    last = p.images.aggregate(m=Max("sort_order"))["m"]
+    im = ProductImage(product=p, sort_order=0 if last is None else last + 1)
+    im.image.save(f"{uuid.uuid4().hex}{ext}", image, save=True)
     return _admin_out(request, _qs().get(pk=p.pk))
 
 
-@router.delete("/products/{product_id}/image", response=AdminProductOut, auth=requires("catalog.edit"))
-def delete_image(request, product_id: int):
+@router.delete("/products/{product_id}/images/{image_id}", response=AdminProductOut, auth=requires("catalog.edit"))
+def delete_image(request, product_id: int, image_id: int):
+    im = get_object_or_404(ProductImage, pk=image_id, product_id=product_id)
+    name = im.image.name
+    im.delete()
+    if name:
+        im.image.storage.delete(name)
+    return _admin_out(request, _qs().get(pk=product_id))
+
+
+class ImageOrderIn(Schema):
+    ids: list[int] = Field(min_length=1, max_length=MAX_IMAGES)
+
+
+@router.put("/products/{product_id}/image-order", response=AdminProductOut, auth=requires("catalog.edit"))
+@transaction.atomic
+def reorder_images(request, product_id: int, data: ImageOrderIn):
+    """Set the gallery order. Must list every photo of this product exactly once; the first one becomes the main photo."""
     p = get_object_or_404(Product, pk=product_id)
-    if p.image:
-        p.image.delete(save=True)
+    current = set(p.images.values_list("id", flat=True))
+    if len(set(data.ids)) != len(data.ids) or set(data.ids) != current:
+        raise HttpError(422, "ต้องส่งลำดับรูปทุกรูปของสินค้านี้ รูปละครั้ง")
+    for position, image_id in enumerate(data.ids):
+        ProductImage.objects.filter(pk=image_id, product=p).update(sort_order=position)
     return _admin_out(request, _qs().get(pk=p.pk))
 
 

@@ -164,3 +164,45 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
 ]
+
+
+# ---------------------------------------------------------------- file storage
+# STORAGE_BACKEND=local (default): files on this server, under MEDIA_ROOT (products) and PRIVATE_MEDIA_ROOT (slips).
+# STORAGE_BACKEND=s3: product photos in an S3 bucket (public), slips in the same bucket under a private prefix,
+#                     reached only through signed links that expire.
+STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local").strip().lower()
+if STORAGE_BACKEND not in ("local", "s3"):
+    from django.core.exceptions import ImproperlyConfigured
+
+    raise ImproperlyConfigured("STORAGE_BACKEND must be 'local' or 's3'")
+
+PRIVATE_MEDIA_ROOT = Path(os.environ.get("PRIVATE_MEDIA_ROOT", BASE_DIR / "private_media"))
+
+# Upload limits. Per file. Products also cap at 10 photos each (catalog/admin_api.py).
+IMAGE_MAX_MB = int(os.environ.get("IMAGE_MAX_MB", "5"))
+IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
+
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "ap-southeast-1")   # Singapore, closest region to Thailand
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+AWS_S3_CUSTOM_DOMAIN = os.environ.get("AWS_S3_CUSTOM_DOMAIN", "")          # optional CDN host for product photos
+AWS_QUERYSTRING_AUTH = False          # product photos are public: plain URLs, no signature
+AWS_DEFAULT_ACL = None                # modern buckets block ACLs; access comes from the bucket policy
+AWS_S3_FILE_OVERWRITE = False
+
+_s3 = STORAGE_BACKEND == "s3"
+if _s3 and not AWS_STORAGE_BUCKET_NAME:
+    from django.core.exceptions import ImproperlyConfigured
+
+    raise ImproperlyConfigured("STORAGE_BACKEND=s3 needs AWS_STORAGE_BUCKET_NAME")
+
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    "products": {"BACKEND": "storages.backends.s3.S3Storage" if _s3 else "django.core.files.storage.FileSystemStorage",
+                 "OPTIONS": {"location": "products"} if _s3 else {}},
+    "private": ({"BACKEND": "storages.backends.s3.S3Storage",
+                 "OPTIONS": {"location": "private", "querystring_auth": True, "default_acl": "private", "querystring_expire": 300}}
+                if _s3 else {"BACKEND": "maehai.core.storage.PrivateFileSystemStorage"}),
+}

@@ -4,12 +4,16 @@ from pathlib import Path
 from django.db import models
 from django.db.models import Q
 
+from maehai.core.storage import private_storage
 from maehai.orders.models import Order
 
 
 def slip_path(instance, filename: str) -> str:
-    """Unguessable name: slips show bank details, so never keep the customer's filename."""
-    return f"slips/{uuid.uuid4().hex}{Path(filename).suffix.lower()[:5]}"
+    """slips/<year>/<month>/<random>.<ext>. Unguessable name: slips show bank details, so never keep the customer's filename."""
+    from django.utils import timezone
+
+    now = timezone.now()
+    return f"slips/{now:%Y}/{now:%m}/{uuid.uuid4().hex}{Path(filename).suffix.lower()[:5]}"
 
 
 class PaymentStatus(models.TextChoices):
@@ -29,7 +33,7 @@ class Payment(models.Model):
     status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
     qr_payload = models.TextField(blank=True)
     expires_at = models.DateTimeField()
-    slip = models.ImageField(upload_to=slip_path, blank=True)
+    slip = models.ImageField(upload_to=slip_path, blank=True, storage=private_storage)  # never public, either backend
     slip_submitted_at = models.DateTimeField(null=True, blank=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)
     decided_by = models.CharField(max_length=80, blank=True)

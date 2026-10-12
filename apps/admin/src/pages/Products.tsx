@@ -3,11 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ErrorNotice } from "../components/Notice";
-import { api, bahtToSatang, unwrap, uploadFile, type AdminProduct, type ProductIn } from "../lib/api";
+import { api, bahtToSatang, unwrap, uploadFile, type AdminProduct, type ProductImage, type ProductIn } from "../lib/api";
 import { useAuth } from "../lib/auth";
 
 type VariantForm = { sku: string; label: string; price: string; weight: string; existing: boolean };
-type Form = Omit<ProductIn, "variants"> & { variants: VariantForm[]; id?: number; image_url?: string | null };
+type Form = Omit<ProductIn, "variants"> & { variants: VariantForm[]; id?: number; images?: ProductImage[] };
 
 const BANDS = [{ v: "yellow", l: "ยางเหลือง" }, { v: "red", l: "ยางแดง" }, { v: "green", l: "ยางเขียว" }];
 const BADGES = [{ v: "", l: "ไม่มี" }, { v: "best_seller", l: "ขายดี" }, { v: "new", l: "ใหม่" }];
@@ -19,7 +19,7 @@ const blank = (category: string): Form => ({
   fda_number: "", storage_note: "", is_active: true, is_featured: false, sort_order: 0, variants: [blankVariant()],
 });
 const fromProduct = (p: AdminProduct): Form => ({
-  id: p.id, image_url: p.image_url, category_slug: p.category.slug, slug: p.slug, name: p.name, name_en: p.name_en,
+  id: p.id, images: p.images, category_slug: p.category.slug, slug: p.slug, name: p.name, name_en: p.name_en,
   subtitle: p.subtitle, description: p.description, bands: p.bands, badge: p.badge, fda_number: p.fda_number,
   storage_note: p.storage_note, is_active: p.is_active, is_featured: p.is_featured, sort_order: p.sort_order,
   variants: p.variants.map((v) => ({ sku: v.sku, label: v.label, price: String(v.price_satang / 100), weight: v.weight_grams ? String(v.weight_grams) : "", existing: true })),
@@ -38,7 +38,7 @@ function toPayload(f: Form): ProductIn | string {
     if (w !== null && (!Number.isFinite(w) || w <= 0)) return `น้ำหนักของขนาด “${v.label}” ไม่ถูกต้อง`;
     variants.push({ label: v.label.trim(), sku: v.sku.trim(), price_satang: price, weight_grams: w, is_active: true });
   }
-  const { id: _id, image_url: _img, variants: _v, ...rest } = f;
+  const { id: _id, images: _imgs, variants: _v, ...rest } = f;
   return { ...rest, variants };
 }
 
@@ -83,13 +83,23 @@ export function Products() {
     onSuccess: (p) => { setForm(fromProduct(p)); setFormError(null); refresh(); },
     onError: (e) => setFormError(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ"),
   });
+  // Gallery actions. Each returns the whole product, so the photo strip always matches the server.
+  const applyImages = (p: AdminProduct) => { setForm((f) => (f ? { ...f, images: p.images } : f)); refresh(); };
   const upload = useMutation({
-    mutationFn: async (file: File) => uploadFile<AdminProduct>(`/api/admin/catalog/products/${form!.id}/image`, "image", file),
-    onSuccess: (p) => { setForm((f) => (f ? { ...f, image_url: p.image_url } : f)); refresh(); },
+    mutationFn: async (files: File[]) => {
+      let last: AdminProduct | null = null;
+      for (const file of files) last = await uploadFile<AdminProduct>(`/api/admin/catalog/products/${form!.id}/images`, "image", file);
+      return last!;
+    },
+    onSuccess: applyImages,
   });
   const removeImage = useMutation({
-    mutationFn: async () => unwrap(await api.DELETE("/api/admin/catalog/products/{product_id}/image", { params: { path: { product_id: form!.id! } } })),
-    onSuccess: () => { setForm((f) => (f ? { ...f, image_url: null } : f)); refresh(); },
+    mutationFn: async (imageId: number) => unwrap(await api.DELETE("/api/admin/catalog/products/{product_id}/images/{image_id}", { params: { path: { product_id: form!.id!, image_id: imageId } } })),
+    onSuccess: applyImages,
+  });
+  const reorder = useMutation({
+    mutationFn: async (ids: number[]) => unwrap(await api.PUT("/api/admin/catalog/products/{product_id}/image-order", { params: { path: { product_id: form!.id! } }, body: { ids } })),
+    onSuccess: applyImages,
   });
   const toggle = useMutation({
     mutationFn: async (p: AdminProduct) => {
@@ -164,20 +174,44 @@ export function Products() {
             <div className="apanel-head"><h2>{form.id ? "แก้ไขสินค้า" : "เพิ่มสินค้า"}</h2><button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setForm(null)}>ปิด</button></div>
 
             <div className="mh-field">
-              <span className="mh-label">รูปสินค้า</span>
+              <span className="mh-label">รูปสินค้า ({form.images?.length ?? 0}/10)</span>
               {form.id ? (
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <div className="thumb-s" style={{ width: 96 }}>{form.image_url ? <img src={form.image_url} alt="รูปสินค้าปัจจุบัน" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8 }} /> : <LogMark />}</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ position: "absolute", left: -9999 }} id="pimg"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) upload.mutate(f); e.target.value = ""; }} />
-                    <label htmlFor="pimg" className="mh-btn mh-btn--secondary mh-btn--sm" style={{ cursor: "pointer" }}>{upload.isPending ? "กำลังอัปโหลด…" : form.image_url ? "เปลี่ยนรูป" : "อัปโหลดรูป"}</label>
-                    {form.image_url && <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" disabled={removeImage.isPending} onClick={() => removeImage.mutate()}>ลบรูป</button>}
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(104px, 1fr))", gap: 10 }}>
+                    {form.images?.map((im, idx, all) => (
+                      <div key={im.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={{ position: "relative" }}>
+                          <img src={im.url} alt={`รูปที่ ${idx + 1}`} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8, display: "block" }} />
+                          {idx === 0 && <span className="mh-badge" style={{ position: "absolute", top: 6, left: 6, fontSize: 11, padding: "0 8px" }}>รูปหลัก</span>}
+                        </div>
+                        <div className="mh-row" style={{ gap: 4, justifyContent: "center" }}>
+                          <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" aria-label="เลื่อนไปทางซ้าย" disabled={idx === 0 || reorder.isPending}
+                            onClick={() => { const ids = all.map((x) => x.id); [ids[idx - 1], ids[idx]] = [ids[idx], ids[idx - 1]]; reorder.mutate(ids); }}>‹</button>
+                          <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" aria-label="เลื่อนไปทางขวา" disabled={idx === all.length - 1 || reorder.isPending}
+                            onClick={() => { const ids = all.map((x) => x.id); [ids[idx + 1], ids[idx]] = [ids[idx], ids[idx + 1]]; reorder.mutate(ids); }}>›</button>
+                          <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" aria-label={`ลบรูปที่ ${idx + 1}`} disabled={removeImage.isPending}
+                            onClick={() => removeImage.mutate(im.id)}>✕</button>
+                        </div>
+                      </div>
+                    ))}
+                    {(form.images?.length ?? 0) < 10 && (
+                      <label htmlFor="pimg" className="drop" style={{ cursor: "pointer", minHeight: 104, alignContent: "center", padding: 8 }}>
+                        <span className="bold" style={{ color: "var(--ink)" }}>{upload.isPending ? "กำลังอัปโหลด…" : "+ เพิ่มรูป"}</span>
+                      </label>
+                    )}
                   </div>
-                </div>
-              ) : <span className="mh-help">บันทึกสินค้าก่อน แล้วจึงอัปโหลดรูปได้</span>}
-              <span className="mh-help">JPG, PNG หรือ WebP ไม่เกิน 5 MB รูปสี่เหลี่ยมจัตุรัส พื้นหลังเรียบ</span>
-              <ErrorNotice error={upload.error ?? removeImage.error} />
+                  <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp" id="pimg" style={{ position: "absolute", left: -9999 }}
+                    onChange={(e) => {
+                      const room = 10 - (form.images?.length ?? 0);
+                      const files = Array.from(e.target.files ?? []);
+                      e.target.value = "";
+                      if (files.length > room) setFormError(`เพิ่มได้อีก ${room} รูป (สูงสุด 10 รูปต่อสินค้า) ระบบจะอัปโหลดเฉพาะ ${room} รูปแรก`);
+                      if (room > 0 && files.length > 0) upload.mutate(files.slice(0, room));
+                    }} />
+                  <span className="mh-help">ลากเลือกได้หลายรูปพร้อมกัน รูปแรกคือรูปที่ลูกค้าเห็นในหน้าร้าน ลำดับเลื่อนด้วยปุ่ม ‹ ›. JPG, PNG หรือ WebP ไม่เกิน 5 MB ต่อรูป</span>
+                </>
+              ) : <span className="mh-help">บันทึกสินค้าก่อน แล้วจึงเพิ่มรูปได้</span>}
+              <ErrorNotice error={upload.error ?? removeImage.error ?? reorder.error} />
             </div>
 
             <div className="mh-field"><label className="mh-label" htmlFor="pn">ชื่อสินค้า</label><input className="mh-input" id="pn" value={form.name} onChange={(e) => set("name", e.target.value)} required /></div>

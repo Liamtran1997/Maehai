@@ -1,6 +1,11 @@
 from ninja import Field, Schema
 
 
+class ProductImageOut(Schema):
+    id: int
+    url: str
+
+
 class CategoryOut(Schema):
     name: str
     slug: str
@@ -43,6 +48,7 @@ class ProductOut(ProductListOut):
     fda_number: str
     storage_note: str
     variants: list[VariantOut]
+    images: list[ProductImageOut] = []
     promotion: PromotionBrief | None = None
 
 
