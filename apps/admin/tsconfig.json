@@ -1,0 +1,1 @@
+{ "extends": "@maehai/config/tsconfig.base.json", "compilerOptions": { "jsx": "react-jsx" }, "include": ["src", "vite.config.ts"] }

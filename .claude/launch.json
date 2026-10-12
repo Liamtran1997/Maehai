@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "shop", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@maehai/shop", "dev"], "port": 3000 },
+    { "name": "admin", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@maehai/admin", "dev"], "port": 5173 }
+  ]
+}

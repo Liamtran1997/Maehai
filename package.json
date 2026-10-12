@@ -1,0 +1,17 @@
+{
+  "name": "maehai",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "api": "cd apps/api && uv run python manage.py runserver",
+    "gen:api": "cd apps/api && uv run python manage.py export_openapi_schema --api config.api.api --output ../../packages/api-client/openapi.json && pnpm --filter @maehai/api-client generate"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0"
+  }
+}

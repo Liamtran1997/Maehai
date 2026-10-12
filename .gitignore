@@ -1,0 +1,15 @@
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.next/
+dist/
+.turbo/
+.env
+.env.local
+*.sqlite3
+media/
+.idea/
+
+*.tsbuildinfo
+next-env.d.ts

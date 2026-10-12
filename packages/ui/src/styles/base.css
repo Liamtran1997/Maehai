@@ -1,0 +1,8 @@
+@import "./tokens.css";
+@import "./components.css";
+@import "./layout.css";
+
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--surface-100); color: var(--ink);
+  font-family: var(--font-sans); font-size: 16px; line-height: 1.6; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

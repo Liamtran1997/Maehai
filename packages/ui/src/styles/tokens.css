@@ -1,0 +1,31 @@
+/* Maehai — generated from tokens.json */
+:root, [data-theme="light"] {
+  --surface-100: #f7f6ef; --surface-200: #ffffff; --surface-300: #eceadd;
+  --ink: #231e17; --ink-muted: #5e584b; --line: #d8d4c2; --line-strong: #85806a;
+  --leaf: #1f6b43; --leaf-hover: #164f31; --on-leaf: #ffffff; --leaf-soft: #ddefe3;
+  --band-yellow: #f2b91b; --on-band-yellow: #231e17; --band-red: #c8352b; --on-band-red: #ffffff;
+  --focus: #1b5fa8;
+  --success: #176b3f; --success-bg: #ddefe3; --warning: #7a4b00; --warning-bg: #fdebc2;
+  --info: #1b5fa8; --info-bg: #dce9f8; --danger: #a81f18; --danger-bg: #f9dad6;
+  --shadow-card: 0 1px 2px rgba(35,30,23,.08), 0 4px 12px rgba(35,30,23,.06);
+  --shadow-pop: 0 8px 24px rgba(35,30,23,.16);
+}
+[data-theme="dark"] {
+  --surface-100: #16150f; --surface-200: #211f17; --surface-300: #2c2a20;
+  --ink: #f2efe4; --ink-muted: #b9b3a0; --line: #3a372b; --line-strong: #8a846f;
+  --leaf: #62c48b; --leaf-hover: #7fd3a2; --on-leaf: #0e2417; --leaf-soft: #1d3626;
+  --band-yellow: #f2b91b; --on-band-yellow: #231e17; --band-red: #ff7a6b; --on-band-red: #2a0c08;
+  --focus: #8bbdf2;
+  --success: #7fd3a2; --success-bg: #1d3626; --warning: #f5c66b; --warning-bg: #3a2e10;
+  --info: #8bbdf2; --info-bg: #162b44; --danger: #ff9a8e; --danger-bg: #43191a;
+  --shadow-card: 0 1px 2px rgba(0,0,0,.5);
+  --shadow-pop: 0 8px 24px rgba(0,0,0,.6);
+}
+:root {
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 72px;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px; --radius-pill: 999px;
+  --font-display: "Mitr", "IBM Plex Sans Thai", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
