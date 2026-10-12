@@ -13,3 +13,6 @@ media/
 
 *.tsbuildinfo
 next-env.d.ts
+
+# deployment
+deploy/backups/

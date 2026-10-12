@@ -49,3 +49,7 @@ def cancelled(order) -> None:
 
 def low_stock(variant, branch, available: int) -> None:
     _staff("low_stock", texts.staff_low_stock(variant, branch, available), None)
+
+
+def restocked(variant, line_user_id: str) -> None:
+    _queue("customer", line_user_id, "restocked", texts.customer_restocked(variant), None)

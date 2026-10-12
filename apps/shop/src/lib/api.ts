@@ -7,9 +7,10 @@ export type Category = Schemas["CategoryOut"];
 
 const BASE_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-/** Catalog data changes rarely; cache for a minute so the shop stays fast and the API stays quiet. */
+/** Always fresh: prices and promotions must match what the order is charged, to the second.
+ * (A cached page could show a promotion that has already ended. The API is cheap enough to ask every time.) */
 const client = createApiClient(BASE_URL, {
-  fetch: (req) => fetch(req, { next: { revalidate: 60 } }),
+  fetch: (req) => fetch(req, { cache: "no-store" }),
 });
 
 function unwrap<T>(res: { data?: T; error?: unknown; response: Response }): T {
@@ -21,7 +22,7 @@ export async function getCategories(): Promise<Category[]> {
   return unwrap(await client.GET("/api/catalog/categories"));
 }
 
-export async function getProducts(params: { category?: string; q?: string } = {}): Promise<Product[]> {
+export async function getProducts(params: { category?: string; q?: string; featured?: boolean } = {}): Promise<Product[]> {
   return unwrap(await client.GET("/api/catalog/products", { params: { query: params } }));
 }
 

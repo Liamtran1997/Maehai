@@ -14,7 +14,7 @@ from ninja.errors import HttpError
 
 from maehai.notifications import events as notify
 
-from .models import Branch, StockLevel, StockMovement, StockReservation
+from .models import Branch, RestockRequest, StockLevel, StockMovement, StockReservation
 
 
 class _Short(Exception):
@@ -88,11 +88,14 @@ def _low_stock_check(lines, branch) -> None:
 
 
 @transaction.atomic
-def release_for_order(order) -> None:
+def release_for_order(order, *, announce: bool = True) -> None:
+    """announce=False when the units are about to be reserved again (moving branch), so nobody is told "back in stock"."""
     for r in order.reservations.select_for_update().filter(state=StockReservation.State.RESERVED):
         StockLevel.objects.filter(branch=r.branch, variant=r.variant).update(reserved=F("reserved") - r.quantity)
         r.state = StockReservation.State.RELEASED
         r.save(update_fields=["state"])
+        if announce:
+            notify_if_restocked(r.variant)
 
 
 @transaction.atomic
@@ -118,7 +121,7 @@ def reassign_branch(order, branch: Branch) -> None:
     held = list(order.reservations.filter(state=StockReservation.State.RESERVED).select_related("variant", "branch"))
     lines = [(r.variant, r.quantity) for r in held]
     sid = transaction.savepoint()
-    release_for_order(order)
+    release_for_order(order, announce=False)
     shortages = _try_reserve(order, lines, branch)
     if shortages:
         transaction.savepoint_rollback(sid)
@@ -153,6 +156,8 @@ def adjust(*, branch: Branch, variant, reason: str, actor: str, quantity: int, n
     lv.on_hand = new
     lv.save(update_fields=["on_hand"])
     StockMovement.objects.create(branch=branch, variant=variant, delta=delta, on_hand_after=new, reason=reason, note=note[:200], actor=actor)
+    if delta > 0:
+        notify_if_restocked(variant)
     return lv
 
 
@@ -177,3 +182,25 @@ def low_stock_count() -> int:
     """Tracked variant+branch pairs at or under the low-stock line (shown on the dashboard)."""
     return StockLevel.objects.filter(variant__track_stock=True, variant__is_active=True, branch__is_active=True,
                                      on_hand__lte=F("reserved") + settings.LOW_STOCK_THRESHOLD).count()
+
+
+def request_restock_alert(variant, line_user_id: str) -> bool:
+    """Returns False if this customer is already waiting for this variant."""
+    _, created = RestockRequest.objects.get_or_create(variant=variant, line_user_id=line_user_id, notified_at=None)
+    return created
+
+
+def notify_if_restocked(variant) -> int:
+    """Message everyone waiting for this variant once it can be bought again. Returns how many were told.
+    Called after anything that can raise availability: receiving stock, a count, a cancelled order."""
+    from django.utils import timezone
+
+    if not variant.track_stock:
+        return 0
+    if (available_map([variant.id]).get(variant.id) or 0) <= 0:
+        return 0
+    waiting = list(RestockRequest.objects.select_for_update().filter(variant=variant, notified_at__isnull=True))
+    for r in waiting:
+        notify.restocked(variant, r.line_user_id)
+    RestockRequest.objects.filter(pk__in=[r.pk for r in waiting]).update(notified_at=timezone.now())
+    return len(waiting)

@@ -98,7 +98,9 @@ class OrderItem(models.Model):
     product_name = models.CharField(max_length=150)
     variant_label = models.CharField(max_length=60)
     sku = models.CharField(max_length=40)
-    unit_price_satang = models.PositiveIntegerField()
+    unit_price_satang = models.PositiveIntegerField(help_text="What the customer paid per unit, after any promotion")
+    list_price_satang = models.PositiveIntegerField(null=True, blank=True, help_text="Catalog price before promotion")
+    promotion_name = models.CharField(max_length=100, blank=True)
     quantity = models.PositiveSmallIntegerField()
 
     class Meta:
@@ -107,6 +109,10 @@ class OrderItem(models.Model):
     @property
     def line_total_satang(self) -> int:
         return self.unit_price_satang * self.quantity
+
+    @property
+    def line_discount_satang(self) -> int:
+        return ((self.list_price_satang or self.unit_price_satang) - self.unit_price_satang) * self.quantity
 
 
 class OrderEvent(models.Model):

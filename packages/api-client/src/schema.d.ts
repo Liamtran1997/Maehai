@@ -143,26 +143,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/catalog/categories": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Categories
-         * @description Every category, including ones with no visible products yet (the public list hides those).
-         */
-        get: operations["maehai_catalog_admin_api_list_categories"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/admin/catalog/products": {
         parameters: {
             query?: never;
@@ -197,6 +177,122 @@ export interface paths {
          * @description Soft delete: hide from the shop, keep rows so past orders still resolve.
          */
         delete: operations["maehai_catalog_admin_api_archive_product"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/products/{product_id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Image
+         * @description Replace the product photo. The file is opened with Pillow, so a renamed non-image is refused.
+         */
+        post: operations["maehai_catalog_admin_api_upload_image"];
+        /** Delete Image */
+        delete: operations["maehai_catalog_admin_api_delete_image"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Categories
+         * @description Every category, hidden ones and empty ones included (the public list hides those).
+         */
+        get: operations["maehai_catalog_admin_api_list_categories"];
+        put?: never;
+        /** Create Category */
+        post: operations["maehai_catalog_admin_api_create_category"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Category */
+        put: operations["maehai_catalog_admin_api_update_category"];
+        post?: never;
+        /** Delete Category */
+        delete: operations["maehai_catalog_admin_api_delete_category"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/promotions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Promotions */
+        get: operations["maehai_catalog_admin_api_list_promotions"];
+        put?: never;
+        /** Create Promotion */
+        post: operations["maehai_catalog_admin_api_create_promotion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/promotions/{promotion_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Promotion */
+        put: operations["maehai_catalog_admin_api_update_promotion"];
+        post?: never;
+        /** Delete Promotion */
+        delete: operations["maehai_catalog_admin_api_delete_promotion"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog/promotions/{promotion_id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End Promotion
+         * @description Stop a running promotion now. Keeps the record (orders already store the name and price they were sold at).
+         */
+        post: operations["maehai_catalog_admin_api_end_promotion"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -568,6 +664,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/payments/{payment_id}/slip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Slip
+         * @description Payment slips are private. They are stored outside the public /media paths and only served here to logged-in staff.
+         */
+        get: operations["maehai_orders_admin_api_download_slip"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/reports/summary": {
         parameters: {
             query?: never;
@@ -627,6 +743,10 @@ export interface components {
             image_url?: string | null;
             /** Price From Satang */
             price_from_satang: number;
+            /** Original Price From Satang */
+            original_price_from_satang?: number | null;
+            /** Promotion Label */
+            promotion_label?: string | null;
             /**
              * In Stock
              * @default true
@@ -650,6 +770,10 @@ export interface components {
             image_url?: string | null;
             /** Price From Satang */
             price_from_satang: number;
+            /** Original Price From Satang */
+            original_price_from_satang?: number | null;
+            /** Promotion Label */
+            promotion_label?: string | null;
             /**
              * In Stock
              * @default true
@@ -663,6 +787,16 @@ export interface components {
             storage_note: string;
             /** Variants */
             variants: components["schemas"]["VariantOut"][];
+            promotion?: components["schemas"]["PromotionBrief"] | null;
+        };
+        /** PromotionBrief */
+        PromotionBrief: {
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+            /** Ends At */
+            ends_at: string | null;
         };
         /** VariantOut */
         VariantOut: {
@@ -674,10 +808,16 @@ export interface components {
             sku: string;
             /** Price Satang */
             price_satang: number;
+            /** Original Price Satang */
+            original_price_satang?: number | null;
+            /** Promotion Label */
+            promotion_label?: string | null;
             /** Weight Grams */
             weight_grams: number | null;
             /** Available */
             available?: number | null;
+            /** Restock Alert Url */
+            restock_alert_url?: string | null;
         };
         /** AdminProductOut */
         AdminProductOut: {
@@ -696,6 +836,10 @@ export interface components {
             image_url?: string | null;
             /** Price From Satang */
             price_from_satang: number;
+            /** Original Price From Satang */
+            original_price_from_satang?: number | null;
+            /** Promotion Label */
+            promotion_label?: string | null;
             /**
              * In Stock
              * @default true
@@ -709,10 +853,17 @@ export interface components {
             storage_note: string;
             /** Variants */
             variants: components["schemas"]["VariantOut"][];
+            promotion?: components["schemas"]["PromotionBrief"] | null;
             /** Id */
             id: number;
             /** Is Active */
             is_active: boolean;
+            /** Is Featured */
+            is_featured: boolean;
+            /** Sort Order */
+            sort_order: number;
+            /** Name En */
+            name_en: string;
         };
         /** ProductIn */
         ProductIn: {
@@ -762,6 +913,16 @@ export interface components {
              * @default true
              */
             is_active: boolean;
+            /**
+             * Is Featured
+             * @default false
+             */
+            is_featured: boolean;
+            /**
+             * Sort Order
+             * @default 0
+             */
+            sort_order: number;
             /** Variants */
             variants: components["schemas"]["VariantIn"][];
         };
@@ -775,6 +936,103 @@ export interface components {
             price_satang: number;
             /** Weight Grams */
             weight_grams?: number | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /** AdminCategoryOut */
+        AdminCategoryOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Slug */
+            slug: string;
+            /** Sort Order */
+            sort_order: number;
+            /** Is Active */
+            is_active: boolean;
+            /** Product Count */
+            product_count: number;
+        };
+        /** CategoryIn */
+        CategoryIn: {
+            /** Name */
+            name: string;
+            /** Slug */
+            slug: string;
+            /**
+             * Sort Order
+             * @default 0
+             */
+            sort_order: number;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /** PromotionOut */
+        PromotionOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Value */
+            value: number;
+            /** Label */
+            label: string;
+            /** Scope */
+            scope: string;
+            /** Product Ids */
+            product_ids: number[];
+            /** Category Ids */
+            category_ids: number[];
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /** Ends At */
+            ends_at: string | null;
+            /** Is Active */
+            is_active: boolean;
+            /** State */
+            state: string;
+            /** Warnings */
+            warnings: string[];
+        };
+        /** PromotionIn */
+        PromotionIn: {
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Value */
+            value: number;
+            /** Scope */
+            scope: string;
+            /**
+             * Product Ids
+             * @default []
+             */
+            product_ids: number[];
+            /**
+             * Category Ids
+             * @default []
+             */
+            category_ids: number[];
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /** Ends At */
+            ends_at?: string | null;
             /**
              * Is Active
              * @default true
@@ -832,6 +1090,13 @@ export interface components {
             variant_label: string;
             /** Unit Price Satang */
             unit_price_satang: number;
+            /** List Price Satang */
+            list_price_satang?: number | null;
+            /**
+             * Promotion Name
+             * @default
+             */
+            promotion_name: string;
             /** Quantity */
             quantity: number;
             /** Line Total Satang */
@@ -873,6 +1138,11 @@ export interface components {
             items: components["schemas"]["ItemOut"][];
             /** Subtotal Satang */
             subtotal_satang: number;
+            /**
+             * Discount Satang
+             * @default 0
+             */
+            discount_satang: number;
             /** Shipping Fee Satang */
             shipping_fee_satang: number | null;
             /** Vat Satang */
@@ -1382,6 +1652,7 @@ export interface operations {
             query?: {
                 category?: string | null;
                 q?: string | null;
+                featured?: boolean;
             };
             header?: never;
             path?: never;
@@ -1418,26 +1689,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductOut"];
-                };
-            };
-        };
-    };
-    maehai_catalog_admin_api_list_categories: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CategoryOut"][];
                 };
             };
         };
@@ -1529,6 +1780,262 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    maehai_catalog_admin_api_upload_image: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Image
+                     * Format: binary
+                     */
+                    image: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProductOut"];
+                };
+            };
+        };
+    };
+    maehai_catalog_admin_api_delete_image: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProductOut"];
+                };
+            };
+        };
+    };
+    maehai_catalog_admin_api_list_categories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryOut"][];
+                };
+            };
+        };
+    };
+    maehai_catalog_admin_api_create_category: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryOut"];
+                };
+            };
+        };
+    };
+    maehai_catalog_admin_api_update_category: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryOut"];
+                };
+            };
+        };
+    };
+    maehai_catalog_admin_api_delete_category: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    maehai_catalog_admin_api_list_promotions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionOut"][];
+                };
+            };
+        };
+    };
+    maehai_catalog_admin_api_create_promotion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromotionIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionOut"];
+                };
+            };
+        };
+    };
+    maehai_catalog_admin_api_update_promotion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                promotion_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromotionIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionOut"];
+                };
+            };
+        };
+    };
+    maehai_catalog_admin_api_delete_promotion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                promotion_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    maehai_catalog_admin_api_end_promotion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                promotion_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionOut"];
+                };
             };
         };
     };
@@ -2029,6 +2536,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["OrderOut"];
                 };
+            };
+        };
+    };
+    maehai_orders_admin_api_download_slip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                payment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -113,3 +113,13 @@ def test_admin_categories_include_empty_ones(staff_client, seeded):
     assert "new-empty" in slugs
     public = [c["slug"] for c in staff_client.get("/api/catalog/categories").json()]
     assert "new-empty" not in public
+
+
+def test_products_follow_sort_order_not_insertion_order(client, seeded):
+    # Reverse the intended order: if the query ever loses its ORDER BY, Postgres would return arbitrary rows.
+    for i, p in enumerate(Product.objects.order_by("id")):
+        Product.objects.filter(pk=p.pk).update(sort_order=100 - i)
+    names = [p["slug"] for p in client.get("/api/catalog/products").json()]
+    expected = list(Product.objects.order_by("sort_order", "name").values_list("slug", flat=True))
+    assert names == expected
+    assert names[0] == Product.objects.order_by("-id").first().slug     # last inserted now sorts first

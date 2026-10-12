@@ -5,8 +5,12 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-secret")
 DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-secret" if DEBUG else "")
+if not DEBUG and (len(SECRET_KEY) < 32 or SECRET_KEY.startswith("dev-only")):
+    from django.core.exceptions import ImproperlyConfigured
+
+    raise ImproperlyConfigured("Set DJANGO_SECRET_KEY to a random string of 32+ characters when DJANGO_DEBUG=0")
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 DOMAIN_APPS = [
@@ -37,6 +41,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -57,15 +62,16 @@ TEMPLATES = [{
 WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {"default": dj_database_url.config(
-    default=os.environ.get("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"))}
+    default=os.environ.get("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"), conn_max_age=60)}
 
 LANGUAGE_CODE = "th"
 TIME_ZONE = "Asia/Bangkok"
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", BASE_DIR / "media"))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = [o for o in os.environ.get(
@@ -132,3 +138,18 @@ RATE_LIMITS = {
 DEFAULT_FULFILLMENT_BRANCH = os.environ.get("DEFAULT_FULFILLMENT_BRANCH", "srinarong")  # ships delivery orders unless it is out of stock
 LOW_STOCK_THRESHOLD = int(os.environ.get("LOW_STOCK_THRESHOLD", "5"))
 ORDER_UNPAID_EXPIRY_HOURS = int(os.environ.get("ORDER_UNPAID_EXPIRY_HOURS", "24"))  # unpaid orders release their stock after this long
+
+# Production hardening. TLS is terminated by the reverse proxy (Caddy), which sets X-Forwarded-Proto.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
+    X_FRAME_OPTIONS = "DENY"
+    LOGGING = {
+        "version": 1, "disable_existing_loggers": False,
+        "handlers": {"console": {"class": "logging.StreamHandler"}},
+        "root": {"handlers": ["console"], "level": os.environ.get("LOG_LEVEL", "INFO")},
+    }

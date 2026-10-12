@@ -10,6 +10,8 @@ export function ProductGrid({ products }: { products: Product[] }) {
           name={p.name}
           subtitle={p.subtitle || undefined}
           priceSatang={p.price_from_satang}
+          originalPriceSatang={p.original_price_from_satang}
+          promotionLabel={p.promotion_label}
           badge={p.in_stock === false ? { label: "หมด", tone: "red" } : BADGE_LABEL[p.badge]}
           bands={toBands(p.bands)}
           imageSrc={p.image_url ?? undefined}

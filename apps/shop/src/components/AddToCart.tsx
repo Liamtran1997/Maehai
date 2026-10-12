@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useCart } from "../lib/cart";
 import { Stepper } from "./Stepper";
 
-type Variant = { sku: string; label: string; price_satang: number; weight_grams: number | null; available?: number | null };
+type Variant = {
+  sku: string; label: string; price_satang: number; weight_grams: number | null; available?: number | null;
+  original_price_satang?: number | null; restock_alert_url?: string | null;
+};
 
 const soldOut = (v: Variant) => v.available === 0;
 
@@ -37,9 +40,17 @@ export function AddToCart({ slug, productName, variants }: { slug: string; produ
         <Stepper value={qty} onChange={(n) => setQty(Math.max(1, Math.min(max, n)))} />
       </div>
       {low && <p className="sm" style={{ color: "var(--warning)" }} role="status">เหลือ {v.available} ชิ้น</p>}
+      {variants.filter((x) => soldOut(x) && x.restock_alert_url).map((x) => (
+        <div key={x.sku} className="notice notice--info">
+          <p>ขนาด{x.label}หมดชั่วคราว <a className="bold" href={x.restock_alert_url!} target="_blank" rel="noreferrer">ให้ร้านแจ้งทาง LINE เมื่อมีของ</a></p>
+        </div>
+      ))}
       <div className="rowline">
         <span className="ink-muted">รวม</span>
-        <span className="mh-price num">{formatTHB(v.price_satang * qty, { hideZeroSatang: true })}</span>
+        <span className={`mh-price num${v.original_price_satang ? " mh-price--sale" : ""}`}>
+          {formatTHB(v.price_satang * qty, { hideZeroSatang: true })}
+          {v.original_price_satang ? <s>{formatTHB(v.original_price_satang * qty, { hideZeroSatang: true })}</s> : null}
+        </span>
       </div>
       <button className="mh-btn mh-btn--accent btn-block" type="button" disabled={soldOut(v)}
         onClick={() => { cart.add({ sku: v.sku, slug, productName, variantLabel: v.label, unitPriceSatang: v.price_satang, quantity: qty }); setAdded(true); }}>

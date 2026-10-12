@@ -31,6 +31,8 @@ class ItemOut(Schema):
     product_name: str
     variant_label: str
     unit_price_satang: int
+    list_price_satang: int | None = None
+    promotion_name: str = ""
     quantity: int
     line_total_satang: int
 
@@ -83,6 +85,7 @@ class OrderOut(Schema):
     note: str
     items: list[ItemOut]
     subtotal_satang: int
+    discount_satang: int = 0
     shipping_fee_satang: int | None
     vat_satang: int
     total_satang: int | None

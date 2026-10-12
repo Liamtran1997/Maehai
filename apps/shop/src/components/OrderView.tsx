@@ -78,6 +78,7 @@ export function OrderView({ number, token }: { number: string; token: string }) 
         ))}
         <hr className="hr" />
         <div className="rowline"><span className="ink-muted">ยอดสินค้า</span><span className="num">{formatTHB(order.subtotal_satang)}</span></div>
+        {order.discount_satang > 0 && <div className="rowline"><span className="ink-muted">ส่วนลดโปรโมชัน (รวมในยอดแล้ว)</span><span className="num" style={{ color: "var(--band-red)" }}>−{formatTHB(order.discount_satang)}</span></div>}
         <div className="rowline"><span className="ink-muted">ค่าจัดส่ง</span><span className="num">{order.shipping_fee_satang === null ? "รอร้านแจ้ง" : formatTHB(order.shipping_fee_satang)}</span></div>
         <div className="rowline"><span className="bold">รวมทั้งสิ้น</span><span className="mh-price num">{order.total_satang === null ? "—" : formatTHB(order.total_satang)}</span></div>
       </div>

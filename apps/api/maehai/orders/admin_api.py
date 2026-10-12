@@ -1,5 +1,6 @@
 """Staff-only order management for the back office."""
 from django.db.models import Q
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
@@ -60,13 +61,13 @@ def set_status(request, number: str, data: StatusIn):
 @router.post("/payments/{payment_id}/confirm", response=PaymentOut)
 def confirm_payment(request, payment_id: int):
     p = payment_services.confirm(get_object_or_404(Payment, pk=payment_id), actor=request.user.get_username())
-    return payment_out(request, p, include_qr=False)
+    return payment_out(request, p, include_qr=False, staff=True)
 
 
 @router.post("/payments/{payment_id}/reject", response=PaymentOut)
 def reject_payment(request, payment_id: int, data: RejectIn):
     p = payment_services.reject(get_object_or_404(Payment, pk=payment_id), actor=request.user.get_username(), reason=data.reason)
-    return payment_out(request, p, include_qr=False)
+    return payment_out(request, p, include_qr=False, staff=True)
 
 
 @router.post("/orders/{number}/branch", response=OrderOut)
@@ -87,3 +88,15 @@ def set_branch(request, number: str, data: BranchIn):
     stock.reassign_branch(order, branch)
     services.log(order, "branch", f"จัดจากสาขา {branch.name}", actor=request.user.get_username())
     return order_out(request, _qs().get(pk=order.pk), staff=True)
+
+
+@router.get("/payments/{payment_id}/slip")
+def download_slip(request, payment_id: int):
+    """Payment slips are private. They are stored outside the public /media paths and only served here to logged-in staff."""
+    p = get_object_or_404(Payment, pk=payment_id)
+    if not p.slip:
+        raise Http404
+    resp = FileResponse(p.slip.open("rb"))
+    resp["Cache-Control"] = "private, no-store"
+    resp["X-Content-Type-Options"] = "nosniff"
+    return resp

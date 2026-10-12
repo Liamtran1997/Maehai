@@ -80,3 +80,16 @@ class StockReservation(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=["order", "state"])]
+
+
+class RestockRequest(models.Model):
+    """A customer asked (through LINE) to be told when a sold-out variant is back. Notified once, then closed."""
+
+    variant = models.ForeignKey("catalog.ProductVariant", on_delete=models.CASCADE, related_name="restock_requests")
+    line_user_id = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+    notified_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["variant", "line_user_id"], condition=Q(notified_at__isnull=True),
+                                               name="one_open_restock_request")]

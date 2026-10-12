@@ -6,6 +6,7 @@ from django.db import transaction
 from ninja.errors import HttpError
 
 from maehai.catalog.models import ProductVariant
+from maehai.catalog.pricing import prices_for
 from maehai.core.money import vat_included
 from maehai.inventory import services as stock
 from maehai.notifications import events as notify
@@ -51,7 +52,7 @@ def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str
         raise HttpError(422, f"จำนวนต้องอยู่ระหว่าง 1 ถึง {MAX_QTY_PER_LINE}")
 
     variants = {v.sku: v for v in ProductVariant.objects.select_related("product")
-                .filter(sku__in=qty, is_active=True, product__is_active=True)}
+                .filter(sku__in=qty, is_active=True, product__is_active=True, product__category__is_active=True)}
     missing = sorted(set(qty) - set(variants))
     if missing:
         raise HttpError(422, f"สินค้าบางรายการหมดหรือไม่มีในระบบ: {', '.join(missing)}")
@@ -70,7 +71,8 @@ def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str
     if method.requires_address and not all(address[k] for k in ("address_line", "province", "postal_code")):
         raise HttpError(422, "กรุณากรอกที่อยู่จัดส่งให้ครบ")
 
-    subtotal = sum(variants[s].price_satang * q for s, q in qty.items())
+    prices = prices_for(variants.values())          # promotions applied here, server-side, at the moment of ordering
+    subtotal = sum(prices[variants[s].id].satang * q for s, q in qty.items())
     quoted = method.fee_is_quoted
     order = Order.objects.create(
         customer_name=customer_name.strip(), phone=normalize_phone(phone), shipping_method=method,
@@ -82,7 +84,10 @@ def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str
     )
     OrderItem.objects.bulk_create([
         OrderItem(order=order, variant=variants[s], product_name=variants[s].product.name,
-                  variant_label=variants[s].label, sku=s, unit_price_satang=variants[s].price_satang, quantity=q)
+                  variant_label=variants[s].label, sku=s, quantity=q,
+                  unit_price_satang=prices[variants[s].id].satang,
+                  list_price_satang=prices[variants[s].id].list_satang,
+                  promotion_name=prices[variants[s].id].promotion.name if prices[variants[s].id].discounted else "")
         for s, q in qty.items()
     ])
     order.fulfillment_branch = stock.reserve_for_order(order, [(variants[s], q) for s, q in qty.items()], method)

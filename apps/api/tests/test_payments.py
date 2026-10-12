@@ -72,7 +72,8 @@ def test_missing_promptpay_config(client, order, settings):
 def test_slip_then_staff_confirms_order_becomes_paid(client, staff_client, order):
     charge(client, order)
     r = upload(client, order)
-    assert r.status_code == 200 and r.json()["status"] == "slip_submitted" and r.json()["slip_url"]
+    assert r.status_code == 200 and r.json()["status"] == "slip_submitted"
+    assert r.json()["slip_url"] is None            # customers never get a link to the slip image
     assert Order.objects.get(number=order["number"]).status == "waiting_payment"   # not paid until someone confirms
 
     pid = r.json()["id"]
@@ -160,3 +161,22 @@ def test_full_happy_path_to_done(client, staff_client, order):
     assert r.json()["tracking_ref"] == "UB-12345"
     assert st("done").json()["status"] == "done"
     assert st("cancelled").status_code == 409
+
+
+def test_slip_is_only_downloadable_by_staff(client, staff_client, order):
+    charge(client, order)
+    pid = upload(client, order).json()["id"]
+
+    url = staff_client.get(f"/api/admin/orders/{order['number']}").json()["payment"]["slip_url"]
+    assert url and url.endswith(f"/api/admin/payments/{pid}/slip")
+    r = staff_client.get(f"/api/admin/payments/{pid}/slip")
+    assert r.status_code == 200 and r["Cache-Control"] == "private, no-store" and b"".join(r.streaming_content).startswith(b"\x89PNG")
+
+    assert client.get(f"/api/admin/payments/{pid}/slip").status_code == 401        # anonymous
+    leaked = client.get(f"/api/orders/{order['number']}", {"token": order["token"]}).json()["payment"]
+    assert leaked["slip_url"] is None
+
+
+def test_staff_download_of_missing_slip_is_404(client, staff_client, order):
+    pid = charge(client, order).json()["id"]
+    assert staff_client.get(f"/api/admin/payments/{pid}/slip").status_code == 404

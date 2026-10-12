@@ -66,11 +66,12 @@ export function OrderDetail() {
             <div className="mh-tablewrap" style={{ border: 0 }}>
               <table className="mh-table">
                 <thead><tr><th>สินค้า</th><th className="r">ราคา</th><th className="r">จำนวน</th><th className="r">รวม</th></tr></thead>
-                <tbody>{o.items.map((i) => <tr key={i.sku}><td>{i.product_name} ({i.variant_label})</td><td className="r">{formatTHB(i.unit_price_satang)}</td><td className="r">{i.quantity}</td><td className="r">{formatTHB(i.line_total_satang)}</td></tr>)}</tbody>
+                <tbody>{o.items.map((i) => <tr key={i.sku}><td>{i.product_name} ({i.variant_label}){i.promotion_name && <><br /><span className="xs" style={{ color: "var(--band-red)" }}>{i.promotion_name}</span></>}</td><td className="r">{formatTHB(i.unit_price_satang)}{i.list_price_satang && i.list_price_satang > i.unit_price_satang ? <><br /><s className="xs ink-muted">{formatTHB(i.list_price_satang)}</s></> : null}</td><td className="r">{i.quantity}</td><td className="r">{formatTHB(i.line_total_satang)}</td></tr>)}</tbody>
               </table>
             </div>
             <hr className="hr" />
             <div className="rowline"><span className="ink-muted">ยอดสินค้า</span><span className="num">{formatTHB(o.subtotal_satang)}</span></div>
+            {o.discount_satang > 0 && <div className="rowline"><span className="ink-muted">ส่วนลดโปรโมชัน (รวมในยอดแล้ว)</span><span className="num">−{formatTHB(o.discount_satang)}</span></div>}
             <div className="rowline"><span className="ink-muted">ค่าจัดส่ง</span><span className="num">{o.shipping_fee_satang === null ? "ยังไม่แจ้ง" : formatTHB(o.shipping_fee_satang)}</span></div>
             {o.vat_satang > 0 && <div className="rowline"><span className="ink-muted">ภาษีมูลค่าเพิ่มรวมในยอด</span><span className="num">{formatTHB(o.vat_satang)}</span></div>}
             <div className="rowline"><span className="bold">รวมทั้งสิ้น</span><span className="mh-price num">{o.total_satang === null ? "—" : formatTHB(o.total_satang)}</span></div>

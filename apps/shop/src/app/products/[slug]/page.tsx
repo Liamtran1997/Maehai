@@ -1,4 +1,4 @@
-import { LogMark } from "@maehai/ui";
+import { LogMark, formatThaiDate } from "@maehai/ui";
 import { AddToCart } from "../../../components/AddToCart";
 import { notFound } from "next/navigation";
 import { ShopHeader } from "../../../components/ShopHeader";
@@ -28,6 +28,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {p.subtitle && <p className="ink-muted">{p.subtitle}</p>}
         </div>
 
+        {p.promotion && (
+          <div className="notice notice--warn" role="note">
+            <p><b>{p.promotion.label}</b> · {p.promotion.name}{p.promotion.ends_at && ` ถึง ${formatThaiDate(p.promotion.ends_at)}`}</p>
+          </div>
+        )}
         <AddToCart slug={p.slug} productName={p.name} variants={p.variants} />
 
         {p.description && <p>{p.description}</p>}

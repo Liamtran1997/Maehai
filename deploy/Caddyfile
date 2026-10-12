@@ -1,0 +1,56 @@
+# One domain for everything:
+#   /            customer shop (Next.js)
+#   /admin       back office (static files built into this image)
+#   /api, /django-admin, /static   Django API
+#   /media/products/*              product photos only. Payment slips are NEVER served from here.
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	# Anything under /media that is not a product photo (slips!) is refused outright.
+	@privateMedia path /media/* 
+	@productMedia path /media/products/*
+
+	handle @productMedia {
+		root * /srv
+		file_server
+	}
+	handle @privateMedia {
+		respond "Not found" 404
+	}
+
+	handle /api/* {
+		request_body {
+			max_size 8MB
+		}
+		reverse_proxy api:8000
+	}
+	handle /django-admin/* {
+		reverse_proxy api:8000
+	}
+	handle /static/* {
+		reverse_proxy api:8000
+	}
+
+	handle /admin* {
+		uri strip_prefix /admin
+		root * /srv/admin
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle {
+		reverse_proxy shop:3000
+	}
+
+	log {
+		output stdout
+	}
+}

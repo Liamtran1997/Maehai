@@ -24,7 +24,8 @@ const BRANCHES = [
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [categories, products] = await Promise.all([getCategories(), getProducts()]);
+  const [categories, featured, products] = await Promise.all([getCategories(), getProducts({ featured: true }), getProducts()]);
+  const popular = (featured.length ? featured : products).slice(0, 4);
   return (
     <>
       <ShopHeader />
@@ -60,7 +61,7 @@ export default async function Home() {
 
       <section className="sec" style={{ paddingTop: 0 }}>
         <div className="sec-head"><h2>รสยอดนิยม</h2><a className="sm bold" href="/products">ดูทั้งหมด</a></div>
-        <ProductGrid products={products.slice(0, 4)} />
+        <ProductGrid products={popular} />
       </section>
 
       <section className="sec" style={{ background: "var(--surface-300)" }}>

@@ -1,0 +1,31 @@
+# syntax=docker/dockerfile:1
+# Next.js customer site, built as a standalone server.
+FROM node:22-alpine AS build
+RUN corepack enable
+WORKDIR /repo
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/shop/package.json apps/shop/
+COPY packages/ui/package.json packages/ui/
+COPY packages/api-client/package.json packages/api-client/
+COPY packages/config/package.json packages/config/
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile --filter @maehai/shop...
+
+COPY apps/shop apps/shop
+COPY packages packages
+# "" = the browser calls the API on the same domain (/api/...). Baked into the client bundle at build time.
+ARG NEXT_PUBLIC_API_URL=""
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_TELEMETRY_DISABLED=1
+RUN pnpm --filter @maehai/shop build
+
+FROM node:22-alpine AS run
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+WORKDIR /app
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build --chown=app:app /repo/apps/shop/.next/standalone ./
+COPY --from=build --chown=app:app /repo/apps/shop/.next/static ./apps/shop/.next/static
+USER app
+EXPOSE 3000
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
+  CMD wget -qO- http://127.0.0.1:3000/track >/dev/null || exit 1
+CMD ["node", "apps/shop/server.js"]

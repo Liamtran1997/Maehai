@@ -9,6 +9,9 @@ export type AdminProduct = Schemas["AdminProductOut"];
 export type ProductIn = Schemas["ProductIn"];
 export type Summary = Schemas["SummaryOut"];
 export type Category = Schemas["CategoryOut"];
+export type AdminCategory = Schemas["AdminCategoryOut"];
+export type Promotion = Schemas["PromotionOut"];
+export type PromotionIn = Schemas["PromotionIn"];
 
 export const api = createApiClient(API_URL, { credentials: "include" });
 
@@ -46,4 +49,15 @@ export function bahtToSatang(text: string): number | null {
   const t = text.replace(/,/g, "").trim();
   if (!/^\d+(\.\d{1,2})?$/.test(t)) return null;
   return Math.round(parseFloat(t) * 100);
+}
+
+/** Multipart upload with the session cookie and CSRF header (openapi-fetch is JSON-only). */
+export async function uploadFile<T>(path: string, field: string, file: File): Promise<T> {
+  const fd = new FormData();
+  fd.append(field, file);
+  const t = document.cookie.split("; ").find((c) => c.startsWith("csrftoken="))?.split("=")[1];
+  const r = await fetch(`${API_URL}${path}`, { method: "POST", body: fd, credentials: "include", headers: t ? { "X-CSRFToken": decodeURIComponent(t) } : {} });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new ApiError(r.status, typeof body.detail === "string" ? body.detail : `อัปโหลดไม่สำเร็จ (${r.status})`);
+  return body as T;
 }

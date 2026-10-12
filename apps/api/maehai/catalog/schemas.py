@@ -10,9 +10,12 @@ class VariantOut(Schema):
     id: int
     label: str
     sku: str
-    price_satang: int
+    price_satang: int                       # selling price now (after promotion). Admin endpoints return the list price here.
+    original_price_satang: int | None = None  # list price, only when a promotion lowers it
+    promotion_label: str | None = None        # e.g. "ลด 10%"
     weight_grams: int | None
     available: int | None = None   # units still buyable; null = not counted (always available)
+    restock_alert_url: str | None = None  # LINE link to ask for a back-in-stock message (sold-out tracked variants only)
 
 
 class ProductListOut(Schema):
@@ -24,7 +27,15 @@ class ProductListOut(Schema):
     bands: list[str]
     image_url: str | None = None
     price_from_satang: int
+    original_price_from_satang: int | None = None
+    promotion_label: str | None = None
     in_stock: bool = True
+
+
+class PromotionBrief(Schema):
+    name: str
+    label: str
+    ends_at: str | None
 
 
 class ProductOut(ProductListOut):
@@ -32,6 +43,7 @@ class ProductOut(ProductListOut):
     fda_number: str
     storage_note: str
     variants: list[VariantOut]
+    promotion: PromotionBrief | None = None
 
 
 class VariantIn(Schema):
@@ -54,9 +66,14 @@ class ProductIn(Schema):
     fda_number: str = ""
     storage_note: str = ""
     is_active: bool = True
+    is_featured: bool = False
+    sort_order: int = Field(default=0, ge=0, le=32767)
     variants: list[VariantIn] = Field(min_length=1)
 
 
 class AdminProductOut(ProductOut):
     id: int
     is_active: bool
+    is_featured: bool
+    sort_order: int
+    name_en: str

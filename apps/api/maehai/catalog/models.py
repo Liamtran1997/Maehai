@@ -1,11 +1,12 @@
 from django.db import models
-from django.db.models import Min, Q
+from django.db.models import F, Min, Q
 
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
     sort_order = models.PositiveSmallIntegerField(default=0)
+    is_active = models.BooleanField(default=True, help_text="Hidden categories and their products disappear from the shop")
 
     class Meta:
         ordering = ["sort_order", "name"]
@@ -32,10 +33,12 @@ class Badge(models.TextChoices):
 class ProductQuerySet(models.QuerySet):
     def visible(self):
         """Products the shop may show: active and with at least one active variant."""
-        return self.filter(is_active=True, variants__is_active=True).distinct()
+        return self.filter(is_active=True, category__is_active=True, variants__is_active=True).distinct()
 
     def with_price_from(self):
-        return self.annotate(price_from_satang=Min("variants__price_satang", filter=Q(variants__is_active=True)))
+        # order_by is explicit on purpose: Django drops Meta.ordering from GROUP BY queries, and Postgres
+        # then returns rows in arbitrary order (SQLite happens to return them by id).
+        return self.annotate(price_from_satang=Min("variants__price_satang", filter=Q(variants__is_active=True))).order_by("sort_order", "name")
 
 
 class Product(models.Model):
@@ -51,6 +54,7 @@ class Product(models.Model):
     fda_number = models.CharField("เลข อย.", max_length=40, blank=True)
     storage_note = models.CharField(max_length=200, blank=True)
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False, help_text="Shown in the home page's best-sellers row")
     sort_order = models.PositiveSmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -85,3 +89,61 @@ class ProductVariant(models.Model):
 
     def __str__(self) -> str:
         return f"{self.product.name} ({self.label})"
+
+
+class Promotion(models.Model):
+    """A time-boxed discount on products, whole categories, or everything.
+
+    Rules (see docs/specs/product-management.md):
+      - Never stacked: when several promotions cover a variant, the customer gets the single biggest discount.
+      - A discount that would make the price 0 or less is ignored, never applied.
+      - Percent discounts round half up to the satang.
+    """
+
+    class Kind(models.TextChoices):
+        PERCENT = "percent", "ลดเป็นเปอร์เซ็นต์"
+        AMOUNT = "amount", "ลดเป็นจำนวนเงิน"
+
+    class Scope(models.TextChoices):
+        PRODUCTS = "products", "สินค้าที่เลือก"
+        CATEGORIES = "categories", "ทั้งหมวดหมู่"
+        ALL = "all", "สินค้าทุกชิ้น"
+
+    name = models.CharField(max_length=100, help_text="Shown to customers, e.g. ลดรับสงกรานต์")
+    kind = models.CharField(max_length=10, choices=Kind.choices)
+    value = models.PositiveIntegerField(help_text="Percent (1-90) or satang off per unit")
+    scope = models.CharField(max_length=12, choices=Scope.choices)
+    products = models.ManyToManyField(Product, blank=True, related_name="promotions")
+    categories = models.ManyToManyField(Category, blank=True, related_name="promotions")
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField(null=True, blank=True, help_text="Empty = until switched off")
+    is_active = models.BooleanField(default=True)
+    created_by = models.CharField(max_length=80, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-starts_at", "-id"]
+        constraints = [
+            models.CheckConstraint(condition=Q(value__gt=0), name="promotion_value_positive"),
+            models.CheckConstraint(condition=~Q(kind="percent") | Q(value__lte=90), name="promotion_percent_at_most_90"),
+            models.CheckConstraint(condition=Q(ends_at__isnull=True) | Q(ends_at__gt=F("starts_at")), name="promotion_ends_after_start"),
+        ]
+
+    def discount_for(self, list_price: int) -> int:
+        """Satang off one unit at this list price. 0 when the promotion would make the item free or negative."""
+        if self.kind == self.Kind.PERCENT:
+            off = (list_price * self.value + 50) // 100
+        else:
+            off = self.value
+        return off if 0 < off < list_price else 0
+
+    @property
+    def label(self) -> str:
+        if self.kind == self.Kind.PERCENT:
+            return f"ลด {self.value}%"
+        baht = self.value / 100
+        return f"ลด ฿{baht:,.0f}" if self.value % 100 == 0 else f"ลด ฿{baht:,.2f}"
+
+    def __str__(self) -> str:
+        return self.name

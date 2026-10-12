@@ -54,4 +54,17 @@ def link_ok(order) -> str:
     return f"เชื่อมต่อ LINE กับคำสั่งซื้อ {order.number} แล้ว\nร้านจะแจ้งเมื่อมีค่าจัดส่ง ได้รับเงิน และจัดส่งสินค้า"
 
 
+def customer_restocked(variant) -> str:
+    return (f"{variant.product.name} ({variant.label}) กลับมามีของแล้ว\nสั่งได้เลยที่: "
+            f"{settings.PUBLIC_SHOP_URL}/products/{variant.product.slug}\n(จำนวนจำกัด ร้านไม่ได้กันของไว้ให้)")
+
+
+def restock_ok(variant) -> str:
+    return f"รับทราบ ร้านจะแจ้งทาง LINE นี้เมื่อ {variant.product.name} ({variant.label}) กลับมามีของ"
+
+
+def restock_in_stock(variant) -> str:
+    return f"{variant.product.name} ({variant.label}) ตอนนี้มีของอยู่แล้ว สั่งได้เลยที่ {settings.PUBLIC_SHOP_URL}/products/{variant.product.slug}"
+
+
 LINK_HELP = "ส่งข้อความจากหน้าคำสั่งซื้อบนเว็บเพื่อเชื่อมต่อ LINE (กดปุ่ม “รับแจ้งเตือนทาง LINE”)"

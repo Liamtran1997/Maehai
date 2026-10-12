@@ -9,7 +9,8 @@ apps/admin    Back office (React + Vite)
 packages/ui          Shared design system (tokens from Claude Design)
 packages/api-client  Typed client generated from the API's OpenAPI
 packages/config      Shared tsconfig / tailwind preset
-infra         docker-compose (postgres, redis)
+infra         docker-compose for local development (postgres, redis)
+deploy        production: Dockerfiles, Caddy, docker-compose, backups -> see deploy/README.md
 ```
 
 ## Quick start
@@ -27,3 +28,7 @@ pnpm gen:api        # regenerate TS client after changing API
 - Money is integer **satang**; only the backend calculates prices, VAT, shipping.
 - Backend is split by domain (catalog, orders, payments, shipping...), not by technical layer.
 - Frontends import only from `@maehai/*` packages, never from each other.
+
+## Production
+Everything runs from one `docker compose` file behind Caddy (automatic HTTPS). Setup, updates, backups and LINE
+configuration: [deploy/README.md](deploy/README.md).
