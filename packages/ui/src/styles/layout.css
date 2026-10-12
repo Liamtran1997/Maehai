@@ -117,7 +117,7 @@ a { color: var(--leaf); }
 .main { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 24px; padding: 24px 32px 48px; }
 .topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .topbar h1 { font: 500 30px/1.4 var(--font-display); margin-right: auto; }
-.tag { display: inline-flex; align-items: center; padding: 0 10px; border-radius: 999px; background: var(--surface-300); color: var(--ink-muted); font: 600 12px/22px var(--font-sans); }
+.tag { display: inline-flex; align-items: center; padding: 0 10px; white-space: nowrap; border-radius: 999px; background: var(--surface-300); color: var(--ink-muted); font: 600 12px/22px var(--font-sans); }
 .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--surface-300); }
 .seg button { min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink); font: 500 14px/1 var(--font-sans); cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--surface-200); font-weight: 600; box-shadow: 0 1px 2px rgba(35,30,23,.15); }
