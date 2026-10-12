@@ -123,7 +123,7 @@ a { color: var(--leaf); }
 .seg button[aria-pressed="true"] { background: var(--surface-200); font-weight: 600; box-shadow: 0 1px 2px rgba(35,30,23,.15); }
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
-.cols--2-1 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+.cols--2-1 { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 1100px) { .cols--2-1 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } }
 /* No side panel open (its column is empty or missing): the list takes the full width. */
 .cols--2-1:not(:has(> :nth-child(2):not(:empty))) { grid-template-columns: minmax(0, 1fr); }
