@@ -89,6 +89,8 @@
 .mh-table td { padding: 10px var(--space-4); border-top: 1px solid var(--line); white-space: nowrap; }
 /* A cell that also has .mh-row would become a flex box, and its height would stop following the row, so row lines drift. */
 .mh-table td.mh-row { display: table-cell; }
+/* Long text (names, shipping names) may wrap so a wide table still fits the page. */
+.mh-table td.wrap { white-space: normal; min-width: 120px; }
 .mh-table td.mh-row > * + * { margin-left: 8px; }
 .mh-table .r { text-align: right; font-variant-numeric: tabular-nums; }
 .mh-table tbody tr:hover { background: var(--surface-100); }

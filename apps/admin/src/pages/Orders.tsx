@@ -48,10 +48,10 @@ export function Orders() {
           <tbody>
             {list.data?.items.map((o) => (
               <tr key={o.number}>
-                <td><Link className="mh-code" to={`/orders/${o.number}`}>{o.number}</Link></td><td>{o.customer_name}</td><td className="num">{o.phone}</td>
-                <td>{o.shipping_method.name}</td><td>{formatThaiDate(o.requested_date)}</td>
+                <td><Link className="mh-code" to={`/orders/${o.number}`}>{o.number}</Link></td><td className="wrap">{o.customer_name}</td><td className="num">{o.phone}</td>
+                <td className="wrap">{o.shipping_method.name}</td><td className="wrap">{formatThaiDate(o.requested_date)}</td>
                 <td className="r">{o.total_satang === null ? "รอแจ้งค่าส่ง" : formatTHB(o.total_satang)}</td>
-                <td><StatusPill status={PILL[o.status]} /></td><td>{formatThaiDate(o.created_at)}</td>
+                <td><StatusPill status={PILL[o.status]} /></td><td className="wrap">{formatThaiDate(o.created_at)}</td>
               </tr>
             ))}
             {list.data && list.data.items.length === 0 && <tr><td colSpan={8} className="ink-muted">ไม่พบคำสั่งซื้อ</td></tr>}
