@@ -44,6 +44,7 @@ def order_out(request, o: Order, *, staff: bool = False) -> dict:
                    "line_total_satang": i.line_total_satang} for i in o.items.all()],
         "subtotal_satang": o.subtotal_satang, "shipping_fee_satang": o.shipping_fee_satang,
         "discount_satang": sum(i.line_discount_satang for i in o.items.all()),
+        "coupon_code": o.coupon_code, "coupon_discount_satang": o.coupon_discount_satang,
         "vat_satang": o.vat_satang, "total_satang": o.total_satang, "tracking_ref": o.tracking_ref,
         "created_at": o.created_at,
         "events": [{"created_at": e.created_at, "kind": e.kind, "detail": e.detail} for e in o.events.all()],

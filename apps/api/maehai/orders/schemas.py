@@ -24,6 +24,7 @@ class OrderIn(Schema):
     requested_date: date
     address: AddressIn = AddressIn()
     note: str = Field(default="", max_length=300)
+    coupon_code: str = Field(default="", max_length=24)
 
 
 class ItemOut(Schema):
@@ -86,6 +87,8 @@ class OrderOut(Schema):
     items: list[ItemOut]
     subtotal_satang: int
     discount_satang: int = 0
+    coupon_code: str = ""
+    coupon_discount_satang: int = 0
     shipping_fee_satang: int | None
     vat_satang: int
     total_satang: int | None

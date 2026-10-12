@@ -1,6 +1,6 @@
 "use client";
 import { formatTHB } from "@maehai/ui";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ShopHeader } from "../../components/ShopHeader";
 import { api, errorText, type ShippingMethod } from "../../lib/client-api";
 import { useCart } from "../../lib/cart";
@@ -15,6 +15,11 @@ export default function CheckoutPage() {
   const [loadError, setLoadError] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; label: string; discount: number; goodsTotal: number } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+  const phoneRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -31,6 +36,20 @@ export default function CheckoutPage() {
   }, []);
 
   const chosen = methods.find((m) => m.code === method);
+  const cartKey = cart.lines.map((l) => `${l.sku}:${l.quantity}`).join(",");
+  useEffect(() => { setCoupon(null); }, [cartKey]);
+
+  async function applyCoupon() {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponBusy(true); setCouponError(null);
+    const res = await api.POST("/api/coupons/validate", {
+      body: { code, items: cart.lines.map((l) => ({ sku: l.sku, quantity: l.quantity })), phone: phoneRef.current?.value ?? "" },
+    }).catch(() => null);
+    setCouponBusy(false);
+    if (res?.data) setCoupon({ code: res.data.code, label: res.data.label, discount: res.data.discount_satang, goodsTotal: res.data.goods_total_satang });
+    else { setCoupon(null); setCouponError(res ? errorText(res.error) : "เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง"); }
+  }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -42,6 +61,7 @@ export default function CheckoutPage() {
       body: {
         items: cart.lines.map((l) => ({ sku: l.sku, quantity: l.quantity })),
         customer_name: str("name"), phone: str("phone"), shipping_method: method, requested_date: str("date"), note: str("note"),
+        coupon_code: coupon?.code ?? "",
         address: { address_line: str("address_line"), subdistrict: str("subdistrict"), district: str("district"), province: str("province"), postal_code: str("postal_code") },
       },
     }).catch(() => null);
@@ -101,7 +121,7 @@ export default function CheckoutPage() {
               <span className="mh-help">สั่งก่อน 13:00 น. เลือกได้ตั้งแต่พรุ่งนี้ ไม่มีรอบส่งวันอาทิตย์และวันหยุดนักขัตฤกษ์</span>
             </div>
             <div className="mh-field"><label className="mh-label" htmlFor="name">ชื่อผู้รับ</label><input className="mh-input" id="name" name="name" required maxLength={120} autoComplete="name" /></div>
-            <div className="mh-field"><label className="mh-label" htmlFor="phone">เบอร์โทรศัพท์</label><input className="mh-input" id="phone" name="phone" required inputMode="tel" autoComplete="tel" placeholder="081-234-5678" /></div>
+            <div className="mh-field"><label className="mh-label" htmlFor="phone">เบอร์โทรศัพท์</label><input className="mh-input" id="phone" name="phone" required inputMode="tel" autoComplete="tel" placeholder="081-234-5678" ref={phoneRef} /></div>
             {chosen?.requires_address && (
               <>
                 <div className="mh-field"><label className="mh-label" htmlFor="address_line">บ้านเลขที่ ซอย ถนน</label><textarea className="mh-textarea" id="address_line" name="address_line" required maxLength={300} /></div>
@@ -117,13 +137,35 @@ export default function CheckoutPage() {
           </div>
 
           <div className="panel">
+            <h2 style={{ font: "600 18px/1.6 var(--font-sans)" }}>โค้ดส่วนลด</h2>
+            {coupon ? (
+              <div className="notice notice--ok" role="status" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                <p><b className="mh-code">{coupon.code}</b> {coupon.label} · ลด {formatTHB(coupon.discount)}</p>
+                <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { setCoupon(null); setCouponInput(""); }}>เอาออก</button>
+              </div>
+            ) : (
+              <div className="mh-field">
+                <label className="mh-label" htmlFor="coupon">มีโค้ดส่วนลดไหม</label>
+                <div className="mh-row" style={{ gap: 8, flexWrap: "nowrap" }}>
+                  <input className="mh-input" id="coupon" value={couponInput} autoCapitalize="characters" autoComplete="off" maxLength={24}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void applyCoupon(); } }} />
+                  <button type="button" className="mh-btn mh-btn--secondary" disabled={couponBusy || !couponInput.trim()} onClick={() => void applyCoupon()}>{couponBusy ? "กำลังตรวจ…" : "ใช้โค้ด"}</button>
+                </div>
+                {couponError && <span className="mh-help" role="alert" style={{ color: "var(--danger)" }}>{couponError}</span>}
+              </div>
+            )}
+          </div>
+
+          <div className="panel">
             <h2 style={{ font: "600 18px/1.6 var(--font-sans)" }}>สรุปคำสั่งซื้อ</h2>
             {cart.lines.map((l) => (
               <div key={l.sku} className="rowline"><span>{l.productName} ({l.variantLabel}) × {l.quantity}</span><span className="num">{formatTHB(l.unitPriceSatang * l.quantity, { hideZeroSatang: true })}</span></div>
             ))}
             <hr className="hr" />
+            {coupon && <div className="rowline"><span>ส่วนลดโค้ด {coupon.code}</span><span className="num" style={{ color: "var(--band-red)" }}>−{formatTHB(coupon.discount)}</span></div>}
             <div className="rowline"><span>ค่าจัดส่ง</span><span className="ink-muted">{chosen?.fee_is_quoted ? "ร้านแจ้งภายหลัง" : "ไม่มี"}</span></div>
-            <div className="rowline"><span className="bold">ยอดสินค้า</span><span className="mh-price num">{formatTHB(cart.subtotalSatang, { hideZeroSatang: true })}</span></div>
+            <div className="rowline"><span className="bold">ยอดสินค้า</span><span className="mh-price num">{coupon ? formatTHB(coupon.goodsTotal) : formatTHB(cart.subtotalSatang, { hideZeroSatang: true })}</span></div>
           </div>
 
           {error && <div className="notice notice--warn" role="alert"><p>{error}</p></div>}

@@ -11,6 +11,8 @@ export type Summary = Schemas["SummaryOut"];
 export type Category = Schemas["CategoryOut"];
 export type AdminCategory = Schemas["AdminCategoryOut"];
 export type Promotion = Schemas["PromotionOut"];
+export type Coupon = Schemas["CouponOut"];
+export type CouponIn = Schemas["CouponIn"];
 export type PromotionIn = Schemas["PromotionIn"];
 
 export const api = createApiClient(API_URL, { credentials: "include" });

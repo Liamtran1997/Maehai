@@ -2,6 +2,7 @@
 from ninja import Router
 
 from maehai.core import ratelimit
+from maehai.coupons.services import CouponError
 
 from . import services
 from .access import order_by_token
@@ -20,12 +21,24 @@ def _load(number: str) -> Order:
 def place_order(request, data: OrderIn):
     ratelimit.hit("order_create_ip", ratelimit.client_ip(request))
     ratelimit.hit("order_create_phone", services.normalize_phone(data.phone))
+    ip = ratelimit.client_ip(request)
+    if data.coupon_code.strip():
+        ratelimit.blocked("coupon_fail_ip", ip)   # stops anyone from guessing codes through checkout
+    try:
+        order = _create(data)
+    except CouponError:
+        ratelimit.failed("coupon_fail_ip", ip)
+        raise
+    return 201, order_out(request, _load(order.number))
+
+
+def _create(data):
     order = services.create_order(
         items=[(i.sku, i.quantity) for i in data.items], customer_name=data.customer_name, phone=data.phone,
         shipping_code=data.shipping_method, requested_date=data.requested_date,
-        address=data.address.dict(), note=data.note,
+        address=data.address.dict(), note=data.note, coupon_code=data.coupon_code,
     )
-    return 201, order_out(request, _load(order.number))
+    return order
 
 
 @router.post("/lookup", response=TokenOut)

@@ -298,6 +298,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/coupons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Coupons */
+        get: operations["maehai_coupons_admin_api_list_coupons"];
+        put?: never;
+        /** Create Coupon */
+        post: operations["maehai_coupons_admin_api_create_coupon"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/coupons/{coupon_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Coupon */
+        put: operations["maehai_coupons_admin_api_update_coupon"];
+        post?: never;
+        /** Delete Coupon */
+        delete: operations["maehai_coupons_admin_api_delete_coupon"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/coupons/{coupon_id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End Coupon
+         * @description Stop the code now. Orders that already used it keep their discount.
+         */
+        post: operations["maehai_coupons_admin_api_end_coupon"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/coupons/{coupon_id}/redemptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Redemptions */
+        get: operations["maehai_coupons_admin_api_redemptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/shipping/methods": {
         parameters: {
             query?: never;
@@ -326,6 +399,23 @@ export interface paths {
         get: operations["maehai_shipping_api_schedule"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coupons/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Validate */
+        post: operations["maehai_coupons_api_validate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1039,6 +1129,108 @@ export interface components {
              */
             is_active: boolean;
         };
+        /** CouponOut */
+        CouponOut: {
+            /** Id */
+            id: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Value */
+            value: number;
+            /** Label */
+            label: string;
+            /** Max Discount Satang */
+            max_discount_satang: number | null;
+            /** Min Subtotal Satang */
+            min_subtotal_satang: number;
+            /** Exclude Discounted Items */
+            exclude_discounted_items: boolean;
+            /** Usage Limit */
+            usage_limit: number | null;
+            /** Per Phone Limit */
+            per_phone_limit: number | null;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /** Ends At */
+            ends_at: string | null;
+            /** Is Active */
+            is_active: boolean;
+            /** Used Count */
+            used_count: number;
+            /** Remaining */
+            remaining: number | null;
+            /** Discount Given Satang */
+            discount_given_satang: number;
+            /** State */
+            state: string;
+        };
+        /** CouponIn */
+        CouponIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Value */
+            value: number;
+            /** Max Discount Satang */
+            max_discount_satang?: number | null;
+            /**
+             * Min Subtotal Satang
+             * @default 0
+             */
+            min_subtotal_satang: number;
+            /**
+             * Exclude Discounted Items
+             * @default false
+             */
+            exclude_discounted_items: boolean;
+            /** Usage Limit */
+            usage_limit?: number | null;
+            /**
+             * Per Phone Limit
+             * @default 1
+             */
+            per_phone_limit: number | null;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /** Ends At */
+            ends_at?: string | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /** RedemptionOut */
+        RedemptionOut: {
+            /** Order Number */
+            order_number: string;
+            /** Customer Name */
+            customer_name: string;
+            /** Phone */
+            phone: string;
+            /** Discount Satang */
+            discount_satang: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Released */
+            released: boolean;
+        };
         /** ShippingMethodOut */
         ShippingMethodOut: {
             /** Code */
@@ -1060,6 +1252,38 @@ export interface components {
             earliest_date: string;
             /** Cutoff Hour */
             cutoff_hour: number;
+        };
+        /** ValidateOut */
+        ValidateOut: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Subtotal Satang */
+            subtotal_satang: number;
+            /** Discount Satang */
+            discount_satang: number;
+            /** Goods Total Satang */
+            goods_total_satang: number;
+        };
+        /** ItemIn */
+        ItemIn: {
+            /** Sku */
+            sku: string;
+            /** Quantity */
+            quantity: number;
+        };
+        /** ValidateIn */
+        ValidateIn: {
+            /** Code */
+            code: string;
+            /** Items */
+            items: components["schemas"]["ItemIn"][];
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
         };
         /** BranchOut */
         BranchOut: {
@@ -1143,6 +1367,16 @@ export interface components {
              * @default 0
              */
             discount_satang: number;
+            /**
+             * Coupon Code
+             * @default
+             */
+            coupon_code: string;
+            /**
+             * Coupon Discount Satang
+             * @default 0
+             */
+            coupon_discount_satang: number;
             /** Shipping Fee Satang */
             shipping_fee_satang: number | null;
             /** Vat Satang */
@@ -1228,13 +1462,6 @@ export interface components {
              */
             postal_code: string;
         };
-        /** ItemIn */
-        ItemIn: {
-            /** Sku */
-            sku: string;
-            /** Quantity */
-            quantity: number;
-        };
         /** OrderIn */
         OrderIn: {
             /** Items */
@@ -1265,6 +1492,11 @@ export interface components {
              * @default
              */
             note: string;
+            /**
+             * Coupon Code
+             * @default
+             */
+            coupon_code: string;
         };
         /** TokenOut */
         TokenOut: {
@@ -2039,6 +2271,140 @@ export interface operations {
             };
         };
     };
+    maehai_coupons_admin_api_list_coupons: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CouponOut"][];
+                };
+            };
+        };
+    };
+    maehai_coupons_admin_api_create_coupon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CouponIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CouponOut"];
+                };
+            };
+        };
+    };
+    maehai_coupons_admin_api_update_coupon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coupon_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CouponIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CouponOut"];
+                };
+            };
+        };
+    };
+    maehai_coupons_admin_api_delete_coupon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coupon_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    maehai_coupons_admin_api_end_coupon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coupon_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CouponOut"];
+                };
+            };
+        };
+    };
+    maehai_coupons_admin_api_redemptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coupon_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RedemptionOut"][];
+                };
+            };
+        };
+    };
     maehai_shipping_api_list_methods: {
         parameters: {
             query?: never;
@@ -2075,6 +2441,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScheduleOut"];
+                };
+            };
+        };
+    };
+    maehai_coupons_api_validate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ValidateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidateOut"];
                 };
             };
         };

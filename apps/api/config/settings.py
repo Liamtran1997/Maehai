@@ -16,6 +16,7 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(","
 DOMAIN_APPS = [
     "maehai.core",
     "maehai.catalog",
+    "maehai.coupons",
     "maehai.inventory",
     "maehai.orders",
     "maehai.payments",
@@ -129,6 +130,8 @@ RATE_LIMITS = {
     "token_fail_ip": (20, 900),
     "login_fail_ip": (10, 900),
     "login_fail_user": (5, 900),
+    "coupon_check_ip": (30, 600),
+    "coupon_fail_ip": (10, 900),
     "charge_order": (20, 3600),
     "slip_order": (10, 3600),
     "slip_ip": (30, 3600),

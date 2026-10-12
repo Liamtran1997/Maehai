@@ -59,8 +59,10 @@ class Order(models.Model):
     postal_code = models.CharField(max_length=5, blank=True)
     note = models.CharField(max_length=300, blank=True)
 
-    # Money, integer satang. total = subtotal + shipping_fee. VAT is the portion already inside total (0 if not VAT registered).
-    subtotal_satang = models.PositiveIntegerField()
+    # Money, integer satang. total = subtotal - coupon_discount + shipping_fee. VAT is the portion already inside total (0 if not VAT registered).
+    subtotal_satang = models.PositiveIntegerField(help_text="Goods total after per-product promotions, before any coupon")
+    coupon_code = models.CharField(max_length=24, blank=True)
+    coupon_discount_satang = models.PositiveIntegerField(default=0)
     shipping_fee_satang = models.PositiveIntegerField(null=True, blank=True, help_text="null = not quoted yet")
     vat_satang = models.PositiveIntegerField(default=0)
     tracking_ref = models.CharField("เลขพัสดุ/ใบฝากส่ง", max_length=60, blank=True)
@@ -76,8 +78,13 @@ class Order(models.Model):
         indexes = [models.Index(fields=["status", "-id"]), models.Index(fields=["phone"])]
 
     @property
+    def goods_total_satang(self) -> int:
+        """What the customer pays for the goods: subtotal minus the coupon."""
+        return self.subtotal_satang - self.coupon_discount_satang
+
+    @property
     def total_satang(self) -> int | None:
-        return None if self.shipping_fee_satang is None else self.subtotal_satang + self.shipping_fee_satang
+        return None if self.shipping_fee_satang is None else self.goods_total_satang + self.shipping_fee_satang
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

@@ -8,6 +8,7 @@ import { AuthProvider } from "./lib/auth";
 import { Categories } from "./pages/Categories";
 import { Inventory } from "./pages/Inventory";
 import { Promotions } from "./pages/Promotions";
+import { Coupons } from "./pages/Coupons";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
 import { OrderDetail } from "./pages/OrderDetail";
@@ -31,6 +32,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="inventory" element={<Inventory />} />
               <Route path="categories" element={<Categories />} />
               <Route path="promotions" element={<Promotions />} />
+              <Route path="coupons" element={<Coupons />} />
             </Route>
           </Routes>
         </BrowserRouter>

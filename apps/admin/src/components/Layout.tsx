@@ -24,6 +24,7 @@ export function Layout() {
         <NavLink to="/products" className={link}>สินค้า</NavLink>
         <NavLink to="/categories" className={link}>หมวดหมู่</NavLink>
         <NavLink to="/promotions" className={link}>โปรโมชัน</NavLink>
+        <NavLink to="/coupons" className={link}>โค้ดส่วนลด</NavLink>
         <NavLink to="/inventory" className={link}>สต็อก{(todo.data?.low_stock ?? 0) > 0 && <span className="pill" aria-label={`${todo.data?.low_stock} รายการใกล้หมด`}>{todo.data?.low_stock}</span>}</NavLink>
         <p className="nav-sep">บัญชี</p>
         <div className="nav" style={{ cursor: "default" }}>{user.username}</div>

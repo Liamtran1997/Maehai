@@ -7,6 +7,7 @@ from ninja.errors import HttpError
 
 from maehai.catalog.models import ProductVariant
 from maehai.catalog.pricing import prices_for
+from maehai.coupons import services as coupon_services
 from maehai.core.money import vat_included
 from maehai.inventory import services as stock
 from maehai.notifications import events as notify
@@ -40,7 +41,7 @@ def _validate_postal(code: str) -> str:
 
 @transaction.atomic
 def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str, shipping_code: str,
-                 requested_date: date, address: dict, note: str = "") -> Order:
+                 requested_date: date, address: dict, note: str = "", coupon_code: str = "") -> Order:
     if not items or len(items) > MAX_LINES:
         raise HttpError(422, "ตะกร้าว่างหรือมีรายการมากเกินไป")
     qty = Counter()
@@ -73,12 +74,21 @@ def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str
 
     prices = prices_for(variants.values())          # promotions applied here, server-side, at the moment of ordering
     subtotal = sum(prices[variants[s].id].satang * q for s, q in qty.items())
+    phone = normalize_phone(phone)
+    evaluation = None
+    if coupon_code.strip():
+        lines = [coupon_services.Line(sku=s, quantity=q, unit_satang=prices[variants[s].id].satang,
+                                      promoted=prices[variants[s].id].discounted) for s, q in qty.items()]
+        evaluation = coupon_services.evaluate(coupon_code, lines, phone=phone, lock=True)   # re-checked now, under a lock
+    coupon_off = evaluation.discount_satang if evaluation else 0
+    goods_total = subtotal - coupon_off
     quoted = method.fee_is_quoted
     order = Order.objects.create(
-        customer_name=customer_name.strip(), phone=normalize_phone(phone), shipping_method=method,
+        customer_name=customer_name.strip(), phone=phone, shipping_method=method,
         requested_date=requested_date, note=note.strip(), subtotal_satang=subtotal,
+        coupon_code=evaluation.coupon.code if evaluation else "", coupon_discount_satang=coupon_off,
         shipping_fee_satang=None if quoted else 0,
-        vat_satang=0 if quoted else vat_included(subtotal),
+        vat_satang=0 if quoted else vat_included(goods_total),
         status=OrderStatus.PENDING_QUOTE if quoted else OrderStatus.WAITING_PAYMENT,
         **address,
     )
@@ -90,6 +100,8 @@ def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str
                   promotion_name=prices[variants[s].id].promotion.name if prices[variants[s].id].discounted else "")
         for s, q in qty.items()
     ])
+    if evaluation:
+        coupon_services.redeem(evaluation.coupon, order, phone, coupon_off)
     order.fulfillment_branch = stock.reserve_for_order(order, [(variants[s], q) for s, q in qty.items()], method)
     order.save(update_fields=["fulfillment_branch"])
     log(order, "created", f"{len(qty)} รายการ ฿{subtotal / 100:,.2f}")
@@ -121,7 +133,7 @@ def quote_fee(order: Order, fee_satang: int, actor: str) -> Order:
         raise HttpError(409, "ลูกค้าแนบสลิปแล้ว ตรวจสลิปก่อนจึงจะแก้ค่าจัดส่งได้")
     order.payments.filter(status=PaymentStatus.PENDING).update(status=PaymentStatus.EXPIRED)
     order.shipping_fee_satang = fee_satang
-    order.vat_satang = vat_included(order.subtotal_satang + fee_satang)
+    order.vat_satang = vat_included(order.goods_total_satang + fee_satang)
     was = order.status
     order.status = OrderStatus.WAITING_PAYMENT
     order.save(update_fields=["shipping_fee_satang", "vat_satang", "status", "updated_at"])
@@ -141,6 +153,7 @@ def staff_set_status(order: Order, to: str, actor: str, tracking_ref: str = "") 
         from maehai.payments.models import PaymentStatus
         order.payments.filter(status=PaymentStatus.PENDING).update(status=PaymentStatus.EXPIRED)
         stock.release_for_order(order)
+        coupon_services.release_for_order(order)
         notify.cancelled(order)
     elif to in (OrderStatus.SHIPPED, OrderStatus.DONE):
         stock.commit_for_order(order, actor)   # no-op if already committed when it shipped

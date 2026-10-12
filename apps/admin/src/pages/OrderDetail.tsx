@@ -71,6 +71,7 @@ export function OrderDetail() {
             </div>
             <hr className="hr" />
             <div className="rowline"><span className="ink-muted">ยอดสินค้า</span><span className="num">{formatTHB(o.subtotal_satang)}</span></div>
+            {o.coupon_discount_satang > 0 && <div className="rowline"><span className="ink-muted">โค้ด <span className="mh-code">{o.coupon_code}</span></span><span className="num">−{formatTHB(o.coupon_discount_satang)}</span></div>}
             {o.discount_satang > 0 && <div className="rowline"><span className="ink-muted">ส่วนลดโปรโมชัน (รวมในยอดแล้ว)</span><span className="num">−{formatTHB(o.discount_satang)}</span></div>}
             <div className="rowline"><span className="ink-muted">ค่าจัดส่ง</span><span className="num">{o.shipping_fee_satang === null ? "ยังไม่แจ้ง" : formatTHB(o.shipping_fee_satang)}</span></div>
             {o.vat_satang > 0 && <div className="rowline"><span className="ink-muted">ภาษีมูลค่าเพิ่มรวมในยอด</span><span className="num">{formatTHB(o.vat_satang)}</span></div>}
