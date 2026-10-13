@@ -137,9 +137,12 @@ def campaign_orders(c: Campaign):
 
 
 def safe_redirect(url: str) -> str:
-    """Only our own paths and https links may be the target of a campaign button; anything else goes home."""
+    """Only our own paths and https links may be the target of a campaign button; anything else goes home.
+    Our own paths are sent to the shop's address, which may be a different host from this API."""
+    from django.conf import settings
+
     if url.startswith("/") and not url.startswith("//"):
-        return url
+        return f"{settings.SHOP_PUBLIC_URL}{url}" or "/"
     if url.startswith("https://"):
         return url
-    return "/"
+    return f"{settings.SHOP_PUBLIC_URL}/" if settings.SHOP_PUBLIC_URL else "/"

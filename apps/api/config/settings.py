@@ -188,6 +188,9 @@ IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
 VIDEO_MAX_MB = int(os.environ.get("VIDEO_MAX_MB", "25"))
 VIDEO_MAX_BYTES = VIDEO_MAX_MB * 1024 * 1024
 
+# Where the shop lives, for redirects the API sends customers through (campaign buttons). Empty = same site.
+SHOP_PUBLIC_URL = os.environ.get("SHOP_PUBLIC_URL", "").rstrip("/")
+
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "ap-southeast-1")   # Singapore, closest region to Thailand
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
