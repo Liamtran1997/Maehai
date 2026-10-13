@@ -250,7 +250,7 @@ function Editor({ campaign, loading, loadError, products, canPublish, onSaved, o
         </fieldset>
       </div>
 
-      <div className="action-bar">
+      <div className="action-bar action-bar--wrap">
         <span className="grow">{current ? "บันทึกร่างไม่กระทบหน้าร้าน" : "บันทึกร่างก่อน จึงจะอัปโหลดส่วนหัวและเผยแพร่ได้"}</span>
         <button type="button" className="mh-btn mh-btn--secondary" onClick={onLeave}>กลับ</button>
         {current?.status === "draft" && <button type="button" className="mh-btn mh-btn--secondary" style={{ color: "var(--danger)" }} disabled={remove.isPending}

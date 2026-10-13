@@ -264,4 +264,7 @@ a { color: var(--leaf); }
 .campaign-cta { align-self: flex-start; margin-top: 6px; display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; background: #fff; color: var(--ink); font: 600 16px/1 var(--font-sans); text-decoration: none; }
 .campaign-pause { position: absolute; right: 16px; bottom: 16px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.92); color: var(--ink); font: 600 14px/1 var(--font-sans); cursor: pointer; }
 @media (min-width: 900px) { .campaign-copy h1 { font-size: 44px; } }
+@media (max-width: 899px) { .campaign-pause { top: 16px; bottom: auto; } }
+/* Action bars with several buttons: on a phone they wrap side by side instead of stacking full width. */
+.action-bar--wrap .mh-btn { flex: 0 1 auto; }
 .campaign-preview { padding: 8px 16px; background: #231e17; color: #fff; text-align: center; font: 600 13px/1.5 var(--font-sans); }
