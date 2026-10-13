@@ -716,11 +716,14 @@ async function getDoc(number: string) {
 
 /** Shown only when printing: a transfer slip with the number, place, vehicle, lines and signature boxes. */
 function PrintSlip({ doc }: { doc: FullDoc }) {
+  const branches = useBranches();
+  const nameOf = (code: string | null | undefined) => branches.data?.find((b) => b.code === code)?.name ?? code ?? "—";
   return (
     <div className="print-slip" aria-hidden="true">
       <style>{`
         .print-slip { display: none; }
         @media print {
+          html, body { background: #fff !important; }
           body * { visibility: hidden; }
           .print-slip, .print-slip * { visibility: visible; }
           .print-slip { display: block; position: absolute; left: 0; top: 0; width: 100%; padding: 16mm; font-size: 12pt; color: #000; background: #fff; }
@@ -731,12 +734,12 @@ function PrintSlip({ doc }: { doc: FullDoc }) {
         }
       `}</style>
       <h2 style={{ margin: 0 }}>ใบส่งสินค้า {doc.number}</h2>
-      <p>จาก: {doc.from_branch} &nbsp;→&nbsp; ไป: <b>{doc.to_branch}</b></p>
+      <p>จาก: {nameOf(doc.from_branch)} &nbsp;→&nbsp; ไป: <b>{nameOf(doc.to_branch)}</b></p>
       <p>รถที่ใช้ส่ง: {doc.vehicle} {doc.carrier && <>· ผู้นำส่ง: {doc.carrier}</>}</p>
       <p>วันที่ส่ง: {doc.sent_at ? formatThaiDate(doc.sent_at) : "—"}</p>
       <table>
         <thead><tr><th>#</th><th>รายการ</th><th>จำนวน</th></tr></thead>
-        <tbody>{doc.lines.map((l, i) => <tr key={l.id}><td>{i + 1}</td><td>{l.name}</td><td>{l.sent} {l.unit}</td></tr>)}</tbody>
+        <tbody>{doc.lines.map((l, i) => <tr key={l.id}><td>{i + 1}</td><td>{l.name}</td><td>{String(Number(l.sent))} {l.unit}</td></tr>)}</tbody>
       </table>
       {doc.note && <p>หมายเหตุ: {doc.note}</p>}
       <div className="sign"><div>ผู้ส่ง</div><div>ผู้รับ (ตรวจนับแล้ว)</div></div>
