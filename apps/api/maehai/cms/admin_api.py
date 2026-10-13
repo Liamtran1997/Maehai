@@ -1,8 +1,10 @@
 """Back office for campaigns. Drafts: campaigns.edit. Publishing, changing a live campaign, ending it: campaigns.publish."""
 import uuid
+from datetime import timedelta
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Count, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import File, Router
@@ -17,7 +19,7 @@ from maehai.core.permissions import check
 
 from . import services
 from .models import Campaign, CampaignProduct
-from .schemas import CampaignIn, CampaignListOut, CampaignOut, PreviewTokenOut
+from .schemas import CampaignIn, CampaignListOut, CampaignOut, CampaignSummaryListOut, PreviewTokenOut
 from .signing import make_preview_token
 
 router = Router(tags=["admin-campaigns"])
@@ -44,7 +46,7 @@ def _out(request, c: Campaign) -> dict:
         "hero_title": c.hero_title, "hero_subtitle": c.hero_subtitle, "hero_cta_label": c.hero_cta_label, "hero_cta_url": c.hero_cta_url,
         "bar_enabled": c.bar_enabled, "bar_text": c.bar_text, "bar_url": c.bar_url, "collection_title": c.collection_title,
         "products": [{"id": cp.product.pk, "name": cp.product.name} for cp in c.products.select_related("product")],
-        "created_by": c.created_by, "updated_by": c.updated_by,
+        "created_by": c.created_by, "updated_by": c.updated_by, "hero_clicks": c.hero_clicks,
     }
 
 
@@ -236,6 +238,41 @@ def upload_hero_poster(request, campaign_id: int, image: File[UploadedFile]):
     c.save()
     audit(request, "campaign.hero_poster", str(c.pk), c.hero_poster.name)
     return _out(request, c)
+
+
+@router.post("/campaigns/{campaign_id}/duplicate", response=CampaignOut, auth=requires("campaigns.edit"))
+def duplicate_campaign(request, campaign_id: int):
+    """A new draft with the same look, text, products and media, moved one year later. Typical for a festival that repeats yearly."""
+    src = _get(campaign_id)
+    shift = timedelta(days=365)
+    with transaction.atomic():
+        c = Campaign.objects.create(
+            name=f"{src.name} (ทำซ้ำ)"[:120], theme=src.theme, accent_color=src.accent_color, decorations=src.decorations,
+            starts_at=src.starts_at + shift, ends_at=src.ends_at + shift,
+            hero_kind=src.hero_kind, hero_image=src.hero_image.name, hero_poster=src.hero_poster.name,
+            hero_video=src.hero_video.name, hero_video_mobile=src.hero_video_mobile.name,
+            hero_title=src.hero_title, hero_subtitle=src.hero_subtitle, hero_cta_label=src.hero_cta_label,
+            hero_cta_url=src.hero_cta_url, bar_enabled=src.bar_enabled, bar_text=src.bar_text, bar_url=src.bar_url,
+            collection_title=src.collection_title, created_by=request.user.get_username(), updated_by=request.user.get_username(),
+        )
+        CampaignProduct.objects.bulk_create([CampaignProduct(campaign=c, product_id=cp.product_id, sort_order=cp.sort_order)
+                                             for cp in src.products.all()])
+    audit(request, "campaign.duplicate", str(c.pk), f"จาก {src.pk}")
+    return _out(request, c)
+
+
+@router.get("/campaign-summary", response=CampaignSummaryListOut, auth=requires("reports.view"))
+def campaign_summary(request):
+    """Per campaign: orders, goods sold, and how many customers pressed its hero button."""
+    items = []
+    for c in Campaign.objects.order_by("-starts_at"):
+        agg = services.campaign_orders(c).aggregate(n=Count("id"), goods=Sum("subtotal_satang"))
+        items.append({
+            "id": c.pk, "name": c.name, "status": services.status(c), "status_label": services.STATUS_LABEL[services.status(c)],
+            "starts_at": c.starts_at, "ends_at": c.ends_at, "orders": agg["n"] or 0,
+            "goods_satang": agg["goods"] or 0, "hero_clicks": c.hero_clicks,
+        })
+    return {"items": items}
 
 
 @router.post("/campaigns/{campaign_id}/preview-token", response=PreviewTokenOut, auth=requires("campaigns.edit"))

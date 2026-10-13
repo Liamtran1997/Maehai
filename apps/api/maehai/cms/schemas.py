@@ -61,10 +61,27 @@ class CampaignOut(Schema):
     products: list[ProductRef]
     created_by: str
     updated_by: str
+    hero_clicks: int
 
 
 class CampaignListOut(Schema):
     items: list[CampaignOut]
+
+
+class CampaignSummaryItem(Schema):
+    id: int
+    name: str
+    status: str
+    status_label: str
+    starts_at: datetime
+    ends_at: datetime
+    orders: int
+    goods_satang: int
+    hero_clicks: int
+
+
+class CampaignSummaryListOut(Schema):
+    items: list[CampaignSummaryItem]
 
 
 class PreviewTokenOut(Schema):

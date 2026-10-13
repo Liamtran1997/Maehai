@@ -1,4 +1,7 @@
 """What the shop reads: the campaign on right now, or a preview of one that is not live yet."""
+from django.http import HttpResponseRedirect
+from django.db.models import F
+from django.shortcuts import get_object_or_404
 from ninja import Router, Schema
 from ninja.errors import HttpError
 
@@ -65,3 +68,13 @@ def current_campaign(request, preview: str = ""):
         return _public(request, c, preview=True)
     c = services.current()
     return _public(request, c, preview=False) if c else None
+
+
+@router.get("/campaign/{campaign_id}/go", response={302: None})
+def campaign_go(request, campaign_id: int):
+    """The hero button. Counts one press for a campaign that is live now, then sends the customer on.
+    No cookies and no personal data: only the count goes up."""
+    c = get_object_or_404(Campaign, pk=campaign_id)
+    if services.status(c) == services.LIVE:
+        Campaign.objects.filter(pk=c.pk).update(hero_clicks=F("hero_clicks") + 1)
+    return HttpResponseRedirect(services.safe_redirect(c.hero_cta_url or "/"))

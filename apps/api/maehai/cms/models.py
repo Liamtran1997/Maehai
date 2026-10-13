@@ -46,6 +46,7 @@ class Campaign(models.Model):
     bar_url = models.CharField(max_length=300, blank=True)
 
     collection_title = models.CharField(max_length=80, blank=True)
+    hero_clicks = models.PositiveIntegerField(default=0, editable=False, help_text="Customers who pressed the hero button")
 
     created_by = models.CharField(max_length=150, blank=True)
     updated_by = models.CharField(max_length=150, blank=True)

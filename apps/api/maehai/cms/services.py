@@ -124,3 +124,22 @@ def check_video(upload, max_bytes: int) -> str:
         if head[offset:offset + len(magic)] == magic:
             return f".{ext}"
     raise HttpError(422, "รองรับเฉพาะวิดีโอ MP4 หรือ WebM")
+
+
+COUNTED_ORDER_STATUSES = ("paid", "packing", "shipped", "done")   # money is in and not cancelled, as in the promotion report
+
+
+def campaign_orders(c: Campaign):
+    """Orders placed while the campaign was running, paid and not cancelled."""
+    from maehai.orders.models import Order
+
+    return Order.objects.filter(status__in=COUNTED_ORDER_STATUSES, created_at__gte=c.starts_at, created_at__lt=effective_end(c))
+
+
+def safe_redirect(url: str) -> str:
+    """Only our own paths and https links may be the target of a campaign button; anything else goes home."""
+    if url.startswith("/") and not url.startswith("//"):
+        return url
+    if url.startswith("https://"):
+        return url
+    return "/"

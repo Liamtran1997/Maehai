@@ -74,7 +74,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
       {campaign && heroReady(campaign) ? (
         <CampaignHero
           title={campaign.hero_title || "หมูยอต้นตำรับเมืองอุบลฯ"} subtitle={campaign.hero_subtitle}
-          ctaLabel={campaign.hero_cta_label} ctaUrl={campaign.hero_cta_url}
+          ctaLabel={campaign.hero_cta_label}
+          ctaUrl={campaign.hero_cta_url ? (campaign.preview ? campaign.hero_cta_url : `/api/shop/campaign/${campaign.id}/go`) : ""}
           kind={campaign.hero_kind as "image" | "animation" | "video"}
           imageUrl={campaign.hero_image_url ?? null} posterUrl={campaign.hero_poster_url ?? null}
           videoUrl={campaign.hero_video_url ?? null} videoMobileUrl={campaign.hero_video_mobile_url ?? null}

@@ -323,3 +323,48 @@ def test_shop_receives_the_video_urls(staff_client):
     out = Client().get("/api/shop/campaign/current").json()
     assert out["hero_kind"] == "video"
     assert out["hero_video_url"] and out["hero_poster_url"]
+
+
+# ================================================================ stage 3: duplicate, hero button, summary
+def test_duplicate_makes_a_draft_one_year_later_with_the_same_look(staff_client, seeded):
+    src = create(staff_client, product_ids=[product_id()], bar_enabled=True, bar_text="สั่งก่อน")
+    r = staff_client.post(f"/api/admin/campaigns/{src['id']}/duplicate")
+    assert r.status_code == 200, r.content
+    copy = r.json()
+    assert copy["id"] != src["id"]
+    assert copy["status"] == "draft"
+    assert copy["name"].endswith("(ทำซ้ำ)")
+    assert copy["theme"] == src["theme"] and copy["bar_text"] == "สั่งก่อน"
+    assert [p["id"] for p in copy["products"]] == [product_id()]
+    shifted = Campaign.objects.get(pk=copy["id"]).starts_at - Campaign.objects.get(pk=src["id"]).starts_at
+    assert shifted == timedelta(days=365)
+
+
+def test_hero_button_counts_only_while_the_campaign_is_live(staff_client):
+    c = create(staff_client, hero_cta_url="/products")
+    go = f"/api/shop/campaign/{c['id']}/go"
+    r = Client().get(go)
+    assert r.status_code == 302 and r["Location"] == "/products"
+    assert Campaign.objects.get(pk=c["id"]).hero_clicks == 0          # a draft does not count
+    Campaign.objects.filter(pk=c["id"]).update(starts_at=now() - timedelta(hours=1), published_at=now())
+    Client().get(go)
+    Client().get(go)
+    assert Campaign.objects.get(pk=c["id"]).hero_clicks == 2
+
+
+def test_hero_button_never_sends_customers_to_another_site(staff_client):
+    c = create(staff_client, hero_cta_url="https://evil.example.com/phish")
+    Campaign.objects.filter(pk=c["id"]).update(starts_at=now() - timedelta(hours=1), published_at=now())
+    assert Client().get(f"/api/shop/campaign/{c['id']}/go")["Location"] == "https://evil.example.com/phish"
+    Campaign.objects.filter(pk=c["id"]).update(hero_cta_url="javascript:alert(1)")
+    assert Client().get(f"/api/shop/campaign/{c['id']}/go")["Location"] == "/"
+    Campaign.objects.filter(pk=c["id"]).update(hero_cta_url="//evil.example.com")
+    assert Client().get(f"/api/shop/campaign/{c['id']}/go")["Location"] == "/"
+
+
+def test_summary_is_for_people_who_see_reports(as_role, staff_client):
+    create(staff_client)
+    assert staff_client.get("/api/admin/campaign-summary").status_code == 200
+    assert as_role("sales").get("/api/admin/campaign-summary").status_code == 403
+    items = staff_client.get("/api/admin/campaign-summary").json()["items"]
+    assert items and items[0]["orders"] == 0

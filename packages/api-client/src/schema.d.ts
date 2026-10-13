@@ -687,6 +687,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/campaigns/{campaign_id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Duplicate Campaign
+         * @description A new draft with the same look, text, products and media, moved one year later. Typical for a festival that repeats yearly.
+         */
+        post: operations["maehai_cms_admin_api_duplicate_campaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/campaign-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Campaign Summary
+         * @description Per campaign: orders, goods sold, and how many customers pressed its hero button.
+         */
+        get: operations["maehai_cms_admin_api_campaign_summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/campaigns/{campaign_id}/preview-token": {
         parameters: {
             query?: never;
@@ -719,6 +759,27 @@ export interface paths {
          * @description The campaign to show now. With a valid preview token, that campaign even if it is a draft.
          */
         get: operations["maehai_cms_api_current_campaign"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shop/campaign/{campaign_id}/go": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Campaign Go
+         * @description The hero button. Counts one press for a campaign that is live now, then sends the customer on.
+         *     No cookies and no personal data: only the count goes up.
+         */
+        get: operations["maehai_cms_api_campaign_go"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2346,6 +2407,8 @@ export interface components {
             created_by: string;
             /** Updated By */
             updated_by: string;
+            /** Hero Clicks */
+            hero_clicks: number;
         };
         /** ProductRef */
         ProductRef: {
@@ -2433,6 +2496,38 @@ export interface components {
              * @default []
              */
             product_ids: number[];
+        };
+        /** CampaignSummaryItem */
+        CampaignSummaryItem: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /** Status Label */
+            status_label: string;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /** Orders */
+            orders: number;
+            /** Goods Satang */
+            goods_satang: number;
+            /** Hero Clicks */
+            hero_clicks: number;
+        };
+        /** CampaignSummaryListOut */
+        CampaignSummaryListOut: {
+            /** Items */
+            items: components["schemas"]["CampaignSummaryItem"][];
         };
         /** PreviewTokenOut */
         PreviewTokenOut: {
@@ -4866,6 +4961,48 @@ export interface operations {
             };
         };
     };
+    maehai_cms_admin_api_duplicate_campaign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_campaign_summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignSummaryListOut"];
+                };
+            };
+        };
+    };
     maehai_cms_admin_api_preview_token: {
         parameters: {
             query?: never;
@@ -4907,6 +5044,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PublicCampaignOut"] | null;
                 };
+            };
+        };
+    };
+    maehai_cms_api_campaign_go: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Found */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
