@@ -105,7 +105,7 @@ export function Inventory() {
         </div>
       )}
 
-      <div className="cols cols--2-1" style={{ alignItems: "start" }}>
+      <div className="cols cols--2-1 stock-cols" style={{ alignItems: "start" }}>
         <div className="mh-tablewrap">
           <table className="mh-table">
             <thead>
