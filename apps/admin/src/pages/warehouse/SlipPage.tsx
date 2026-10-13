@@ -1,6 +1,6 @@
 import { formatThaiDate } from "@maehai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ErrorNotice } from "../../components/Notice";
 import { api, unwrap } from "../../lib/api";
@@ -20,6 +20,35 @@ export function SlipPage() {
   const doc = detail.data;
   if (detail.error) return <div className="notice notice--warn" role="alert"><p>ไม่พบเอกสารนี้ หรือไม่มีสิทธิ์ดูสาขานี้</p></div>;
   if (!doc) return <p className="ink-muted">กำลังโหลด…</p>;
+  const receiving = doc.kind === "transfer" && doc.status === "sent" && can("inventory.receive_transfer");
+  const returning = doc.kind === "return" && doc.status === "sent_back" && can("inventory.receive_return");
+  const aside = (
+    <aside className="slip-aside">
+      <section className="panel" aria-labelledby="info-h">
+        <h2 id="info-h">ข้อมูลใบ</h2>
+        <dl className="kv">
+          {doc.from_branch && <><dt>จาก</dt><dd>{doc.from_branch}</dd></>}
+          {doc.to_branch && <><dt>ไป</dt><dd><b>{doc.to_branch}</b></dd></>}
+          {doc.source && <><dt>แหล่ง</dt><dd>{doc.source}</dd></>}
+          {doc.vehicle && <><dt>รถ</dt><dd>{doc.vehicle}</dd></>}
+          {doc.carrier && <><dt>ผู้นำส่ง</dt><dd>{doc.carrier}</dd></>}
+          {doc.origin && <><dt>ของใบ</dt><dd className="mh-code">{doc.origin}</dd></>}
+          <dt>สร้างโดย</dt><dd>{doc.created_by}</dd>
+          <dt>หมายเหตุ</dt><dd className="muted">{doc.note || "—"}</dd>
+        </dl>
+      </section>
+      <section className="panel" aria-labelledby="hist-h">
+        <h2 id="hist-h">ความเคลื่อนไหว</h2>
+        <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12, fontSize: 14 }}>
+          <li><b>สร้างใบ</b><br /><span className="small muted">{formatThaiDate(doc.created_at)} · {doc.created_by}</span></li>
+          {doc.sent_at && <li><b>ส่งออก</b><br /><span className="small muted">{formatThaiDate(doc.sent_at)}</span></li>}
+          {doc.closed_at && <li><b>{doc.status === "cancelled" ? "ยกเลิก" : "ปิดใบ"}</b><br /><span className="small muted">{formatThaiDate(doc.closed_at)} · {doc.closed_by}</span>{doc.substitute_reason && <><br /><span className="small">รับแทนสาขา: {doc.substitute_reason}</span></>}</li>}
+          {doc.cancel_reason && <li><span className="small">เหตุผลที่ยกเลิก: {doc.cancel_reason}</span></li>}
+        </ol>
+      </section>
+      {doc.kind === "transfer" && doc.status === "sent" && can("inventory.transfer") && <CancelSlip number={doc.number} onDone={refresh} />}
+    </aside>
+  );
   return (
     <>
       <nav className="crumbs" aria-label="ตำแหน่ง"><Link to="/warehouse?tab=docs">คลังสินค้า</Link><span aria-hidden="true">›</span><Link to="/warehouse?tab=docs">เอกสาร</Link><span aria-hidden="true">›</span><span>{doc.number}</span></nav>
@@ -38,44 +67,20 @@ export function SlipPage() {
 
       <Steps doc={doc} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 2fr) minmax(260px, 1fr)", gap: 24, alignItems: "start" }} className="slip-grid">
-        <section className="panel" aria-labelledby="lines-h">
-          <div className="panel-head"><h2 id="lines-h">รายการ</h2><span className="small muted">{doc.lines.length} รายการ</span></div>
-          {doc.kind === "transfer" && doc.status === "sent" && can("inventory.receive_transfer")
-            ? <ReceiveLines doc={doc} isSubstitute={user?.role !== "branch_manager"} onDone={refresh} />
-            : doc.kind === "return" && doc.status === "sent_back" && can("inventory.receive_return")
-              ? <ReceiveReturnLines doc={doc} onDone={refresh} />
-              : <ReadOnlyLines lines={doc.lines} />}
-        </section>
-
-        <aside style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
-          <section className="panel" aria-labelledby="info-h">
-            <h2 id="info-h">ข้อมูลใบ</h2>
-            <dl className="kv">
-              {doc.from_branch && <><dt>จาก</dt><dd>{doc.from_branch}</dd></>}
-              {doc.to_branch && <><dt>ไป</dt><dd><b>{doc.to_branch}</b></dd></>}
-              {doc.source && <><dt>แหล่ง</dt><dd>{doc.source}</dd></>}
-              {doc.vehicle && <><dt>รถ</dt><dd>{doc.vehicle}</dd></>}
-              {doc.carrier && <><dt>ผู้นำส่ง</dt><dd>{doc.carrier}</dd></>}
-              {doc.origin && <><dt>ของใบ</dt><dd className="mh-code">{doc.origin}</dd></>}
-              <dt>สร้างโดย</dt><dd>{doc.created_by}</dd>
-              <dt>หมายเหตุ</dt><dd className="muted">{doc.note || "—"}</dd>
-            </dl>
-          </section>
-          <section className="panel" aria-labelledby="hist-h">
-            <h2 id="hist-h">ความเคลื่อนไหว</h2>
-            <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12, fontSize: 14 }}>
-              <li><b>สร้างใบ</b><br /><span className="small muted">{formatThaiDate(doc.created_at)} · {doc.created_by}</span></li>
-              {doc.sent_at && <li><b>ส่งออก</b><br /><span className="small muted">{formatThaiDate(doc.sent_at)}</span></li>}
-              {doc.closed_at && <li><b>{doc.status === "cancelled" ? "ยกเลิก" : "ปิดใบ"}</b><br /><span className="small muted">{formatThaiDate(doc.closed_at)} · {doc.closed_by}</span>{doc.substitute_reason && <><br /><span className="small">รับแทนสาขา: {doc.substitute_reason}</span></>}</li>}
-              {doc.cancel_reason && <li><span className="small">เหตุผลที่ยกเลิก: {doc.cancel_reason}</span></li>}
-            </ol>
-          </section>
-          {doc.kind === "transfer" && doc.status === "sent" && can("inventory.transfer") && <CancelSlip number={doc.number} onDone={refresh} />}
-        </aside>
-      </div>
+      {receiving
+        ? <ReceiveSlip doc={doc} isSubstitute={user?.role !== "branch_manager"} onDone={refresh} aside={aside} />
+        : returning
+          ? <ReceiveReturnSlip doc={doc} onDone={refresh} aside={aside} />
+          : (
+            <div className="slip-grid">
+              <section className="panel" aria-labelledby="lines-h">
+                <div className="panel-head"><h2 id="lines-h">รายการ</h2><span className="small muted">{doc.lines.length} รายการ</span></div>
+                <ReadOnlyLines lines={doc.lines} />
+              </section>
+              {aside}
+            </div>
+          )}
       {doc.kind === "transfer" && <PrintSlip doc={doc} />}
-      <style>{`@media (max-width: 899px) { .slip-grid { grid-template-columns: minmax(0, 1fr) !important; } }`}</style>
     </>
   );
 }
@@ -156,7 +161,8 @@ function Qty({ value, onChange, label, max }: { value: string; onChange: (v: str
   );
 }
 
-function ReceiveLines({ doc, isSubstitute, onDone }: { doc: FullDoc; isSubstitute: boolean; onDone: () => void }) {
+/** Receiving a transfer. The form sits in the lines card; the confirm bar sits at the bottom of the page. */
+function ReceiveSlip({ doc, isSubstitute, onDone, aside }: { doc: FullDoc; isSubstitute: boolean; onDone: () => void; aside: ReactNode }) {
   const [rows, setRows] = useState(() => doc.lines.map((l) => ({ line_id: l.id, received: l.sent, reason: "", note: "", sent: l.sent, name: l.name, unit: l.unit })));
   const [substitute, setSubstitute] = useState("");
   const shortTotal = rows.reduce((t, r) => t + Math.max(0, Number(r.sent) - Number(r.received)), 0);
@@ -172,47 +178,56 @@ function ReceiveLines({ doc, isSubstitute, onDone }: { doc: FullDoc; isSubstitut
   });
   const set = (i: number, patch: Partial<(typeof rows)[number]>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   return (
-    <form onSubmit={(e) => { e.preventDefault(); confirm.mutate(); }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <p className="small muted" style={{ margin: 0 }}>นับของที่มาถึงจริง ถ้าไม่ครบให้เลือกเหตุผล ของที่ชำรุดหรือไม่ตรงจะกลับคลังกลาง ของที่หายระหว่างทางจะไม่กลับ</p>
-      {rows.map((r, i) => {
-        const short = Number(r.received) < Number(r.sent);
-        return (
-          <div key={r.line_id} style={{ display: "grid", gap: 8, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
-              <b style={{ flex: "1 1 200px" }}>{r.name}</b>
-              <span className="small muted">ส่ง {Number(r.sent)} {r.unit}</span>
-              <Qty value={r.received} onChange={(v) => set(i, { received: v })} label={r.name} max={Number(r.sent)} />
-            </div>
-            {short && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                <div className="mh-chips" role="group" aria-label={`เหตุผลที่ไม่ครบ ${r.name}`}>
-                  {REFUSE.map((o) => (
-                    <button key={o.v} type="button" className="mh-chip" aria-pressed={r.reason === o.v} style={{ minHeight: 40 }} onClick={() => set(i, { reason: o.v })}>{o.l}</button>
-                  ))}
+    <>
+      <div className="slip-grid">
+        <section className="panel" aria-labelledby="lines-h">
+          <div className="panel-head"><h2 id="lines-h">รายการ</h2><span className="small muted">{doc.lines.length} รายการ</span></div>
+          <form id="receive-form" onSubmit={(e) => { e.preventDefault(); confirm.mutate(); }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <p className="small muted" style={{ margin: 0 }}>นับของที่มาถึงจริง ถ้าไม่ครบให้เลือกเหตุผล ของที่ชำรุดหรือไม่ตรงจะกลับคลังกลาง ของที่หายระหว่างทางจะไม่กลับ</p>
+            {rows.map((r, i) => {
+              const short = Number(r.received) < Number(r.sent);
+              return (
+                <div key={r.line_id} style={{ display: "grid", gap: 8, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+                    <b style={{ flex: "1 1 200px" }}>{r.name}</b>
+                    <span className="small muted">ส่ง {Number(r.sent)} {r.unit}</span>
+                    <Qty value={r.received} onChange={(v) => set(i, { received: v })} label={r.name} max={Number(r.sent)} />
+                  </div>
+                  {short && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                      <div className="mh-chips" role="group" aria-label={`เหตุผลที่ไม่ครบ ${r.name}`}>
+                        {REFUSE.map((o) => (
+                          <button key={o.v} type="button" className="mh-chip" aria-pressed={r.reason === o.v} style={{ minHeight: 40 }} onClick={() => set(i, { reason: o.v })}>{o.l}</button>
+                        ))}
+                      </div>
+                      {r.reason && r.reason !== "missing" && (
+                        <input className="mh-input" aria-label={`รายละเอียด ${r.name}`} placeholder={r.reason === "other" ? "ต้องพิมพ์รายละเอียด" : "รายละเอียด (ถ้ามี)"} style={{ flex: "1 1 220px" }} value={r.note} onChange={(e) => set(i, { note: e.target.value })} />
+                      )}
+                    </div>
+                  )}
                 </div>
-                {r.reason && r.reason !== "missing" && (
-                  <input className="mh-input" aria-label={`รายละเอียด ${r.name}`} placeholder={r.reason === "other" ? "ต้องพิมพ์รายละเอียด" : "รายละเอียด (ถ้ามี)"} style={{ flex: "1 1 220px" }} value={r.note} onChange={(e) => set(i, { note: e.target.value })} />
-                )}
+              );
+            })}
+            {isSubstitute && (
+              <div className="mh-field"><label className="mh-label" htmlFor="sub">รับแทนผู้จัดการสาขา: เหตุผล</label>
+                <input className="mh-input" id="sub" value={substitute} onChange={(e) => setSubstitute(e.target.value)} placeholder="เช่น ผู้จัดการสาขาไม่อยู่" />
               </div>
             )}
-          </div>
-        );
-      })}
-      {isSubstitute && (
-        <div className="mh-field"><label className="mh-label" htmlFor="sub">รับแทนผู้จัดการสาขา: เหตุผล</label>
-          <input className="mh-input" id="sub" value={substitute} onChange={(e) => setSubstitute(e.target.value)} placeholder="เช่น ผู้จัดการสาขาไม่อยู่" />
-        </div>
-      )}
-      <ErrorNotice error={confirm.error} />
+            <ErrorNotice error={confirm.error} />
+          </form>
+        </section>
+        {aside}
+      </div>
       <div className="action-bar">
         <span className="grow">{shortTotal > 0 ? <><b style={{ color: "var(--ink)" }}>ไม่ครบ {shortTotal} ชิ้น</b> · จะมีใบคืนสินค้าสำหรับส่วนที่ไม่รับ</> : <>รับครบทุกรายการ</>}</span>
-        <button className="mh-btn mh-btn--primary" type="submit" disabled={confirm.isPending}>{confirm.isPending ? "กำลังบันทึก…" : "ยืนยันรับของ"}</button>
+        <button form="receive-form" className="mh-btn mh-btn--primary" type="submit" disabled={confirm.isPending}>{confirm.isPending ? "กำลังบันทึก…" : "ยืนยันรับของ"}</button>
       </div>
-    </form>
+    </>
   );
 }
 
-function ReceiveReturnLines({ doc, onDone }: { doc: FullDoc; onDone: () => void }) {
+/** Receiving a store return at the central warehouse. Same layout as ReceiveSlip: form in the card, confirm bar at the page bottom. */
+function ReceiveReturnSlip({ doc, onDone, aside }: { doc: FullDoc; onDone: () => void; aside: ReactNode }) {
   const [rows, setRows] = useState(() => doc.lines.map((l) => ({ line_id: l.id, restock: l.sent, discard: "0", sent: l.sent, name: l.name, unit: l.unit })));
   const confirm = useMutation({
     mutationFn: async () => unwrap(await api.POST("/api/admin/inventory/documents/{number}/receive-return", {
@@ -222,24 +237,32 @@ function ReceiveReturnLines({ doc, onDone }: { doc: FullDoc; onDone: () => void 
     onSuccess: onDone,
   });
   return (
-    <form onSubmit={(e) => { e.preventDefault(); confirm.mutate(); }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <p className="small muted" style={{ margin: 0 }}>เข้าสต็อก = ยังขายได้ · ทิ้ง = เสียหายไม่กลับเข้าสต็อก · ส่วนที่นับไม่ครบจะถือว่าหาย</p>
-      {rows.map((r, i) => (
-        <div key={r.line_id} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
-          <b style={{ flex: "1 1 200px" }}>{r.name}</b>
-          <span className="small muted">ส่งคืน {Number(r.sent)} {r.unit}</span>
-          <label className="small">เข้าสต็อก <input className="mh-input num" aria-label={`เข้าสต็อก ${r.name}`} style={{ width: 90 }} value={r.restock}
-            onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, restock: e.target.value } : x)))} /></label>
-          <label className="small">ทิ้ง <input className="mh-input num" aria-label={`ทิ้ง ${r.name}`} style={{ width: 90 }} value={r.discard}
-            onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, discard: e.target.value } : x)))} /></label>
-        </div>
-      ))}
-      <ErrorNotice error={confirm.error} />
+    <>
+      <div className="slip-grid">
+        <section className="panel" aria-labelledby="lines-h">
+          <div className="panel-head"><h2 id="lines-h">รายการ</h2><span className="small muted">{doc.lines.length} รายการ</span></div>
+          <form id="receive-form" onSubmit={(e) => { e.preventDefault(); confirm.mutate(); }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <p className="small muted" style={{ margin: 0 }}>เข้าสต็อก = ยังขายได้ · ทิ้ง = เสียหายไม่กลับเข้าสต็อก · ส่วนที่นับไม่ครบจะถือว่าหาย</p>
+            {rows.map((r, i) => (
+              <div key={r.line_id} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
+                <b style={{ flex: "1 1 200px" }}>{r.name}</b>
+                <span className="small muted">ส่งคืน {Number(r.sent)} {r.unit}</span>
+                <label className="small">เข้าสต็อก <input className="mh-input num" aria-label={`เข้าสต็อก ${r.name}`} style={{ width: 90 }} value={r.restock}
+                  onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, restock: e.target.value } : x)))} /></label>
+                <label className="small">ทิ้ง <input className="mh-input num" aria-label={`ทิ้ง ${r.name}`} style={{ width: 90 }} value={r.discard}
+                  onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, discard: e.target.value } : x)))} /></label>
+              </div>
+            ))}
+            <ErrorNotice error={confirm.error} />
+          </form>
+        </section>
+        {aside}
+      </div>
       <div className="action-bar">
         <span className="grow">รับคืนเข้าคลังกลาง</span>
-        <button className="mh-btn mh-btn--primary" type="submit" disabled={confirm.isPending}>{confirm.isPending ? "กำลังบันทึก…" : "ยืนยันรับคืน"}</button>
+        <button form="receive-form" className="mh-btn mh-btn--primary" type="submit" disabled={confirm.isPending}>{confirm.isPending ? "กำลังบันทึก…" : "ยืนยันรับคืน"}</button>
       </div>
-    </form>
+    </>
   );
 }
 
