@@ -50,6 +50,15 @@ function priceRange(p: AdminProduct) {
   return lo === hi ? f(lo) : `${f(lo)} ถึง ${f(hi)}`;
 }
 
+/** One line under the product name: category, number of sizes, and the price range the shop shows. */
+function formSummary(f: Form, categoryName: string) {
+  const prices = f.variants.map((v) => bahtToSatang(v.price)).filter((n): n is number => n !== null && n > 0);
+  const money = (n: number) => formatTHB(n, { hideZeroSatang: true });
+  const lo = Math.min(...prices), hi = Math.max(...prices);
+  const range = prices.length === 0 ? "ยังไม่มีราคา" : lo === hi ? money(lo) : `${money(lo)} ถึง ${money(hi)}`;
+  return `หมวด ${categoryName} · ${f.variants.length} ขนาด · ${range}`;
+}
+
 export function Products() {
   const qc = useQueryClient();
   const { can } = useAuth();
@@ -118,11 +127,16 @@ export function Products() {
 
   return (
     <>
-      {!form && <div className="topbar">
-        <h1>สินค้า</h1>
-        <Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/categories">จัดการหมวดหมู่</Link>
-        <Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/promotions">โปรโมชัน</Link>
-        {canEdit && canPrice && <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open(blank(cats.data?.[0]?.slug ?? ""))}>เพิ่มสินค้า</button>}
+      {!form && <div className="page-head">
+        <div><h1>สินค้า</h1><p>{products.data?.length ?? 0} รายการ · แก้ราคาปกติที่นี่ ส่วนลดตั้งที่โปรโมชัน</p></div>
+        <div className="actions">
+          <Link className="mh-btn mh-btn--secondary mh-btn--sm" to="/categories">จัดการหมวดหมู่</Link>
+          <Link className="mh-btn mh-btn--secondary mh-btn--sm" to="/promotions">โปรโมชัน</Link>
+          {canEdit && canPrice && <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open(blank(cats.data?.[0]?.slug ?? ""))}>เพิ่มสินค้า</button>}
+        </div>
+      </div>}
+      {!form && <div className="seg" role="group" aria-label="กรองตามสถานะ" style={{ alignSelf: "flex-start" }}>
+        {STATUS.map((s) => <button key={s.v} type="button" aria-pressed={status === s.v} onClick={() => setStatus(s.v)}>{s.l}</button>)}
       </div>}
       {!form && <div className="toolbar">
         <div className="searchbox">
@@ -132,9 +146,6 @@ export function Products() {
         </div>
         <select className="mh-select" style={{ width: "auto" }} aria-label="หมวดหมู่" value={cat} onChange={(e) => setCat(e.target.value)}>
           <option value="">ทุกหมวดหมู่</option>{cats.data?.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
-        </select>
-        <select className="mh-select" style={{ width: "auto" }} aria-label="สถานะ" value={status} onChange={(e) => setStatus(e.target.value)}>
-          {STATUS.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
         </select>
         <span className="sm ink-muted">{shown.length} จาก {products.data?.length ?? 0} รายการ</span>
       </div>}
@@ -174,11 +185,22 @@ export function Products() {
             <fieldset disabled={!canEdit} style={{ border: 0, margin: 0, padding: 0, display: "contents" }}>
             <nav className="crumbs" aria-label="ตำแหน่ง"><button type="button" className="link-btn" onClick={() => setForm(null)}>สินค้า</button><span aria-hidden="true"> › </span><span>{form.id ? form.name || "แก้ไขสินค้า" : "เพิ่มสินค้า"}</span></nav>
             <div className="page-head">
-              <div><h1>{form.id ? form.name || "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}</h1><p>{form.id ? "แก้ไขข้อมูลและรูปภาพ ราคาปกติตั้งที่นี่ ส่วนลดตั้งที่โปรโมชัน" : "บันทึกสินค้าก่อน แล้วจึงเพิ่มรูปและประวัติราคาได้"}</p></div>
+              <div>
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+                  <h1>{form.id ? form.name || "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}</h1>
+                  {form.id && <span className={`mh-status ${form.is_active ? "mh-status--done" : "mh-status--paid"}`} data-glyph={form.is_active ? "✓" : "○"}>{form.is_active ? "แสดงบนหน้าร้าน" : "ซ่อนอยู่"}</span>}
+                </div>
+                <p>{form.id ? formSummary(form, cats.data?.find((c) => c.slug === form.category_slug)?.name ?? "—") : "บันทึกสินค้าก่อน แล้วจึงเพิ่มรูปและประวัติราคาได้"}</p>
+              </div>
+              {form.id && canEdit && (
+                <div className="actions">
+                  <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => set("is_active", !form.is_active)}>{form.is_active ? "ซ่อนจากหน้าร้าน" : "แสดงบนหน้าร้าน"}</button>
+                </div>
+              )}
             </div>
             <div className="editor-grid">
             <nav className="sectionnav" aria-label="หัวข้อในหน้านี้">
-              <a href="#p-photos">รูปภาพ</a><a href="#p-basic">ข้อมูลหลัก</a><a href="#p-detail">รายละเอียดและการเก็บ</a><a href="#p-sizes">ขนาดและราคา</a>{form.id && <a href="#p-history">ประวัติราคา</a>}
+              <a href="#p-photos">รูปภาพ</a><a href="#p-basic">ข้อมูลหลัก</a><a href="#p-detail">รายละเอียด อย. การเก็บ</a><a href="#p-sizes">ขนาดและราคา</a>{form.id && <a href="#p-history">ประวัติราคา</a>}
             </nav>
             <div className="editor-body">
             <section id="p-photos" className="panel">
