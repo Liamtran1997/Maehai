@@ -5,24 +5,25 @@ import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { api, unwrap } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Account } from "../pages/Account";
+import { Icon } from "./Icon";
 
 // Menu grouped by what staff are doing. Each item names the permission needed to see it; the server enforces the same rules.
 const GROUPS = [
-  { title: null, items: [{ to: "/", label: "ภาพรวม", perm: null, end: true }] },
+  { title: null, items: [{ to: "/", label: "ภาพรวม", icon: "home", perm: null, end: true }] },
   { title: "งานขาย", items: [
-    { to: "/orders", label: "คำสั่งซื้อ", perm: "orders.view", badge: "orders" },
-    { to: "/coupons", label: "โค้ดส่วนลด", perm: "coupons.view" },
-    { to: "/promotions", label: "โปรโมชัน", perm: "catalog.view" },
+    { to: "/orders", label: "คำสั่งซื้อ", icon: "orders", perm: "orders.view", badge: "orders" },
+    { to: "/coupons", label: "โค้ดส่วนลด", icon: "coupon", perm: "coupons.view" },
+    { to: "/promotions", label: "โปรโมชัน", icon: "promo", perm: "catalog.view" },
   ] },
   { title: "สินค้า", items: [
-    { to: "/products", label: "สินค้า", perm: "catalog.view" },
-    { to: "/categories", label: "หมวดหมู่", perm: "catalog.view" },
+    { to: "/products", label: "สินค้า", icon: "products", perm: "catalog.view" },
+    { to: "/categories", label: "หมวดหมู่", icon: "categories", perm: "catalog.view" },
   ] },
   { title: "คลัง", items: [
-    { to: "/warehouse", label: "คลังสินค้า", perm: "inventory.view", badge: "stock" },
+    { to: "/warehouse", label: "คลังสินค้า", icon: "warehouse", perm: "inventory.view", badge: "stock" },
   ] },
-  { title: "รายงาน", items: [{ to: "/campaigns", label: "รายงานโปรโมชัน", perm: "reports.view" }] },
-  { title: "ผู้ดูแลระบบ", items: [{ to: "/staff", label: "พนักงานและสิทธิ์", perm: "staff.manage" }] },
+  { title: "รายงาน", items: [{ to: "/campaigns", label: "รายงานโปรโมชัน", icon: "campaign", perm: "reports.view" }] },
+  { title: "ผู้ดูแลระบบ", items: [{ to: "/staff", label: "พนักงานและสิทธิ์", icon: "staff", perm: "staff.manage" }] },
 ] as const;
 
 export function Layout() {
@@ -53,7 +54,8 @@ export function Layout() {
         <Link className="appbar-brand" to="/" aria-label="ภาพรวม"><BrandLogo src={`${import.meta.env.BASE_URL}brand/logo.png`} height={32} /></Link>
         <div className="appbar-user">
           <NavLink to="/account" aria-label="บัญชีของฉัน" className="appbar-who">
-            <b>{user.display_name}</b><span className="xs ink-muted"> · {user.role_label}</span>
+            <span className="avatar" aria-hidden="true">{(user.display_name || user.username || "?").trim().charAt(0).toUpperCase()}</span>
+            <span className="appbar-name"><b>{user.display_name}</b><span className="xs ink-muted">{user.role_label}</span></span>
           </NavLink>
           <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => void logout()}>ออกจากระบบ</button>
         </div>
@@ -70,7 +72,7 @@ export function Layout() {
                   const count = "badge" in n ? badges[n.badge] : 0;
                   return (
                     <NavLink key={n.to} to={n.to} end={"end" in n} className={link}>
-                      {n.label}{count > 0 && <span className="pill" aria-label={`${count} รายการต้องดู`}>{count}</span>}
+                      <Icon name={n.icon} />{n.label}{count > 0 && <span className="pill" aria-label={`${count} รายการต้องดู`}>{count}</span>}
                     </NavLink>
                   );
                 })}
