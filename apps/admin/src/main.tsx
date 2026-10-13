@@ -2,13 +2,14 @@ import "@maehai/ui/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { AuthProvider } from "./lib/auth";
 import { Account } from "./pages/Account";
 import { Categories } from "./pages/Categories";
-import { Inventory } from "./pages/Inventory";
 import { Warehouse } from "./pages/Warehouse";
+import { NewSlipPage } from "./pages/warehouse/NewSlip";
+import { SlipPage } from "./pages/warehouse/SlipPage";
 import { Promotions } from "./pages/Promotions";
 import { Staff } from "./pages/Staff";
 import { RequirePermission } from "./components/RequirePermission";
@@ -44,8 +45,10 @@ createRoot(document.getElementById("root")!).render(
               <Route path="orders" element={<RequirePermission perm="orders.view"><Orders /></RequirePermission>} />
               <Route path="orders/:number" element={<RequirePermission perm="orders.view"><OrderDetail /></RequirePermission>} />
               <Route path="products" element={<RequirePermission perm="catalog.view"><Products /></RequirePermission>} />
-              <Route path="inventory" element={<RequirePermission perm="inventory.view"><Inventory /></RequirePermission>} />
+              <Route path="inventory" element={<Navigate to="/warehouse?tab=stock" replace />} />
               <Route path="warehouse" element={<RequirePermission perm="inventory.view"><Warehouse /></RequirePermission>} />
+              <Route path="warehouse/documents/:number" element={<RequirePermission perm="inventory.view"><SlipPage /></RequirePermission>} />
+              <Route path="warehouse/new/:kind" element={<RequirePermission perm="inventory.view"><NewSlipPage /></RequirePermission>} />
               <Route path="categories" element={<RequirePermission perm="catalog.view"><Categories /></RequirePermission>} />
               <Route path="promotions" element={<RequirePermission perm="catalog.view"><Promotions /></RequirePermission>} />
               <Route path="coupons" element={<RequirePermission perm="coupons.view"><Coupons /></RequirePermission>} />

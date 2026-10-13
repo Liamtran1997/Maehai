@@ -20,7 +20,6 @@ const GROUPS = [
   ] },
   { title: "คลัง", items: [
     { to: "/warehouse", label: "คลังสินค้า", perm: "inventory.view", badge: "stock" },
-    { to: "/inventory", label: "สต็อก", perm: "inventory.view" },
   ] },
   { title: "รายงาน", items: [{ to: "/campaigns", label: "รายงานโปรโมชัน", perm: "reports.view" }] },
   { title: "ผู้ดูแลระบบ", items: [{ to: "/staff", label: "พนักงานและสิทธิ์", perm: "staff.manage" }] },

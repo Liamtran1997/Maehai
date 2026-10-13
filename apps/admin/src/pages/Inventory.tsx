@@ -72,9 +72,9 @@ export function Inventory() {
 
   return (
     <>
-      <div className="topbar">
-        <h1>สต็อกสินค้า</h1>
-        {canAdjust && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { setImporting(true); setSku(null); }}>นำเข้าสต็อกจากไฟล์ CSV</button>}
+      <div className="page-head">
+        <div><h2 style={{ margin: 0, font: "600 18px/1.5 var(--font-sans)" }}>สต็อกในแต่ละสาขา</h2></div>
+        {canAdjust && <div className="actions"><button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { setImporting(true); setSku(null); }}>นำเข้าสต็อกจากไฟล์ CSV</button></div>}
       </div>
       <p className="sm ink-muted">รับของเข้า โอนไปสาขา และรับคืนทำในหน้า “คลังสินค้า” “ว่าง” คือของที่ขายได้จริง = มีอยู่ − จองไว้ให้คำสั่งซื้อที่ยังไม่ส่ง สินค้าที่ไม่เปิดนับสต็อกจะขายได้ไม่จำกัด เปิดนับหลังกรอกจำนวนจริงเข้าระบบแล้ว ถ้าตั้ง “โควตาออนไลน์” ไว้ ร้านออนไลน์จะขายได้ไม่เกินโควตาต่อวัน ส่วนที่เหลือเก็บไว้ขายหน้าร้าน</p>
       <form className="toolbar" role="search" onSubmit={(e) => e.preventDefault()}>
