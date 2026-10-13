@@ -9,7 +9,7 @@ export default function CartPage() {
   return (
     <>
       <ShopHeader />
-      <section className="sec sec--tight" style={{ paddingTop: 24 }}>
+      <section className="sec sec--tight sec--narrow" style={{ paddingTop: 24 }}>
         <h1 style={{ font: "500 32px/1.4 var(--font-display)" }}>ตะกร้าสินค้า</h1>
 
         {cart.ready && cart.lines.length === 0 && (

@@ -22,16 +22,16 @@ export function Gallery({ images, name, bands, badge }: { images: Img[]; name: s
         {badge && <span className="mh-badge" style={{ zIndex: 1 }}>{badge}</span>}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={current.url} alt={images.length > 1 ? `${name} รูปที่ ${index + 1} จาก ${images.length}` : name}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 100%" }} />
       </div>
       {images.length > 1 && (
-        <ul aria-label="รูปสินค้า" style={{ display: "flex", gap: 8, overflowX: "auto", padding: "12px 16px 0", margin: 0, listStyle: "none" }}>
+        <ul aria-label="รูปสินค้า" className="pdp-thumbs">
           {images.map((im, i) => (
             <li key={im.id} style={{ flex: "none" }}>
               <button type="button" aria-label={`ดูรูปที่ ${i + 1}`} aria-pressed={i === index} onClick={() => setIndex(i)}
                 style={{ padding: 0, border: 0, background: "none", borderRadius: 10, outline: i === index ? "2px solid var(--leaf)" : "2px solid transparent", outlineOffset: 2, cursor: "pointer" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={im.url} alt="" style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 10, display: "block" }} />
+                <img src={im.url} alt="" style={{ width: 88, height: 66, objectFit: "cover", objectPosition: "50% 100%", borderRadius: 10, display: "block" }} />
               </button>
             </li>
           ))}

@@ -14,6 +14,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
           promotionLabel={p.promotion_label}
           badge={p.in_stock === false ? { label: "หมด", tone: "red" } : BADGE_LABEL[p.badge]}
           bands={toBands(p.bands)}
+          bandDots={p.bands}
           imageSrc={p.image_url ?? undefined}
           href={`/products/${p.slug}`}
         />
