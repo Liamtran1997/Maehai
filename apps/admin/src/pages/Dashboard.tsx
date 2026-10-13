@@ -45,6 +45,7 @@ export function Dashboard() {
             {can("orders.quote") && <li><span className="n num">{todoOnly.data.pending_quote}</span><span className="grow">รอร้านแจ้งค่าจัดส่ง</span></li>}
             {can("orders.fulfil") && <li><span className="n num">{todoOnly.data.to_pack}</span><span className="grow">ชำระแล้ว รอจัดเตรียม</span></li>}
             {can("inventory.view") && <li><span className="n num">{todoOnly.data.low_stock}</span><span className="grow">สินค้าใกล้หมด (ตามสาขา)</span></li>}
+            {can("inventory.view") && <li><span className="n num">{todoOnly.data.slips_to_receive}</span><span className="grow">ใบส่ง/คืนสินค้ารอสาขายืนยัน</span></li>}
           </ul>
         </section>
       )}
@@ -69,6 +70,7 @@ export function Dashboard() {
                 <li><span className="n num">{s.todo.pending_quote}</span><span className="grow">รอร้านแจ้งค่าจัดส่ง</span><Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/orders?status=pending_quote">แจ้ง</Link></li>
                 <li><span className="n num">{s.todo.to_pack}</span><span className="grow">ชำระแล้ว รอจัดเตรียม</span><Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/orders?status=paid">เปิด</Link></li>
                 <li><span className="n num">{s.todo.low_stock}</span><span className="grow">สินค้าใกล้หมด (ตามสาขา)</span><Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/inventory">ดู</Link></li>
+                <li><span className="n num">{s.todo.slips_to_receive}</span><span className="grow">ใบส่ง/คืนสินค้ารอสาขายืนยัน</span><Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/warehouse">ดู</Link></li>
                 <li><span className="n num">{s.todo.waiting_payment}</span><span className="grow">รอลูกค้าชำระเงิน</span><Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/orders?status=waiting_payment">ดู</Link></li>
               </ul>
             </section>

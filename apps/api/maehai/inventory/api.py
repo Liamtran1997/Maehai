@@ -57,6 +57,17 @@ class AdjustIn(Schema):
     note: str = Field(default="", max_length=200)
 
 
+class PlaceSettingsOut(Schema):
+    code: str
+    name: str
+    kind: str
+    line_group_id: str
+
+
+class LineGroupIn(Schema):
+    line_group_id: str = Field(default="", max_length=64, pattern=r"^[A-Za-z0-9]*$")
+
+
 class TrackIn(Schema):
     track: bool
 
@@ -424,6 +435,21 @@ def branches(request):
     if ids is not None:
         qs = qs.filter(pk__in=ids)
     return qs
+
+
+@router.get("/branches/settings", response=list[PlaceSettingsOut], auth=requires("inventory.approve"))
+def branch_settings(request):
+    return Branch.objects.filter(is_active=True)
+
+
+@router.put("/branches/{code}/line-group", response=PlaceSettingsOut, auth=requires("inventory.approve"))
+def set_line_group(request, code: str, data: LineGroupIn):
+    """LINE group that gets this place's warehouse alerts. Empty = the shared staff group."""
+    b = _branch(code)
+    b.line_group_id = data.line_group_id.strip()
+    b.save(update_fields=["line_group_id"])
+    audit(request, "inventory.line_group", b.code, f"กลุ่ม LINE {'ตั้งค่าแล้ว' if b.line_group_id else 'ล้างแล้ว (ใช้กลุ่มกลาง)'}")
+    return b
 
 
 @router.get("/stock", response=list[StockRowOut], auth=requires("inventory.view"))

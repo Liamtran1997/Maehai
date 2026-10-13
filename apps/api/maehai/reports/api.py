@@ -37,6 +37,7 @@ class Todo(Schema):
     waiting_payment: int
     to_pack: int
     low_stock: int = 0
+    slips_to_receive: int = 0
 
 
 class SummaryOut(Schema):

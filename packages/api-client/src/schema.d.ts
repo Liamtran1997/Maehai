@@ -706,6 +706,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/inventory/branches/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Branch Settings */
+        get: operations["maehai_inventory_api_branch_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/branches/{code}/line-group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Line Group
+         * @description LINE group that gets this place's warehouse alerts. Empty = the shared staff group.
+         */
+        put: operations["maehai_inventory_api_set_line_group"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/inventory/stock": {
         parameters: {
             query?: never;
@@ -2233,6 +2270,25 @@ export interface components {
             /** Kind */
             kind: string;
         };
+        /** PlaceSettingsOut */
+        PlaceSettingsOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Line Group Id */
+            line_group_id: string;
+        };
+        /** LineGroupIn */
+        LineGroupIn: {
+            /**
+             * Line Group Id
+             * @default
+             */
+            line_group_id: string;
+        };
         /** LevelOut */
         LevelOut: {
             /** Branch */
@@ -2962,6 +3018,11 @@ export interface components {
              * @default 0
              */
             low_stock: number;
+            /**
+             * Slips To Receive
+             * @default 0
+             */
+            slips_to_receive: number;
         };
         /** TopProduct */
         TopProduct: {
@@ -4162,6 +4223,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StockBranchOut"][];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_branch_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceSettingsOut"][];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_set_line_group: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LineGroupIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceSettingsOut"];
                 };
             };
         };

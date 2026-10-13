@@ -446,3 +446,28 @@ def test_bungwai_is_a_store_with_its_own_pickup_method(seeded):
     b = Branch.objects.get(code=BUNGWAI)
     assert b.kind == "store" and ShippingMethod.objects.get(code="pickup-bungwai").branch_id == b.id
     assert Branch.objects.get(code=CENTRAL).kind == "central"
+
+
+def test_the_owner_sets_a_branch_line_group_and_only_approvers_can(warehouse):
+    r = warehouse.put(f"/api/admin/inventory/branches/{CHANGSANIT}/line-group", {"line_group_id": "Cabc123"}, content_type=JSON)
+    assert r.status_code == 200 and r.json()["line_group_id"] == "Cabc123"
+    settings_rows = {b["code"]: b["line_group_id"] for b in warehouse.get("/api/admin/inventory/branches/settings").json()}
+    assert settings_rows[CHANGSANIT] == "Cabc123"
+    mgr = make_manager("mgr-group", CHANGSANIT)
+    assert mgr.put(f"/api/admin/inventory/branches/{CHANGSANIT}/line-group", {"line_group_id": "Cx"}, content_type=JSON).status_code == 403
+
+
+def test_a_blank_line_group_falls_back_to_the_shared_group(warehouse):
+    warehouse.put(f"/api/admin/inventory/branches/{CHANGSANIT}/line-group", {"line_group_id": ""}, content_type=JSON)
+    stock_in(warehouse, CENTRAL, PEPPER, 10)
+    Outbox.objects.all().delete()
+    post(warehouse, "/api/admin/inventory/documents/transfers",
+         {"to_branch": CHANGSANIT, "vehicle": "x", "lines": [{"sku": PEPPER, "quantity": 1}]})
+    assert list(Outbox.objects.filter(kind="transfer_sent").values_list("recipient", flat=True)) == ["Cshared"]
+
+
+def test_the_dashboard_counts_slips_waiting_to_be_received(warehouse):
+    stock_in(warehouse, CENTRAL, PEPPER, 10)
+    post(warehouse, "/api/admin/inventory/documents/transfers",
+         {"to_branch": CHANGSANIT, "vehicle": "x", "lines": [{"sku": PEPPER, "quantity": 1}]})
+    assert warehouse.get("/api/admin/reports/summary").json()["todo"]["slips_to_receive"] == 1

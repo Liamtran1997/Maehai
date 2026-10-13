@@ -6,7 +6,7 @@ import { ErrorNotice } from "../components/Notice";
 import { api, unwrap } from "../lib/api";
 import { useAuth } from "../lib/auth";
 
-type Tab = "docs" | "receipt" | "transfer" | "return" | "materials" | "sources" | "report";
+type Tab = "docs" | "receipt" | "transfer" | "return" | "materials" | "sources" | "places" | "report";
 
 const TABS: { key: Tab; label: string; perm: string }[] = [
   { key: "docs", label: "เอกสาร", perm: "inventory.view" },
@@ -15,6 +15,7 @@ const TABS: { key: Tab; label: string; perm: string }[] = [
   { key: "return", label: "สาขาส่งคืนคลัง", perm: "inventory.adjust" },
   { key: "materials", label: "วัตถุดิบและวัสดุ", perm: "inventory.view" },
   { key: "sources", label: "แหล่งสินค้า", perm: "inventory.receive" },
+  { key: "places", label: "สาขาและกลุ่ม LINE", perm: "inventory.approve" },
   { key: "report", label: "รายงานคลัง", perm: "inventory.view" },
 ];
 
@@ -50,6 +51,7 @@ export function Warehouse() {
       {tab === "return" && <StoreReturnTab />}
       {tab === "materials" && <MaterialsTab />}
       {tab === "sources" && <SourcesTab />}
+      {tab === "places" && <PlacesTab />}
       {tab === "report" && <ReportTab />}
     </>
   );
@@ -595,6 +597,47 @@ function SourcesTab() {
   );
 }
 
+function PlacesTab() {
+  const qc = useQueryClient();
+  const places = useQuery({ queryKey: ["branch-settings"], queryFn: async () => unwrap(await api.GET("/api/admin/inventory/branches/settings")) });
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const save = useMutation({
+    mutationFn: async (code: string) => unwrap(await api.PUT("/api/admin/inventory/branches/{code}/line-group", {
+      params: { path: { code } }, body: { line_group_id: (drafts[code] ?? "").trim() },
+    })),
+    onSuccess: (_d, code) => {
+      setDrafts((d) => { const next = { ...d }; delete next[code]; return next; });
+      void qc.invalidateQueries({ queryKey: ["branch-settings"] });
+    },
+  });
+  return (
+    <div style={{ display: "grid", gap: 12, maxWidth: 820 }}>
+      <p className="sm ink-muted">แจ้งเตือนคลังของแต่ละสาขาจะส่งเข้ากลุ่ม LINE ของสาขานั้น เว้นว่างไว้จะใช้กลุ่มกลางของร้าน รหัสกลุ่มขึ้นต้นด้วย C ดูได้จากบอท LINE (พิมพ์ /id ในกลุ่ม)</p>
+      <ErrorNotice error={save.error} />
+      <div className="mh-tablewrap">
+        <table className="mh-table">
+          <thead><tr><th>สาขา</th><th>ประเภท</th><th>รหัสกลุ่ม LINE</th><th /></tr></thead>
+          <tbody>
+            {places.data?.map((p) => {
+              const value = drafts[p.code] ?? p.line_group_id;
+              return (
+                <tr key={p.code}>
+                  <td className="bold">{p.name}</td>
+                  <td>{p.kind === "central" ? "คลังกลาง" : "สาขา"}</td>
+                  <td><input className="mh-input" aria-label={`รหัสกลุ่ม LINE ${p.name}`} value={value} maxLength={64} placeholder="ใช้กลุ่มกลาง"
+                    onChange={(e) => setDrafts({ ...drafts, [p.code]: e.target.value })} /></td>
+                  <td><button className="mh-btn mh-btn--secondary mh-btn--sm" disabled={save.isPending || drafts[p.code] === undefined}
+                    onClick={() => save.mutate(p.code)}>บันทึก</button></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------- reconciliation
 
 function ReportTab() {
@@ -633,7 +676,7 @@ function ReportTab() {
           </p>
           <div className="mh-tablewrap">
             <table className="mh-table">
-              <thead><tr><th>รายการ</th><th className="r">ต้นงวด</th><th>การเคลื่อนไหว</th><th className="r">ปลายงวด</th><th className="r">มีอยู่</th><th className="r">กำลังส่ง (เข้า/ออก)</th><th className="r">หาย</th><th className="r">ทิ้ง</th></tr></thead>
+              <thead><tr style={{ whiteSpace: "normal" }}><th>รายการ</th><th className="r">ต้นงวด</th><th>การเคลื่อนไหว</th><th className="r">ปลายงวด</th><th className="r">มีอยู่</th><th className="r">กำลังส่ง (เข้า/ออก)</th><th className="r">หาย</th><th className="r">ทิ้ง</th></tr></thead>
               <tbody>
                 {report.data.rows.map((r) => (
                   <tr key={`${r.kind}-${r.id}`}>
