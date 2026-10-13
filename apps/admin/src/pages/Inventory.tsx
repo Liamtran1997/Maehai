@@ -98,7 +98,7 @@ export function Inventory() {
       <ErrorNotice error={stock.error ?? track.error} />
 
       {stock.data && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
           <div className="mh-tile"><span className="mh-tile__label">ใกล้หมด</span><span className="mh-tile__value" style={{ color: lowCount ? "var(--band-red)" : undefined }}>{lowCount} รายการ</span><span className="small muted">ต่ำกว่าจุดเตือนในสาขาใดสาขาหนึ่ง</span></div>
           <div className="mh-tile"><span className="mh-tile__label">หมดแล้ว</span><span className="mh-tile__value">{outCount} รายการ</span><span className="small muted">ขายได้เป็นศูนย์ในทุกสาขา</span></div>
           <div className="mh-tile"><span className="mh-tile__label">เปิดนับสต็อก</span><span className="mh-tile__value">{trackedCount} / {stock.data.length}</span><span className="small muted">สินค้าที่ตัดสต็อกตามจำนวนจริง</span></div>
