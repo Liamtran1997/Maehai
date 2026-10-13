@@ -70,7 +70,10 @@ export function Promotions() {
 
   return (
     <>
-      <div className="topbar"><h1>โปรโมชัน</h1>{canManage && <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => { save.reset(); setForm(blank()); }}>สร้างโปรโมชัน</button>}</div>
+      <div className="page-head">
+        <div><h1>โปรโมชัน</h1><p>ส่วนลดที่ตั้งจากราคาปกติ ตั้งช่วงเวลาและเงื่อนไขได้ที่นี่</p></div>
+        {canManage && <div className="actions"><button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => { save.reset(); setForm(blank()); }}>สร้างโปรโมชัน</button></div>}
+      </div>
       <p className="sm ink-muted">ส่วนลดไม่ซ้อนกัน ถ้าสินค้าอยู่ในหลายโปรโมชันพร้อมกัน ลูกค้าได้ส่วนลดที่มากที่สุดเพียงอันเดียว ราคาในคำสั่งซื้อจะถูกบันทึกตอนสั่ง ปิดโปรโมชันภายหลังไม่กระทบคำสั่งซื้อเก่า</p>
       <ErrorNotice error={promos.error ?? end.error} />
       <div className="cols cols--2-1" style={{ alignItems: "start" }}>

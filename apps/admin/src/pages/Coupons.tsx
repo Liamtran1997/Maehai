@@ -99,7 +99,10 @@ export function Coupons() {
 
   return (
     <>
-      <div className="topbar"><h1>โค้ดส่วนลด</h1>{canManage && <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open({ ...blank(), code: randomCode() })}>สร้างโค้ด</button>}</div>
+      <div className="page-head">
+        <div><h1>โค้ดส่วนลด</h1><p>โค้ดที่ลูกค้าใส่ตอนชำระเงิน</p></div>
+        {canManage && <div className="actions"><button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open({ ...blank(), code: randomCode() })}>สร้างโค้ด</button></div>}
+      </div>
       <p className="sm ink-muted">ลูกค้ากรอกโค้ดตอนสั่งซื้อ ส่วนลดคิดจากยอดสินค้าหลังหักโปรโมชันรายสินค้าแล้ว ไม่รวมค่าจัดส่ง ใช้ร่วมกับโปรโมชันรายสินค้าได้ (หรือเลือกไม่ให้ใช้กับสินค้าที่ลดอยู่แล้ว) ยกเลิกคำสั่งซื้อจะคืนสิทธิ์การใช้โค้ด</p>
       <ErrorNotice error={list.error ?? end.error} />
       <div className="cols cols--2-1" style={{ alignItems: "start" }}>

@@ -37,7 +37,10 @@ export function Categories() {
 
   return (
     <>
-      <div className="topbar"><h1>หมวดหมู่สินค้า</h1>{canEdit && <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => { save.reset(); setForm({ ...blank }); }}>เพิ่มหมวดหมู่</button>}</div>
+      <div className="page-head">
+        <div><h1>หมวดหมู่สินค้า</h1><p>หมวดที่ซ่อนอยู่จะไม่แสดงบนหน้าร้าน</p></div>
+        {canEdit && <div className="actions"><button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => { save.reset(); setForm({ ...blank }); }}>เพิ่มหมวดหมู่</button></div>}
+      </div>
       <p className="sm ink-muted">หมวดหมู่ที่ซ่อนจะหายจากหน้าร้านพร้อมสินค้าทั้งหมดในหมวด และลูกค้าสั่งสินค้าในหมวดนั้นไม่ได้ ลบได้เฉพาะหมวดที่ไม่มีสินค้า</p>
       <ErrorNotice error={cats.error ?? toggle.error ?? remove.error} />
       <div className="cols cols--2-1" style={{ alignItems: "start" }}>

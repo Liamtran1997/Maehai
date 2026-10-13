@@ -161,6 +161,13 @@ a { color: var(--leaf); }
 .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .toolbar .searchbox { flex: 1 1 260px; max-width: 420px; }
 .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Underline tabs for list pages (status filters): the active tab has a leaf-green bar under it. */
+.list-tabs { display: flex; flex-wrap: wrap; gap: 4px 24px; border-bottom: 1px solid var(--line); }
+.list-tabs .tab { position: relative; padding: 10px 2px 12px; border: 0; background: none; cursor: pointer; font: 600 15px/1.2 var(--font-sans); color: var(--ink-muted); white-space: nowrap; }
+.list-tabs .tab:hover { color: var(--ink); }
+.list-tabs .tab[aria-pressed="true"] { color: var(--leaf); }
+.list-tabs .tab[aria-pressed="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--leaf); }
+@media (max-width: 899px) { .list-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } }
 .thumb-s { width: 44px; display: grid; place-items: center; padding: 6px; border-radius: 10px; background: var(--surface-300); }
 .stock-low { color: var(--danger); font-weight: 600; }
 .switch { display: inline-block; position: relative; width: 44px; height: 26px; border-radius: 999px; background: var(--leaf); }

@@ -47,14 +47,16 @@ export function Staff() {
 
   return (
     <>
-      <div className="topbar">
-        <h1>พนักงานและสิทธิ์</h1>
-        <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open({ username: "", display_name: "", role: "sales", password: "", is_active: true, branch_codes: [] })}>เพิ่มพนักงาน</button>
+      <div className="page-head">
+        <div><h1>พนักงานและสิทธิ์</h1><p>บัญชีพนักงาน ตารางสิทธิ์ และประวัติการใช้งาน</p></div>
+        <div className="actions">
+          <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open({ username: "", display_name: "", role: "sales", password: "", is_active: true, branch_codes: [] })}>เพิ่มพนักงาน</button>
+        </div>
       </div>
-      <div className="seg" role="group" aria-label="หัวข้อ" style={{ alignSelf: "flex-start" }}>
-        <button aria-pressed={tab === "people"} onClick={() => setTab("people")}>พนักงาน</button>
-        <button aria-pressed={tab === "roles"} onClick={() => setTab("roles")}>ตารางสิทธิ์</button>
-        <button aria-pressed={tab === "audit"} onClick={() => setTab("audit")}>ประวัติการใช้งาน</button>
+      <div className="list-tabs" role="group" aria-label="หัวข้อ">
+        <button type="button" className="tab" aria-pressed={tab === "people"} onClick={() => setTab("people")}>พนักงาน</button>
+        <button type="button" className="tab" aria-pressed={tab === "roles"} onClick={() => setTab("roles")}>ตารางสิทธิ์</button>
+        <button type="button" className="tab" aria-pressed={tab === "audit"} onClick={() => setTab("audit")}>ประวัติการใช้งาน</button>
       </div>
       <ErrorNotice error={staff.error ?? reset.error} />
 

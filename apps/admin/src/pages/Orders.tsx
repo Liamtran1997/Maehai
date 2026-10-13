@@ -29,9 +29,11 @@ export function Orders() {
 
   return (
     <>
-      <div className="topbar"><h1>คำสั่งซื้อ</h1></div>
-      <div className="tabs" role="group" aria-label="กรองตามสถานะ">
-        {STATUS_TABS.map((t) => <button key={t.key} className="mh-chip" aria-pressed={status === t.key} onClick={() => set({ status: t.key })}>{t.label}</button>)}
+      <div className="page-head">
+        <div><h1>คำสั่งซื้อ</h1><p>ค้นและกรองคำสั่งซื้อทั้งหมด เริ่มจากสถานะที่ต้องดำเนินการก่อน</p></div>
+      </div>
+      <div className="list-tabs" role="group" aria-label="กรองตามสถานะ">
+        {STATUS_TABS.map((t) => <button key={t.key} type="button" className="tab" aria-pressed={status === t.key} onClick={() => set({ status: t.key })}>{t.label}</button>)}
       </div>
       <form className="toolbar" role="search" onSubmit={(e) => { e.preventDefault(); set({ q: draft.trim() }); }}>
         <div className="searchbox">

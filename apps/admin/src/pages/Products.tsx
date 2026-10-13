@@ -217,14 +217,14 @@ export function Products() {
               <span className="mh-label">รูปสินค้า ({form.images?.length ?? 0}/10)</span>
               {form.id ? (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(104px, 1fr))", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(128px, 1fr))", gap: 12 }}>
                     {form.images?.map((im, idx, all) => (
                       <div key={im.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                         <div style={{ position: "relative" }}>
                           <img src={im.url} alt={`รูปที่ ${idx + 1}`} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8, display: "block" }} />
                           {idx === 0 && <span className="mh-badge" style={{ position: "absolute", top: 6, left: 6, fontSize: 11, padding: "0 8px" }}>รูปหลัก</span>}
                         </div>
-                        <div className="mh-row" style={{ gap: 4, justifyContent: "center" }}>
+                        <div className="mh-row" style={{ gap: 4, justifyContent: "center", flexWrap: "nowrap" }}>
                           <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" aria-label="เลื่อนไปทางซ้าย" disabled={idx === 0 || reorder.isPending}
                             onClick={() => { const ids = all.map((x) => x.id); [ids[idx - 1], ids[idx]] = [ids[idx], ids[idx - 1]]; reorder.mutate(ids); }}>‹</button>
                           <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" aria-label="เลื่อนไปทางขวา" disabled={idx === all.length - 1 || reorder.isPending}
@@ -252,14 +252,14 @@ export function Products() {
                 </>
               ) : (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(104px, 1fr))", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(128px, 1fr))", gap: 12 }}>
                     {pending.map((f, idx) => (
                       <div key={`${f.name}-${idx}`} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                         <div style={{ position: "relative" }}>
                           <img src={previews[idx]} alt={`รูปที่ ${idx + 1}`} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8, display: "block" }} />
                           {idx === 0 && <span className="mh-badge" style={{ position: "absolute", top: 6, left: 6, fontSize: 11, padding: "0 8px" }}>รูปหลัก</span>}
                         </div>
-                        <div className="mh-row" style={{ gap: 4, justifyContent: "center" }}>
+                        <div className="mh-row" style={{ gap: 4, justifyContent: "center", flexWrap: "nowrap" }}>
                           <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" aria-label={`เอารูปที่ ${idx + 1} ออก`} onClick={() => setPending(pending.filter((_, j) => j !== idx))}>✕</button>
                         </div>
                       </div>

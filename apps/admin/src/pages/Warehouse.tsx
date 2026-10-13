@@ -53,9 +53,9 @@ export function Warehouse() {
           </div>
         )}
       </div>
-      <div className="seg" role="tablist" aria-label="ส่วนของคลัง">
+      <div className="list-tabs" role="tablist" aria-label="ส่วนของคลัง">
         {visible.map((t) => (
-          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} aria-pressed={tab === t.key} onClick={() => setParams({ tab: t.key })}>{t.label}</button>
+          <button key={t.key} type="button" className="tab" role="tab" aria-selected={tab === t.key} aria-pressed={tab === t.key} onClick={() => setParams({ tab: t.key })}>{t.label}</button>
         ))}
       </div>
       {tab === "stock" && <Inventory />}
