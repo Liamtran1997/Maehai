@@ -5,6 +5,7 @@ branches assigned to them (visible_branch_ids). Owners and managers see every br
 """
 from decimal import Decimal
 
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Field, Router, Schema
@@ -47,6 +48,7 @@ class StockRowOut(Schema):
     variant_label: str
     track_stock: bool
     levels: list[LevelOut]
+    in_transit: int = 0             # sent on transfer slips that the receiving branch has not confirmed yet
 
 
 class AdjustIn(Schema):
@@ -503,12 +505,18 @@ def stock(request, q: str | None = None, tracked_only: bool = False):
     order = [c for c in Branch.objects.filter(is_active=True).values_list("code", flat=True) if visible is None or c in visible]
     variants = list(qs.order_by("product__sort_order", "product__name", "sort_order"))
     sold = _sold_today([lv.id for v in variants for lv in v.stock_levels.all()])
+    transit_lines = DocumentLine.objects.filter(document__kind=Document.Kind.TRANSFER, document__status=Document.Status.SENT,
+                                                variant__isnull=False)
+    if visible is not None:
+        transit_lines = transit_lines.filter(document__to_branch__code__in=visible)
+    transit = dict(transit_lines.values("variant_id").annotate(total=Sum("sent")).values_list("variant_id", "total"))
     rows = []
     for v in variants:
         by_branch = {lv.branch.code: lv for lv in v.stock_levels.all()}
         rows.append({
             "sku": v.sku, "product_name": v.product.name, "variant_label": v.label, "track_stock": v.track_stock,
             "levels": [_level_out(c, by_branch.get(c), sold.get(by_branch[c].id, 0) if c in by_branch else 0) for c in order],
+            "in_transit": int(transit.get(v.pk) or 0),
         })
     return rows
 

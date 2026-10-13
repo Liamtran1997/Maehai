@@ -2794,6 +2794,11 @@ export interface components {
             track_stock: boolean;
             /** Levels */
             levels: components["schemas"]["LevelOut"][];
+            /**
+             * In Transit
+             * @default 0
+             */
+            in_transit: number;
         };
         /** AdjustIn */
         AdjustIn: {
