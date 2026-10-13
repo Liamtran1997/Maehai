@@ -46,11 +46,16 @@ export function Layout() {
           );
         })}
         {can("staff.manage") && <><p className="nav-sep">ผู้ดูแลระบบ</p><NavLink to="/staff" className={link}>พนักงานและสิทธิ์</NavLink></>}
-        <p className="nav-sep">บัญชี</p>
-        <NavLink to="/account" className={link}><span><span className="bold">{user.display_name}</span><br /><span className="xs ink-muted">{user.role_label}</span></span></NavLink>
-        <button className="nav" style={{ border: 0, background: "transparent", cursor: "pointer", textAlign: "left" }} onClick={() => void logout()}>ออกจากระบบ</button>
       </nav>
-      <main className="main"><Outlet /></main>
+      <main className="main">
+        <div className="acct-bar" style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <NavLink to="/account" aria-label="บัญชีของฉัน" style={{ textAlign: "right", textDecoration: "none", color: "inherit" }}>
+            <span className="bold">{user.display_name}</span> <span className="xs ink-muted">· {user.role_label}</span>
+          </NavLink>
+          <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => void logout()}>ออกจากระบบ</button>
+        </div>
+        <Outlet />
+      </main>
     </div>
   );
 }
