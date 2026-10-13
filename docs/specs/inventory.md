@@ -1,6 +1,13 @@
 # Spec: Kho v2 (tồn kho theo chi nhánh)
 
-Trạng thái: **đề xuất, chưa triển khai**. Cập nhật: 12/10/2026.
+Trạng thái: **giai đoạn 1 đã triển khai** (mục 4, 5, 8.1–8.3, 12.1–12.3). Các giai đoạn 2 đến 4 vẫn là đề xuất. Cập nhật: 12/10/2026.
+
+Ghi chú giai đoạn 1 (khác với văn bản đề xuất bên dưới):
+- Chưa chốt Q1 và Q4 với chủ tiệm, nên làm theo đề xuất: hạn mức online (Q1 = A) và giữ hàng 60 phút (Q4). Đổi bằng cấu hình từng món (`online_quota`) và `ORDER_UNPAID_EXPIRY_MINUTES`.
+- File CSV chỉ nhận `tracking` = `none` hoặc `stock`. `daily` và cột `daily_capacity` thuộc giai đoạn 2, hiện báo lỗi "ยังไม่รองรับ".
+- Nút "หมดหน้าร้าน" dùng quyền `inventory.adjust` (cho nhân viên bán hàng bấm ở chi nhánh của mình thuộc mục 14, giai đoạn 3).
+- Mục 8.4 (nhắc báo phí ship sau 4 giờ) và 8.5 (đếm ngược trên trang đơn của khách) chưa làm.
+- Cảnh báo "sắp hết" chỉ phát khi tồn **giảm** xuống ngưỡng. Nhập hàng mà vẫn thấp thì không báo.
 Phạm vi: trang quản trị mục **สต็อก**, cách đơn online giữ và trừ hàng, và thông báo liên quan.
 Cần chủ tiệm chốt các quyết định ở mục 2 trước khi làm.
 

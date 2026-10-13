@@ -10,7 +10,7 @@ const ACTION_LABEL: Record<string, string> = {
   "staff.create": "เพิ่มพนักงาน", "staff.update": "แก้ไขพนักงาน", "staff.reset_password": "รีเซ็ตรหัสผ่าน", "password.change": "เปลี่ยนรหัสผ่านตัวเอง",
   "price.change": "แก้ราคา", "product.create": "เพิ่มสินค้า", "promotion.create": "สร้างโปรโมชัน", "promotion.update": "แก้โปรโมชัน",
   "promotion.end": "ปิดโปรโมชัน", "promotion.delete": "ลบโปรโมชัน", "coupon.create": "สร้างโค้ด", "coupon.update": "แก้โค้ด",
-  "coupon.end": "ปิดโค้ด", "coupon.delete": "ลบโค้ด", "order.cancel_paid": "ยกเลิกคำสั่งซื้อที่ชำระแล้ว",
+  "coupon.end": "ปิดโค้ด", "inventory.import": "นำเข้าสต็อกจากไฟล์", "inventory.level_settings": "ตั้งโควตาออนไลน์/จุดเตือนสต็อก", "coupon.delete": "ลบโค้ด", "order.cancel_paid": "ยกเลิกคำสั่งซื้อที่ชำระแล้ว",
 };
 
 type Form = { id?: number; username: string; display_name: string; role: string; password: string; is_active: boolean };

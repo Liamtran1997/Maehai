@@ -142,7 +142,7 @@ RATE_LIMITS = {
 # Inventory
 DEFAULT_FULFILLMENT_BRANCH = os.environ.get("DEFAULT_FULFILLMENT_BRANCH", "srinarong")  # ships delivery orders unless it is out of stock
 LOW_STOCK_THRESHOLD = int(os.environ.get("LOW_STOCK_THRESHOLD", "5"))
-ORDER_UNPAID_EXPIRY_HOURS = int(os.environ.get("ORDER_UNPAID_EXPIRY_HOURS", "24"))  # unpaid orders release their stock after this long
+ORDER_UNPAID_EXPIRY_MINUTES = int(os.environ.get("ORDER_UNPAID_EXPIRY_MINUTES", "60"))  # unpaid orders release their stock after this long
 
 # Production hardening. TLS is terminated by the reverse proxy (Caddy), which sets X-Forwarded-Proto.
 if not DEBUG:

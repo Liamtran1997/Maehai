@@ -757,6 +757,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/inventory/levels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Level Settings
+         * @description Daily online quota and own low-stock line for one size at one branch.
+         */
+        put: operations["maehai_inventory_api_level_settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/sold-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sold Out
+         * @description The counter sold the rest: stop online sales for this size at this branch now.
+         */
+        post: operations["maehai_inventory_api_sold_out"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/import/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Import Template */
+        get: operations["maehai_inventory_api_import_template"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Preview
+         * @description Check a stock file and show what would change. Nothing is written.
+         */
+        post: operations["maehai_inventory_api_import_preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/import/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Apply */
+        post: operations["maehai_inventory_api_import_apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/inventory/variants/{sku}/track": {
         parameters: {
             query?: never;
@@ -1885,6 +1979,25 @@ export interface components {
             reserved: number;
             /** Available */
             available: number;
+            /** Online Quota */
+            online_quota?: number | null;
+            /**
+             * Online Sold Today
+             * @default 0
+             */
+            online_sold_today: number;
+            /**
+             * Online Available
+             * @default 0
+             */
+            online_available: number;
+            /** Low Stock Threshold */
+            low_stock_threshold?: number | null;
+            /**
+             * Low Stock Line
+             * @default 0
+             */
+            low_stock_line: number;
         };
         /** StockRowOut */
         StockRowOut: {
@@ -1930,6 +2043,86 @@ export interface components {
              * @default
              */
             note: string;
+        };
+        /** LevelSettingsIn */
+        LevelSettingsIn: {
+            /** Branch */
+            branch: string;
+            /** Sku */
+            sku: string;
+            /** Online Quota */
+            online_quota?: number | null;
+            /** Low Stock Threshold */
+            low_stock_threshold?: number | null;
+        };
+        /** SoldOutIn */
+        SoldOutIn: {
+            /** Branch */
+            branch: string;
+            /** Sku */
+            sku: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** TemplateOut */
+        TemplateOut: {
+            /** Filename */
+            filename: string;
+            /** Csv */
+            csv: string;
+        };
+        /** ImportPreviewOut */
+        ImportPreviewOut: {
+            /** Rows */
+            rows: components["schemas"]["ImportRowOut"][];
+            /** Total */
+            total: number;
+            /** Error Count */
+            error_count: number;
+            /** Ok Count */
+            ok_count: number;
+        };
+        /** ImportRowOut */
+        ImportRowOut: {
+            /** Line */
+            line: number;
+            /** Sku */
+            sku: string;
+            /** Branch Code */
+            branch_code: string;
+            /** Tracking */
+            tracking: string;
+            /** Product Name */
+            product_name: string;
+            /** Variant Label */
+            variant_label: string;
+            /** On Hand */
+            on_hand: number | null;
+            /** Online Quota */
+            online_quota: number | null;
+            /** Low Stock Threshold */
+            low_stock_threshold: number | null;
+            /** Current On Hand */
+            current_on_hand: number;
+            /** Delta */
+            delta: number | null;
+            /** Errors */
+            errors: string[];
+        };
+        /** ImportIn */
+        ImportIn: {
+            /** Csv */
+            csv: string;
+        };
+        /** ImportResultOut */
+        ImportResultOut: {
+            /** Rows */
+            rows: number;
+            /** Changed */
+            changed: number;
         };
         /** TrackIn */
         TrackIn: {
@@ -3366,6 +3559,122 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    maehai_inventory_api_level_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LevelSettingsIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LevelOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_sold_out: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SoldOutIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LevelOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_import_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_import_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportPreviewOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_import_apply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResultOut"];
+                };
             };
         };
     };

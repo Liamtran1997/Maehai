@@ -12,11 +12,11 @@ from django.core.management.base import BaseCommand
 log = logging.getLogger(__name__)
 
 # (management command, minutes between runs)
-JOBS = [("expire_unpaid_orders", 60)]
+JOBS = [("expire_unpaid_orders", 5)]
 
 
 class Command(BaseCommand):
-    help = "Run periodic jobs (expire unpaid orders hourly). Use --once to run every job a single time and exit."
+    help = "Run periodic jobs (expire unpaid orders every 5 minutes). Use --once to run every job a single time and exit."
 
     def add_arguments(self, parser):
         parser.add_argument("--once", action="store_true")

@@ -16,7 +16,9 @@ Cập nhật: 12/10/2026. Phần kỹ thuật đã làm xong trên máy phát tr
 
 - [ ] **Giá thật** cho từng cỡ của 28 sản phẩm (hiện là giá tạm ฿100 cho món mới và giá mẫu cho 22 món cũ). Sau đó bật hiển thị từng món.
 - [ ] **Mô tả, số อย., cách bảo quản, trọng lượng** cho từng sản phẩm.
-- [ ] **Đếm kho thực tế** rồi bật theo dõi tồn kho cho các món cần theo dõi.
+- [ ] **Đếm kho thực tế** rồi nhập vào hệ thống bằng file CSV (trang สต็อก, nút "นำเข้าสต็อกจากไฟล์ CSV"): tải file mẫu, điền `tracking` (`stock` hoặc `none`) và `on_hand` cho từng món ở từng chi nhánh, rồi nhập. Hệ thống kiểm tra trước, chưa ghi gì cho tới khi bấm xác nhận.
+- [ ] **Chốt cách chia hàng giữa online và bán tại quầy** (spec kho, Q1): đặt "โควตาออนไลน์ต่อวัน" cho từng món ở từng chi nhánh (cột `online_quota` trong file CSV hoặc nút "โควตา / จุดเตือน"). Để trống thì online bán được tới khi hết tồn. Nhân viên bấm "หมดหน้าร้าน" khi quầy bán hết.
+- [ ] **Chốt thời gian giữ hàng cho đơn chưa thanh toán**: mặc định 60 phút (`ORDER_UNPAID_EXPIRY_MINUTES`), job kiểm tra mỗi 5 phút. Đơn đã gửi slip không bị hủy.
 - [ ] **Số PromptPay** nhận tiền và có đăng ký VAT hay không.
 - [ ] **Ngày nghỉ** không giao hàng (biến `NON_WORKING_DATES`).
 - [ ] **Điền các chỗ [ระบุ]** trong trang chính sách, rồi nhờ tư vấn pháp lý kiểm tra (PDPA, thời hạn lưu dữ liệu, hoàn tiền, điều khoản vận chuyển).

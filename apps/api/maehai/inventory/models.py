@@ -23,6 +23,11 @@ class StockLevel(models.Model):
     variant = models.ForeignKey("catalog.ProductVariant", on_delete=models.CASCADE, related_name="stock_levels")
     on_hand = models.PositiveIntegerField(default=0)
     reserved = models.PositiveIntegerField(default=0)
+    online_quota = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Most units online may sell from this branch per day. Empty = no daily limit, sell what is on hand.")
+    low_stock_threshold = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Staff are told when available drops to this. Empty = LOW_STOCK_THRESHOLD.")
+    low_alerted = models.BooleanField(default=False, help_text="A low-stock alert is out; cleared once stock is back above the line.")
 
     class Meta:
         constraints = [
@@ -35,6 +40,29 @@ class StockLevel(models.Model):
     def available(self) -> int:
         return self.on_hand - self.reserved
 
+    @property
+    def threshold(self) -> int:
+        from django.conf import settings
+
+        return settings.LOW_STOCK_THRESHOLD if self.low_stock_threshold is None else self.low_stock_threshold
+
+    def online_available(self, sold_today: int) -> int:
+        """What the shop may still sell today: the stock, capped by what is left of the daily online quota."""
+        if self.online_quota is None:
+            return self.available
+        return max(0, min(self.available, self.online_quota - sold_today))
+
+
+class OnlineSale(models.Model):
+    """Units reserved by online orders from one level on one day, counted against its daily online quota."""
+
+    level = models.ForeignKey(StockLevel, on_delete=models.CASCADE, related_name="online_sales")
+    day = models.DateField()
+    units = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["level", "day"], name="one_online_sale_row_per_day")]
+
 
 class StockMovement(models.Model):
     """Append-only history of every change to on_hand: who, why, how many."""
@@ -46,6 +74,8 @@ class StockMovement(models.Model):
         TRANSFER_IN = "transfer_in", "รับโอน"
         TRANSFER_OUT = "transfer_out", "โอนออก"
         SALE = "sale", "ขาย"
+        OPENING = "opening", "ยอดยกมา"
+        COUNTER_SALE = "counter_sale", "ขายหน้าร้าน"
 
     branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name="movements")
     variant = models.ForeignKey("catalog.ProductVariant", on_delete=models.PROTECT, related_name="movements")
@@ -76,6 +106,7 @@ class StockReservation(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name="+")
     quantity = models.PositiveIntegerField()
     state = models.CharField(max_length=10, choices=State.choices, default=State.RESERVED)
+    quota_day = models.DateField(null=True, blank=True, help_text="Day whose online quota this reservation was counted against")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

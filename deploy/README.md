@@ -8,7 +8,7 @@ Một máy chủ, một tên miền, một lệnh. Toàn bộ hệ thống chạ
 | `shop` | Website bán hàng (Next.js) |
 | `api` | Django API (gunicorn, 3 worker) |
 | `worker` | Gửi tin LINE trong hàng đợi. **Không chạy thì không ai nhận được thông báo** |
-| `scheduler` | Hủy đơn quá hạn chưa thanh toán (mỗi giờ) để trả hàng về kho |
+| `scheduler` | Hủy đơn quá hạn chưa thanh toán (kiểm tra mỗi 5 phút, hủy sau 60 phút) để trả hàng về kho |
 | `migrate` | Chạy migration database rồi thoát, trước khi `api` khởi động |
 | `db` | PostgreSQL 16 |
 | `redis` | Bộ đếm giới hạn tần suất (rate limit) dùng chung giữa các worker |
