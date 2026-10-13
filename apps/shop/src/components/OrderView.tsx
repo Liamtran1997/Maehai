@@ -43,13 +43,13 @@ export function OrderView({ number, token }: { number: string; token: string }) 
 
   if (missing) {
     return (
-      <section className="sec"><div className="notice notice--warn"><p>ไม่พบคำสั่งซื้อนี้ ลิงก์อาจไม่ถูกต้อง ลอง<a href="/track" className="bold">ค้นหาด้วยเลขที่และเบอร์โทร</a></p></div></section>
+      <section className="sec sec--narrow"><div className="notice notice--warn"><p>ไม่พบคำสั่งซื้อนี้ ลิงก์อาจไม่ถูกต้อง ลอง<a href="/track" className="bold">ค้นหาด้วยเลขที่และเบอร์โทร</a></p></div></section>
     );
   }
-  if (!order) return <section className="sec"><p className="ink-muted" aria-live="polite">{netError ? "เชื่อมต่อไม่ได้ กำลังลองใหม่…" : "กำลังโหลด…"}</p></section>;
+  if (!order) return <section className="sec sec--narrow"><p className="ink-muted" aria-live="polite">{netError ? "เชื่อมต่อไม่ได้ กำลังลองใหม่…" : "กำลังโหลด…"}</p></section>;
 
   return (
-    <section className="sec sec--tight" style={{ gap: 20 }}>
+    <section className="sec sec--tight sec--narrow" style={{ gap: 20 }}>
       <div className="panel">
         <div className="rowline"><span className="mh-code">{order.number}</span><StatusPill status={PILL[order.status]} /></div>
         <p className="sm ink-muted">{order.status_label} · นัดรับ {formatThaiDate(order.requested_date)} · {order.shipping_method.name}</p>

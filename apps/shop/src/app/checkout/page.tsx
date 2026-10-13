@@ -83,7 +83,7 @@ export default function CheckoutPage() {
     return (
       <>
         <ShopHeader />
-        <section className="sec" style={{ textAlign: "center" }}>
+        <section className="sec sec--narrow" style={{ textAlign: "center" }}>
           <p className="ink-muted">ตะกร้าว่างอยู่</p>
           <div><a className="mh-btn mh-btn--accent btn-link" href="/products">เลือกสินค้า</a></div>
         </section>
@@ -101,9 +101,9 @@ export default function CheckoutPage() {
       </ol>
 
       {loadError ? (
-        <section className="sec"><div className="notice notice--warn"><p>โหลดข้อมูลการจัดส่งไม่ได้ ลองรีเฟรชหน้านี้ หรือสั่งทาง LINE @maehai</p></div></section>
+        <section className="sec sec--narrow"><div className="notice notice--warn"><p>โหลดข้อมูลการจัดส่งไม่ได้ ลองรีเฟรชหน้านี้ หรือสั่งทาง LINE @maehai</p></div></section>
       ) : (
-        <form className="sec sec--tight" style={{ gap: 20 }} onSubmit={onSubmit}>
+        <form className="sec sec--tight sec--narrow" style={{ gap: 20 }} onSubmit={onSubmit}>
           <fieldset className="panel" style={{ border: "1px solid var(--line)", margin: 0 }}>
             <legend className="bold" style={{ font: "600 18px/1.6 var(--font-sans)", padding: "0 4px" }}>วิธีรับสินค้า</legend>
             {methods.map((m) => (
