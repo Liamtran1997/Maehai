@@ -23,10 +23,20 @@ export function Inventory() {
   const [mode, setMode] = useState<Mode>("adjust");
   const [form, setForm] = useState({ branch: "", reason: "waste", quantity: "", note: "", quota: "", line: "" });
   const [importing, setImporting] = useState(false);
+  const [lowOnly, setLowOnly] = useState(false);
 
   const branches = useQuery({ queryKey: ["branches"], queryFn: async () => unwrap(await api.GET("/api/admin/inventory/branches")) });
   const stock = useQuery({ queryKey: ["stock", q], placeholderData: (p) => p, queryFn: async () => unwrap(await api.GET("/api/admin/inventory/stock", { params: { query: { q: q || undefined } } })) });
   const moves = useQuery({ queryKey: ["movements", sku], queryFn: async () => unwrap(await api.GET("/api/admin/inventory/movements", { params: { query: { sku: sku ?? undefined, limit: 20 } } })) });
+
+  // Summary tiles and the "ใกล้หมด" filter are computed from the rows already loaded.
+  const rows = stock.data ?? [];
+  const isLow = (r: (typeof rows)[number]) => r.track_stock && r.levels.some((l) => Number(l.available) <= Number(l.low_stock_line));
+  const isOut = (r: (typeof rows)[number]) => r.track_stock && r.levels.every((l) => Number(l.available) <= 0);
+  const lowCount = rows.filter(isLow).length;
+  const outCount = rows.filter(isOut).length;
+  const trackedCount = rows.filter((r) => r.track_stock).length;
+  const visible = lowOnly ? rows.filter(isLow) : rows;
   const row = stock.data?.find((r) => r.sku === sku);
   const refresh = () => { for (const k of ["stock", "movements", "todo", "summary"]) void qc.invalidateQueries({ queryKey: [k] }); };
 
@@ -83,8 +93,17 @@ export function Inventory() {
           <label htmlFor="iq" style={{ position: "absolute", left: -9999 }}>ค้นหาสินค้า</label>
           <input className="mh-input" id="iq" value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาชื่อสินค้า" />
         </div>
+        <button type="button" className="mh-chip" aria-pressed={lowOnly} onClick={() => setLowOnly(!lowOnly)}>เฉพาะที่ใกล้หมด</button>
       </form>
       <ErrorNotice error={stock.error ?? track.error} />
+
+      {stock.data && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 16 }}>
+          <div className="mh-tile"><span className="mh-tile__label">ใกล้หมด</span><span className="mh-tile__value" style={{ color: lowCount ? "var(--band-red)" : undefined }}>{lowCount} รายการ</span><span className="small muted">ต่ำกว่าจุดเตือนในสาขาใดสาขาหนึ่ง</span></div>
+          <div className="mh-tile"><span className="mh-tile__label">หมดแล้ว</span><span className="mh-tile__value">{outCount} รายการ</span><span className="small muted">ขายได้เป็นศูนย์ในทุกสาขา</span></div>
+          <div className="mh-tile"><span className="mh-tile__label">เปิดนับสต็อก</span><span className="mh-tile__value">{trackedCount} / {stock.data.length}</span><span className="small muted">สินค้าที่ตัดสต็อกตามจำนวนจริง</span></div>
+        </div>
+      )}
 
       <div className="cols cols--2-1" style={{ alignItems: "start" }}>
         <div className="mh-tablewrap">
@@ -93,7 +112,7 @@ export function Inventory() {
               <tr><th>สินค้า</th>{branches.data?.map((b) => <th key={b.code} className="r">{b.name}<br /><span className="xs ink-muted" style={{ fontWeight: 400 }}>ว่าง / มีอยู่ (จอง)</span></th>)}<th>นับสต็อก</th><th /></tr>
             </thead>
             <tbody>
-              {stock.data?.map((r) => (
+              {visible.map((r) => (
                 <tr key={r.sku} className={r.sku === sku ? "sel" : ""}>
                   <td><span className="bold">{r.product_name}</span><br /><span className="xs ink-muted">{r.variant_label} · {r.sku}</span></td>
                   {r.levels.map((l) => (
@@ -106,7 +125,8 @@ export function Inventory() {
                   <td><button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { setSku(r.sku); setImporting(false); save.reset(); saveLimits.reset(); soldOut.reset(); }}>{canAdjust ? "ปรับสต็อก" : "ประวัติ"}</button></td>
                 </tr>
               ))}
-              {stock.data?.length === 0 && <tr><td colSpan={5} className="ink-muted">ไม่พบสินค้า</td></tr>}
+              {stock.data?.length === 0 && <tr><td colSpan={(branches.data?.length ?? 0) + 4} className="ink-muted">ไม่พบสินค้า</td></tr>}
+              {stock.data && stock.data.length > 0 && visible.length === 0 && <tr><td colSpan={(branches.data?.length ?? 0) + 4} className="ink-muted">ไม่มีสินค้าที่ใกล้หมด</td></tr>}
             </tbody>
           </table>
         </div>

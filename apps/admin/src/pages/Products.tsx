@@ -1,6 +1,6 @@
 import { LogMark, formatTHB } from "@maehai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ErrorNotice } from "../components/Notice";
 import { api, bahtToSatang, unwrap, uploadFile, type AdminProduct, type ProductImage, type ProductIn } from "../lib/api";
@@ -68,6 +68,9 @@ export function Products() {
   const cats = useQuery({ queryKey: ["admin-categories"], queryFn: async () => unwrap(await api.GET("/api/admin/catalog/categories")) });
   const [form, setForm] = useState<Form | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [pending, setPending] = useState<File[]>([]);
+  const previews = useMemo(() => pending.map((f) => URL.createObjectURL(f)), [pending]);
+  useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
   const [status, setStatus] = useState("");
@@ -90,15 +93,19 @@ export function Products() {
         : unwrap(await api.POST("/api/admin/catalog/products", { body }));
     },
     // Keep the panel open on the saved product so a new product can get its photo straight away.
-    onSuccess: (p) => { setForm(fromProduct(p)); setFormError(null); refresh(); },
+    onSuccess: (p) => {
+      setForm(fromProduct(p)); setFormError(null); refresh();
+      // Photos picked before the product existed go up now that it has an id.
+      if (pending.length) { upload.mutate({ id: p.id, files: pending }); setPending([]); }
+    },
     onError: (e) => setFormError(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ"),
   });
   // Gallery actions. Each returns the whole product, so the photo strip always matches the server.
   const applyImages = (p: AdminProduct) => { setForm((f) => (f ? { ...f, images: p.images } : f)); refresh(); };
   const upload = useMutation({
-    mutationFn: async (files: File[]) => {
+    mutationFn: async ({ id, files }: { id: number; files: File[] }) => {
       let last: AdminProduct | null = null;
-      for (const file of files) last = await uploadFile<AdminProduct>(`/api/admin/catalog/products/${form!.id}/images`, "image", file);
+      for (const file of files) last = await uploadFile<AdminProduct>(`/api/admin/catalog/products/${id}/images`, "image", file);
       return last!;
     },
     onSuccess: applyImages,
@@ -123,7 +130,7 @@ export function Products() {
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
   const setVariant = (i: number, patch: Partial<VariantForm>) => setForm((f) => f && { ...f, variants: f.variants.map((v, j) => (j === i ? { ...v, ...patch } : v)) });
   const onSubmit = (e: FormEvent) => { e.preventDefault(); setFormError(null); if (form) save.mutate(form); };
-  const open = (f: Form) => { setFormError(null); save.reset(); upload.reset(); setForm(f); };
+  const open = (f: Form) => { setFormError(null); save.reset(); upload.reset(); setPending([]); setForm(f); };
 
   return (
     <>
@@ -239,11 +246,41 @@ export function Products() {
                       const files = Array.from(e.target.files ?? []);
                       e.target.value = "";
                       if (files.length > room) setFormError(`เพิ่มได้อีก ${room} รูป (สูงสุด 10 รูปต่อสินค้า) ระบบจะอัปโหลดเฉพาะ ${room} รูปแรก`);
-                      if (room > 0 && files.length > 0) upload.mutate(files.slice(0, room));
+                      if (room > 0 && files.length > 0) upload.mutate({ id: form.id!, files: files.slice(0, room) });
                     }} />
                   <span className="mh-help">ลากเลือกได้หลายรูปพร้อมกัน รูปแรกคือรูปที่ลูกค้าเห็นในหน้าร้าน ลำดับเลื่อนด้วยปุ่ม ‹ ›. JPG, PNG หรือ WebP ไม่เกิน 5 MB ต่อรูป</span>
                 </>
-              ) : <span className="mh-help">บันทึกสินค้าก่อน แล้วจึงเพิ่มรูปได้</span>}
+              ) : (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(104px, 1fr))", gap: 10 }}>
+                    {pending.map((f, idx) => (
+                      <div key={`${f.name}-${idx}`} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={{ position: "relative" }}>
+                          <img src={previews[idx]} alt={`รูปที่ ${idx + 1}`} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8, display: "block" }} />
+                          {idx === 0 && <span className="mh-badge" style={{ position: "absolute", top: 6, left: 6, fontSize: 11, padding: "0 8px" }}>รูปหลัก</span>}
+                        </div>
+                        <div className="mh-row" style={{ gap: 4, justifyContent: "center" }}>
+                          <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" aria-label={`เอารูปที่ ${idx + 1} ออก`} onClick={() => setPending(pending.filter((_, j) => j !== idx))}>✕</button>
+                        </div>
+                      </div>
+                    ))}
+                    {pending.length < 10 && (
+                      <label htmlFor="pimg-new" className="drop" style={{ cursor: "pointer", minHeight: 104, alignContent: "center", padding: 8 }}>
+                        <span className="bold" style={{ color: "var(--ink)" }}>+ เพิ่มรูป</span>
+                      </label>
+                    )}
+                  </div>
+                  <input type="file" multiple accept="image/jpeg,image/png,image/webp" id="pimg-new" style={{ position: "absolute", left: -9999 }}
+                    onChange={(e) => {
+                      const room = 10 - pending.length;
+                      const files = Array.from(e.target.files ?? []);
+                      e.target.value = "";
+                      if (files.length > room) setFormError(`เพิ่มได้อีก ${room} รูป (สูงสุด 10 รูปต่อสินค้า)`);
+                      if (room > 0 && files.length > 0) setPending([...pending, ...files.slice(0, room)]);
+                    }} />
+                  <span className="mh-help">รูปจะถูกอัปโหลดเมื่อกดบันทึกสินค้า รูปแรกคือรูปหลัก</span>
+                </>
+              )}
               <ErrorNotice error={upload.error ?? removeImage.error ?? reorder.error} />
             </div>
 
