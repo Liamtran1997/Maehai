@@ -1,6 +1,6 @@
 # Spec: Phân quyền nhân viên
 
-Trạng thái: đã triển khai. Cập nhật: 12/10/2026.
+Trạng thái: mục 1–7 đã triển khai. **Mục 8 (ผู้จัดการสาขา, phạm vi theo kho, quyền kho mới) đã chốt, chưa triển khai**: làm cùng giai đoạn 2 của `inventory.md`. Cập nhật: 13/10/2026.
 
 ## 1. Vấn đề trước đây
 
@@ -31,6 +31,11 @@ Mọi nhân viên đăng nhập được đều làm được mọi thứ: sửa
 | `inventory.view` | Xem tồn kho |
 | `inventory.adjust` | Nhận hàng, ghi hàng hỏng, kiểm kê, chuyển kho, bật/tắt theo dõi kho |
 | `staff.manage` | Quản lý nhân viên, xem nhật ký hoạt động |
+| `inventory.receive` *(mới)* | Tạo phiếu nhập kho tổng, quản lý nguồn và mặt hàng kho |
+| `inventory.transfer` *(mới)* | Tạo, hủy phiếu chuyển kho tổng → chi nhánh |
+| `inventory.receive_transfer` *(mới)* | Xác nhận nhận phiếu chuyển của chi nhánh mình |
+| `inventory.receive_return` *(mới)* | Nhận và xử lý phiếu hoàn tại kho tổng |
+| `inventory.approve` *(mới)* | Duyệt kiểm kê, sửa sai, xác nhận thay chi nhánh |
 
 ## 4. Vai trò
 
@@ -88,9 +93,56 @@ Nhật ký chỉ thêm, không có chức năng sửa hay xóa trong ứng dụn
 
 Migration tự cấp vai trò cho người dùng nhân viên cũ để không ai bị khóa ngoài: superuser thành **chủ tiệm**, nhân viên khác thành **quản lý** (đúng với quyền họ có trước đây, trừ quản lý nhân viên). Chủ tiệm nên rà lại và hạ quyền nếu cần.
 
-## 8. Chưa làm (đề xuất)
+## 8. ผู้จัดการสาขา và phạm vi theo kho *(đã chốt, chưa triển khai)*
 
-1. **Giới hạn theo chi nhánh**: nhân viên kho chỉ thấy và chỉnh kho chi nhánh của mình.
+Nguồn: `inventory.md` mục 16, quyết định D12, D25, D32–D34.
+
+### 8.1 Vai trò mới: ผู้จัดการสาขา (`branch_manager`)
+
+- Gắn với **đúng một** chi nhánh (không phải kho tổng). Mỗi chi nhánh có 1–2 người. Mỗi người một tài khoản riêng.
+- Là người **duy nhất ở chi nhánh** được xác nhận nhận hàng từ kho tổng.
+
+| Quyền | ผู้จัดการสาขา | Phạm vi |
+|---|:-:|---|
+| reports.view | | |
+| orders.view | ✓ | Chỉ đơn nhận tại chi nhánh mình |
+| orders.quote | | |
+| orders.fulfil | ✓ | Chỉ đơn nhận tại chi nhánh mình: chuẩn bị, giao cho khách |
+| orders.cancel, orders.cancel_paid | | |
+| payments.review | | Không xác nhận thanh toán (D33) |
+| catalog.view | ✓ | |
+| catalog.edit, pricing.manage, coupons.view | | |
+| inventory.view | ✓ | Chỉ chi nhánh mình |
+| inventory.adjust | ✓ | Chỉ chi nhánh mình: ghi hỏng, เบิกใช้, หมดหน้าร้าน, hạn mức online, ngưỡng |
+| inventory.receive_transfer | ✓ | Chỉ phiếu gửi tới chi nhánh mình; tạo phiếu hoàn chủ động |
+| inventory.receive, transfer, receive_return, approve | | |
+| staff.manage | | |
+
+### 8.2 Quyền kho mới cho các vai trò hiện có
+
+| Quyền | Chủ tiệm | Quản lý | Bán hàng | Kho | Sản phẩm |
+|---|:-:|:-:|:-:|:-:|:-:|
+| inventory.receive | ✓ | ✓ | | | |
+| inventory.transfer | ✓ | ✓ | | ✓ | |
+| inventory.receive_transfer | ✓ (thay) | ✓ (thay) | | | |
+| inventory.receive_return | ✓ | ✓ | | ✓ | |
+| inventory.approve | ✓ | ✓ | | | |
+
+- "(thay)": chủ tiệm và quản lý chung xác nhận thay chi nhánh được, **bắt buộc ghi lý do**, nhật ký ghi "xác nhận thay" (D25).
+- Nhân viên bán hàng **không** xác nhận nhận hàng (D12).
+
+### 8.3 Phạm vi theo kho
+
+- Chủ tiệm và quản lý chung: mọi kho.
+- Các vai trò khác được **gán một hoặc nhiều kho** khi tạo/sửa nhân viên. ผู้จัดการสาขา: đúng một chi nhánh (D34).
+- Mọi API kho kiểm tra **cả quyền lẫn kho**: có quyền nhưng sai kho thì 403. Danh sách (tồn, sổ, phiếu, đơn nhận tại tiệm) tự lọc theo kho được gán.
+- Đổi kho được gán có hiệu lực ngay, giống đổi vai trò.
+- Nhật ký hoạt động ghi thêm thay đổi kho được gán.
+- Test: ma trận quyền mở rộng thêm chiều "kho"; mỗi endpoint kho có test "đúng quyền, sai kho → 403".
+
+## 9. Chưa làm (đề xuất)
+
+1. ~~Giới hạn theo chi nhánh~~ đã chốt, xem mục 8 (làm cùng giai đoạn 2 kho).
 2. **Xác thực hai bước (2FA)** cho chủ tiệm và quản lý.
 3. **Đăng nhập bằng LINE** thay mật khẩu.
 4. **Nhật ký đăng nhập** (thành công và thất bại, theo thiết bị) và cảnh báo đăng nhập lạ.
