@@ -36,7 +36,7 @@ export function Layout() {
   // Opening a page closes the menu drawer on phones.
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
   if (loading) return <p className="ink-muted" style={{ padding: 32 }}>กำลังโหลด…</p>;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   if (user.must_change_password) return <Account />;     // nothing else works until the temporary password is replaced
 
   const badges = {

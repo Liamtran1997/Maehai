@@ -1,21 +1,24 @@
 import { BrandLogo } from "@maehai/ui";
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { ErrorNotice } from "../components/Notice";
 
 export function Login() {
   const { user, login } = useAuth();
   const nav = useNavigate();
+  const location = useLocation();
+  // Where to go after signing in: the page that was asked for before the login redirect, else the home page.
+  const from = (location.state as { from?: string } | null)?.from ?? "/";
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to={from} replace />;
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     setBusy(true); setError(null);
-    try { await login(String(f.get("u")), String(f.get("p"))); nav("/", { replace: true }); }
+    try { await login(String(f.get("u")), String(f.get("p"))); nav(from, { replace: true }); }
     catch (err) { setError(err); }
     finally { setBusy(false); }
   }
