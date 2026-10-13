@@ -1,6 +1,7 @@
 import { LogMark, formatTHB } from "@maehai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ErrorNotice } from "../components/Notice";
 import { api, bahtToSatang, unwrap, uploadFile, type AdminProduct, type ProductImage, type ProductIn } from "../lib/api";
@@ -361,14 +362,15 @@ export function Products() {
           </form>
         )}
       </div>
-      {zoom && (
+      {zoom && createPortal(
         <div role="dialog" aria-modal="true" aria-label="รูปสินค้า" onClick={() => setZoom(null)}
-          style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(20, 18, 14, 0.85)", display: "grid", placeItems: "center", padding: 16 }}>
+          style={{ position: "fixed", inset: 0, zIndex: 50, background: "#1f1d18", display: "grid", placeItems: "center", padding: 16 }}>
           <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setZoom(null)}
             style={{ position: "absolute", top: 16, right: 16, background: "var(--surface-200)" }}>ปิด</button>
           <img src={zoom} alt="" onClick={(e) => e.stopPropagation()}
             style={{ maxWidth: "100%", maxHeight: "90vh", objectFit: "contain", borderRadius: 8, background: "#fff" }} />
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
