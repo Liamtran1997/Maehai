@@ -69,6 +69,14 @@ export function Products() {
   const [form, setForm] = useState<Form | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState<File[]>([]);
+  const [zoom, setZoom] = useState<string | null>(null);
+  // Escape closes the enlarged photo, like clicking outside it.
+  useEffect(() => {
+    if (!zoom) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setZoom(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [zoom]);
   const previews = useMemo(() => pending.map((f) => URL.createObjectURL(f)), [pending]);
   useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
   const [q, setQ] = useState("");
@@ -221,9 +229,10 @@ export function Products() {
                     {form.images?.map((im, idx, all) => (
                       <div key={im.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                         <div style={{ position: "relative" }}>
-                          <a href={im.url} target="_blank" rel="noreferrer" aria-label={`เปิดรูปที่ ${idx + 1} ขนาดเต็มในแท็บใหม่`} style={{ display: "block", background: "var(--surface-300)", borderRadius: 8 }}>
+                          <button type="button" onClick={() => setZoom(im.url)} aria-label={`ดูรูปที่ ${idx + 1} ขนาดใหญ่`}
+                            style={{ display: "block", width: "100%", padding: 0, border: 0, background: "var(--surface-300)", borderRadius: 8, cursor: "zoom-in" }}>
                             <img src={im.url} alt={`รูปที่ ${idx + 1}`} style={{ width: "100%", aspectRatio: "1", objectFit: "contain", borderRadius: 8, display: "block" }} />
-                          </a>
+                          </button>
                           {idx === 0 && <span className="mh-badge" style={{ position: "absolute", top: 6, left: 6, fontSize: 11, padding: "0 8px" }}>รูปหลัก</span>}
                         </div>
                         <div className="mh-row" style={{ gap: 4, justifyContent: "center", flexWrap: "nowrap" }}>
@@ -352,6 +361,15 @@ export function Products() {
           </form>
         )}
       </div>
+      {zoom && (
+        <div role="dialog" aria-modal="true" aria-label="รูปสินค้า" onClick={() => setZoom(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(20, 18, 14, 0.85)", display: "grid", placeItems: "center", padding: 16 }}>
+          <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setZoom(null)}
+            style={{ position: "absolute", top: 16, right: 16, background: "var(--surface-200)" }}>ปิด</button>
+          <img src={zoom} alt="" onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "100%", maxHeight: "90vh", objectFit: "contain", borderRadius: 8, background: "#fff" }} />
+        </div>
+      )}
     </>
   );
 }
