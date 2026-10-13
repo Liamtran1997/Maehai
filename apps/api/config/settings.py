@@ -184,6 +184,10 @@ PRIVATE_MEDIA_ROOT = Path(os.environ.get("PRIVATE_MEDIA_ROOT", BASE_DIR / "priva
 IMAGE_MAX_MB = int(os.environ.get("IMAGE_MAX_MB", "5"))
 IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
 
+# Campaign hero videos. Per file. Animated GIFs use IMAGE_MAX_MB-style checks with their own limit in cms/admin_api.py.
+VIDEO_MAX_MB = int(os.environ.get("VIDEO_MAX_MB", "25"))
+VIDEO_MAX_BYTES = VIDEO_MAX_MB * 1024 * 1024
+
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "ap-southeast-1")   # Singapore, closest region to Thailand
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")

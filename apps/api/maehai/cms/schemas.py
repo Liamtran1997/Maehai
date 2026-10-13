@@ -48,6 +48,8 @@ class CampaignOut(Schema):
     hero_kind: str
     hero_image_url: str | None
     hero_poster_url: str | None
+    hero_video_url: str | None
+    hero_video_mobile_url: str | None
     hero_title: str
     hero_subtitle: str
     hero_cta_label: str

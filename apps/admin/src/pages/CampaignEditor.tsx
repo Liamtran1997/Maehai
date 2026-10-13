@@ -18,6 +18,7 @@ const HERO = [
   { v: "none", l: "ใช้แบบปกติ" },
   { v: "image", l: "รูปภาพ" },
   { v: "animation", l: "ภาพเคลื่อนไหว (GIF)" },
+  { v: "video", l: "วิดีโอ" },
 ];
 const BKK = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
 
@@ -128,6 +129,14 @@ function Editor({ campaign, loading, loadError, products, canPublish, onSaved, o
       setCurrent(c); set("hero_kind", c.hero_kind as Form["hero_kind"]); setNotice("อัปโหลดส่วนหัวแล้ว"); onSaved(c);
     },
   });
+  /** Video and poster uploads: each goes to its own endpoint, and the result becomes the current campaign. */
+  const media = useMutation({
+    mutationFn: async ({ path, field, file }: { path: (id: number) => string; field: string; file: File }) => {
+      const saved = current ?? (await save.mutateAsync());
+      return uploadFile<Campaign>(path(saved.id), field, file);
+    },
+    onSuccess: (c) => { setCurrent(c); set("hero_kind", c.hero_kind as Form["hero_kind"]); setNotice("อัปโหลดแล้ว"); onSaved(c); },
+  });
   const previewMutation = useMutation({
     mutationFn: async () => {
       const saved = current ?? (await save.mutateAsync());
@@ -138,7 +147,7 @@ function Editor({ campaign, loading, loadError, products, canPublish, onSaved, o
 
   const onSubmit = (e: FormEvent) => { e.preventDefault(); setNotice(null); save.mutate(); };
   const toggleProduct = (pid: number) => set("product_ids", f.product_ids.includes(pid) ? f.product_ids.filter((x) => x !== pid) : [...f.product_ids, pid]);
-  const error = save.error ?? publish.error ?? remove.error ?? upload.error ?? previewMutation.error ?? loadError;
+  const error = save.error ?? publish.error ?? remove.error ?? upload.error ?? media.error ?? previewMutation.error ?? loadError;
 
   if (loading) return <p className="ink-muted">กำลังโหลด…</p>;
   return (
@@ -204,7 +213,7 @@ function Editor({ campaign, loading, loadError, products, canPublish, onSaved, o
             <div className="mh-chips" role="radiogroup" aria-label="ชนิดส่วนหัว">
               {HERO.map((h) => <button key={h.v} type="button" role="radio" className="mh-chip" aria-checked={f.hero_kind === h.v} aria-pressed={f.hero_kind === h.v} onClick={() => set("hero_kind", h.v as Form["hero_kind"])}>{h.l}</button>)}
             </div>
-            {f.hero_kind !== "none" && (
+            {(f.hero_kind === "image" || f.hero_kind === "animation") && (
               <div className="mh-field">
                 <span className="mh-label">{f.hero_kind === "animation" ? "ไฟล์ GIF หรือ WebP แบบเคลื่อนไหว (ไม่เกิน 8 MB)" : "ไฟล์รูป JPG, PNG หรือ WebP (ไม่เกิน 8 MB)"}</span>
                 {current?.hero_image_url && (
@@ -213,7 +222,29 @@ function Editor({ campaign, loading, loadError, products, canPublish, onSaved, o
                 <input type="file" accept={f.hero_kind === "animation" ? "image/gif,image/webp" : "image/jpeg,image/png,image/webp"} aria-label="เลือกไฟล์ส่วนหัว"
                   disabled={upload.isPending || readOnly} onChange={(e) => { const file = e.target.files?.[0]; if (file) upload.mutate(file); e.target.value = ""; }} />
                 {upload.isPending && <span className="mh-help">กำลังอัปโหลด…</span>}
-                {f.hero_kind !== "none" && !current?.hero_image_url && <span className="mh-help" style={{ color: "var(--danger)" }}>ต้องมีไฟล์ส่วนหัวก่อนเผยแพร่</span>}
+                {!current?.hero_image_url && <span className="mh-help" style={{ color: "var(--danger)" }}>ต้องมีไฟล์ส่วนหัวก่อนเผยแพร่</span>}
+              </div>
+            )}
+            {f.hero_kind === "video" && (
+              <div className="mh-field">
+                <span className="mh-label">วิดีโอ MP4 หรือ WebM (ไม่เกิน 25 MB) เล่นเองแบบไม่มีเสียงและวนซ้ำ</span>
+                {current?.hero_video_url && (
+                  <video src={current.hero_video_url} poster={current.hero_poster_url ?? undefined} muted loop playsInline controls aria-label="วิดีโอส่วนหัวปัจจุบัน"
+                    style={{ width: "100%", maxWidth: 480, aspectRatio: "16 / 7", objectFit: "cover", borderRadius: 12, border: "1px solid var(--line)", background: "#000" }} />
+                )}
+                <input type="file" accept="video/mp4,video/webm" aria-label="เลือกไฟล์วิดีโอ" disabled={media.isPending || readOnly}
+                  onChange={(e) => { const file = e.target.files?.[0]; if (file) media.mutate({ path: (id) => `/api/admin/campaigns/${id}/hero-video`, field: "video", file }); e.target.value = ""; }} />
+                <span className="mh-label" style={{ marginTop: 8 }}>วิดีโอแนวตั้งสำหรับมือถือ (ไม่บังคับ)</span>
+                {current?.hero_video_mobile_url && <span className="small muted">มีไฟล์สำหรับมือถือแล้ว</span>}
+                <input type="file" accept="video/mp4,video/webm" aria-label="เลือกวิดีโอสำหรับมือถือ" disabled={media.isPending || readOnly}
+                  onChange={(e) => { const file = e.target.files?.[0]; if (file) media.mutate({ path: (id) => `/api/admin/campaigns/${id}/hero-video-mobile`, field: "video", file }); e.target.value = ""; }} />
+                <span className="mh-label" style={{ marginTop: 8 }}>ภาพปกของวิดีโอ (JPG, PNG หรือ WebP)</span>
+                {current?.hero_poster_url && <img src={current.hero_poster_url} alt="ภาพปกปัจจุบัน" style={{ width: 160, aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 8 }} />}
+                <input type="file" accept="image/jpeg,image/png,image/webp" aria-label="เลือกภาพปกของวิดีโอ" disabled={media.isPending || readOnly}
+                  onChange={(e) => { const file = e.target.files?.[0]; if (file) media.mutate({ path: (id) => `/api/admin/campaigns/${id}/hero-poster`, field: "image", file }); e.target.value = ""; }} />
+                {media.isPending && <span className="mh-help">กำลังอัปโหลด…</span>}
+                {!current?.hero_video_url && <span className="mh-help" style={{ color: "var(--danger)" }}>ต้องมีไฟล์วิดีโอก่อนเผยแพร่</span>}
+                {!current?.hero_poster_url && <span className="mh-help" style={{ color: "var(--danger)" }}>ต้องมีภาพปกก่อนเผยแพร่</span>}
               </div>
             )}
             <div className="form-grid">

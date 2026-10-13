@@ -19,6 +19,7 @@ class Campaign(models.Model):
         NONE = "none", "ใช้แบบปกติ"
         IMAGE = "image", "รูปภาพ"
         ANIMATION = "animation", "ภาพเคลื่อนไหว (GIF)"
+        VIDEO = "video", "วิดีโอ"
 
     name = models.CharField("ชื่อแคมเปญ (ลูกค้าไม่เห็น)", max_length=120)
     theme = models.CharField(max_length=32, choices=Theme.choices, default=Theme.DEFAULT)
@@ -33,6 +34,8 @@ class Campaign(models.Model):
     hero_kind = models.CharField(max_length=16, choices=HeroKind.choices, default=HeroKind.NONE)
     hero_image = models.ImageField(upload_to="campaigns/%Y/%m/", blank=True)
     hero_poster = models.ImageField(upload_to="campaigns/%Y/%m/", blank=True)
+    hero_video = models.FileField(upload_to="campaigns/%Y/%m/", blank=True, help_text="MP4 หรือ WebM ไม่เกิน VIDEO_MAX_MB")
+    hero_video_mobile = models.FileField(upload_to="campaigns/%Y/%m/", blank=True, help_text="เวอร์ชันแนวตั้งสำหรับมือถือ (ไม่บังคับ)")
     hero_title = models.CharField(max_length=80, blank=True)
     hero_subtitle = models.CharField(max_length=160, blank=True)
     hero_cta_label = models.CharField(max_length=40, blank=True)

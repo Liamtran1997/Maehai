@@ -627,6 +627,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/campaigns/{campaign_id}/hero-video": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Hero Video
+         * @description The hero video (MP4 or WebM). The poster is uploaded separately: it is what shows before the video loads.
+         */
+        post: operations["maehai_cms_admin_api_upload_hero_video"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/campaigns/{campaign_id}/hero-video-mobile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Hero Video Mobile
+         * @description A vertical version for phones. Optional: without it, phones play the main video.
+         */
+        post: operations["maehai_cms_admin_api_upload_hero_video_mobile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/campaigns/{campaign_id}/hero-poster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Hero Poster
+         * @description A still picture (JPG, PNG or WebP) shown before a video loads, on slow connections, or when motion is reduced.
+         */
+        post: operations["maehai_cms_admin_api_upload_hero_poster"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/campaigns/{campaign_id}/preview-token": {
         parameters: {
             query?: never;
@@ -2260,6 +2320,10 @@ export interface components {
             hero_image_url: string | null;
             /** Hero Poster Url */
             hero_poster_url: string | null;
+            /** Hero Video Url */
+            hero_video_url: string | null;
+            /** Hero Video Mobile Url */
+            hero_video_mobile_url: string | null;
             /** Hero Title */
             hero_title: string;
             /** Hero Subtitle */
@@ -2393,6 +2457,10 @@ export interface components {
             hero_image_url: string | null;
             /** Hero Poster Url */
             hero_poster_url: string | null;
+            /** Hero Video Url */
+            hero_video_url: string | null;
+            /** Hero Video Mobile Url */
+            hero_video_mobile_url: string | null;
             /** Hero Title */
             hero_title: string;
             /** Hero Subtitle */
@@ -4671,6 +4739,102 @@ export interface operations {
         };
     };
     maehai_cms_admin_api_upload_hero: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Image
+                     * Format: binary
+                     */
+                    image: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_upload_hero_video: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Video
+                     * Format: binary
+                     */
+                    video: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_upload_hero_video_mobile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Video
+                     * Format: binary
+                     */
+                    video: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_upload_hero_poster: {
         parameters: {
             query?: never;
             header?: never;

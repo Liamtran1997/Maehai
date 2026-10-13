@@ -51,6 +51,12 @@ export const dynamic = "force-dynamic";
 // The accent a theme uses when the campaign does not set its own. Default = the shop's green.
 const THEME_ACCENT: Record<string, string> = { candle_festival: "#9a4a10", songkran: "#0b5d82", new_year: "#8a6d1d" };
 
+/** A campaign hero is shown only when its media is there; otherwise the shop keeps its usual hero. */
+function heroReady(c: { hero_kind: string; hero_image_url?: string | null; hero_video_url?: string | null }) {
+  if (c.hero_kind === "video") return !!c.hero_video_url;
+  return c.hero_kind !== "none" && !!c.hero_image_url;
+}
+
 export default async function Home({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
   const { preview } = await searchParams;
   const [categories, featured, products, campaign] = await Promise.all([
@@ -65,11 +71,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
       {campaign?.preview && <div role="status" className="campaign-preview">โหมดตัวอย่าง: ลูกค้ายังไม่เห็นแคมเปญนี้</div>}
       <ShopHeader />
 
-      {campaign && campaign.hero_kind !== "none" && campaign.hero_image_url ? (
+      {campaign && heroReady(campaign) ? (
         <CampaignHero
           title={campaign.hero_title || "หมูยอต้นตำรับเมืองอุบลฯ"} subtitle={campaign.hero_subtitle}
-          ctaLabel={campaign.hero_cta_label} ctaUrl={campaign.hero_cta_url} imageUrl={campaign.hero_image_url}
-          posterUrl={campaign.hero_poster_url ?? null} animated={campaign.hero_kind === "animation"} accent={accent || "var(--leaf)"}
+          ctaLabel={campaign.hero_cta_label} ctaUrl={campaign.hero_cta_url}
+          kind={campaign.hero_kind as "image" | "animation" | "video"}
+          imageUrl={campaign.hero_image_url ?? null} posterUrl={campaign.hero_poster_url ?? null}
+          videoUrl={campaign.hero_video_url ?? null} videoMobileUrl={campaign.hero_video_mobile_url ?? null}
+          accent={accent || "var(--leaf)"}
         />
       ) : (
       <section className="hero" style={accent ? { background: accent } : undefined}>

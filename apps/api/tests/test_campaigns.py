@@ -255,3 +255,71 @@ def test_public_response_hides_internal_names(staff_client):
     Campaign.objects.filter(pk=c["id"]).update(starts_at=now() - timedelta(hours=1), published_at=now())
     out = Client().get("/api/shop/campaign/current").json()
     assert "created_by" not in out and "updated_by" not in out
+
+
+# ================================================================ video (stage 2)
+MP4 = b"\x00\x00\x00\x18ftypmp42" + b"\x00" * 64
+WEBM = b"\x1a\x45\xdf\xa3" + b"\x00" * 64
+
+
+def video_file(data=MP4, name="hero.mp4"):
+    return SimpleUploadedFile(name, data, content_type="video/mp4")
+
+
+def test_mp4_and_webm_are_accepted_by_their_content(staff_client):
+    c = create(staff_client)
+    r = staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-video", {"video": video_file()})
+    assert r.status_code == 200, r.content
+    assert r.json()["hero_kind"] == "video"
+    assert r.json()["hero_video_url"].endswith(".mp4")
+    r = staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-video", {"video": video_file(WEBM, "clip.mp4")})
+    assert r.status_code == 200
+    assert r.json()["hero_video_url"].endswith(".webm")
+
+
+def test_a_file_renamed_to_mp4_is_refused(staff_client):
+    c = create(staff_client)
+    r = staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-video", {"video": video_file(b"<html>not a video</html>")})
+    assert r.status_code == 422
+
+
+def test_video_over_the_limit_is_refused(staff_client, settings):
+    settings.VIDEO_MAX_BYTES = 100
+    c = create(staff_client)
+    r = staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-video", {"video": video_file(MP4 + b"0" * 200)})
+    assert r.status_code == 422
+    assert "ใหญ่เกิน" in r.json()["detail"]
+
+
+def test_video_needs_its_poster_before_publishing(staff_client):
+    c = create(staff_client)
+    staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-video", {"video": video_file()})
+    r = staff_client.post(f"/api/admin/campaigns/{c['id']}/publish")
+    assert r.status_code == 422
+    assert "ภาพปกของวิดีโอ" in r.json()["detail"]
+    poster = image_file("JPEG", name="poster.jpg")
+    assert staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-poster", {"image": poster}).status_code == 200
+    assert staff_client.post(f"/api/admin/campaigns/{c['id']}/publish").status_code == 200
+
+
+def test_poster_must_be_a_still_picture(staff_client):
+    c = create(staff_client)
+    r = staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-poster", {"image": image_file("GIF", frames=2, name="p.gif")})
+    assert r.status_code == 422
+
+
+def test_mobile_video_is_optional_and_stored(staff_client):
+    c = create(staff_client)
+    r = staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-video-mobile", {"video": video_file(name="phone.mp4")})
+    assert r.status_code == 200
+    assert r.json()["hero_video_mobile_url"].endswith(".mp4")
+
+
+def test_shop_receives_the_video_urls(staff_client):
+    c = create(staff_client)
+    staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-video", {"video": video_file()})
+    staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-poster", {"image": image_file("JPEG", name="p.jpg")})
+    Campaign.objects.filter(pk=c["id"]).update(starts_at=now() - timedelta(hours=1), published_at=now())
+    out = Client().get("/api/shop/campaign/current").json()
+    assert out["hero_kind"] == "video"
+    assert out["hero_video_url"] and out["hero_poster_url"]

@@ -86,6 +86,11 @@ def check_publishable(c: Campaign) -> None:
         problems.append("ยังไม่มีรูปส่วนหัว")
     if c.hero_kind == Campaign.HeroKind.ANIMATION and not c.hero_poster:
         problems.append("ยังไม่มีภาพปกของภาพเคลื่อนไหว")
+    if c.hero_kind == Campaign.HeroKind.VIDEO:
+        if not c.hero_video:
+            problems.append("ยังไม่มีไฟล์วิดีโอ")
+        if not c.hero_poster:
+            problems.append("ยังไม่มีภาพปกของวิดีโอ")
     if c.bar_enabled and not c.bar_text.strip():
         problems.append("เปิดแถบประกาศแล้วต้องมีข้อความ")
     if problems:
@@ -104,3 +109,18 @@ def poster_from_first_frame(upload) -> ContentFile:
     frame.save(buf, format="JPEG", quality=85)
     upload.seek(0)
     return ContentFile(buf.getvalue(), name="poster.jpg")
+
+
+VIDEO_MAGIC = {"mp4": (4, b"ftyp"), "webm": (0, b"\x1a\x45\xdf\xa3")}
+
+
+def check_video(upload, max_bytes: int) -> str:
+    """MP4 or WebM within the size limit. Judged by the file's first bytes, never by its name. Returns the extension."""
+    if upload.size > max_bytes:
+        raise HttpError(422, f"วิดีโอใหญ่เกิน {max_bytes // (1024 * 1024)} MB")
+    head = upload.read(12)
+    upload.seek(0)
+    for ext, (offset, magic) in VIDEO_MAGIC.items():
+        if head[offset:offset + len(magic)] == magic:
+            return f".{ext}"
+    raise HttpError(422, "รองรับเฉพาะวิดีโอ MP4 หรือ WebM")

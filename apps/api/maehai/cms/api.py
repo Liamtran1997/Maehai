@@ -23,6 +23,8 @@ class PublicCampaignOut(Schema):
     hero_kind: str
     hero_image_url: str | None
     hero_poster_url: str | None
+    hero_video_url: str | None
+    hero_video_mobile_url: str | None
     hero_title: str
     hero_subtitle: str
     hero_cta_label: str
@@ -41,6 +43,7 @@ def _public(request, c: Campaign, preview: bool) -> dict:
     return {
         "id": c.pk, "theme": c.theme, "accent_color": c.accent_color, "decorations": c.decorations,
         "hero_kind": c.hero_kind, "hero_image_url": url(c.hero_image), "hero_poster_url": url(c.hero_poster),
+        "hero_video_url": url(c.hero_video), "hero_video_mobile_url": url(c.hero_video_mobile),
         "hero_title": c.hero_title, "hero_subtitle": c.hero_subtitle, "hero_cta_label": c.hero_cta_label,
         "hero_cta_url": c.hero_cta_url, "bar_enabled": c.bar_enabled, "bar_text": c.bar_text, "bar_url": c.bar_url,
         "collection_title": c.collection_title,

@@ -257,7 +257,7 @@ a { color: var(--leaf); }
 .campaign-bar a { color: #fff; text-decoration: underline; }
 .campaign-hero { position: relative; min-height: 420px; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; border-radius: 0; }
 .campaign-media { position: absolute; inset: 0; }
-.campaign-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.campaign-media img, .campaign-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .campaign-copy { position: relative; margin: 0 16px 32px; padding: 20px; border-radius: 16px; background: rgba(8, 40, 56, 0.82); display: flex; flex-direction: column; gap: 8px; max-width: 560px; box-sizing: border-box; }
 .campaign-copy h1 { margin: 0; font: 500 34px/1.3 var(--font-display); text-wrap: balance; }
 .campaign-copy p { margin: 0; font-size: 16px; line-height: 1.6; }

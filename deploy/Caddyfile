@@ -3,6 +3,7 @@
 #   /admin       back office (static files built into this image)
 #   /api, /django-admin, /static   Django API
 #   /media/products/*              product photos only. Payment slips are NEVER served from here.
+#   /media/campaigns/*             campaign pictures and videos (public)
 {$SITE_ADDRESS} {
 	encode zstd gzip
 
@@ -17,15 +18,30 @@
 	# Anything under /media that is not a product photo (slips!) is refused outright.
 	@privateMedia path /media/* 
 	@productMedia path /media/products/*
+	# Campaign heroes: pictures, GIFs, posters and videos. Public, like product photos.
+	@campaignMedia path /media/campaigns/*
 
 	handle @productMedia {
 		root * /srv
+		file_server
+	}
+	handle @campaignMedia {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
 		file_server
 	}
 	handle @privateMedia {
 		respond "Not found" 404
 	}
 
+	# Campaign video uploads are the only requests allowed to be bigger than 8 MB.
+	@campaignVideo path_regexp campaignVideo ^/api/admin/campaigns/[0-9]+/hero-video(-mobile)?$
+	handle @campaignVideo {
+		request_body {
+			max_size 30MB
+		}
+		reverse_proxy api:8000
+	}
 	handle /api/* {
 		request_body {
 			max_size 8MB

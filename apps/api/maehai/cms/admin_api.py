@@ -1,6 +1,7 @@
 """Back office for campaigns. Drafts: campaigns.edit. Publishing, changing a live campaign, ending it: campaigns.publish."""
 import uuid
 
+from django.conf import settings
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -39,6 +40,7 @@ def _out(request, c: Campaign) -> dict:
         "starts_at": c.starts_at, "ends_at": c.ends_at, "published_at": c.published_at, "ended_at": c.ended_at,
         "status": st, "status_label": services.STATUS_LABEL[st],
         "hero_kind": c.hero_kind, "hero_image_url": _url(request, c.hero_image), "hero_poster_url": _url(request, c.hero_poster),
+        "hero_video_url": _url(request, c.hero_video), "hero_video_mobile_url": _url(request, c.hero_video_mobile),
         "hero_title": c.hero_title, "hero_subtitle": c.hero_subtitle, "hero_cta_label": c.hero_cta_label, "hero_cta_url": c.hero_cta_url,
         "bar_enabled": c.bar_enabled, "bar_text": c.bar_text, "bar_url": c.bar_url, "collection_title": c.collection_title,
         "products": [{"id": cp.product.pk, "name": cp.product.name} for cp in c.products.select_related("product")],
@@ -68,7 +70,7 @@ def _apply(c: Campaign, data: CampaignIn, request) -> None:
                   "hero_subtitle", "hero_cta_label", "hero_cta_url", "bar_enabled", "bar_text", "bar_url", "collection_title"):
         setattr(c, field, getattr(data, field))
     if c.hero_kind == Campaign.HeroKind.NONE:
-        c.hero_image = c.hero_poster = None
+        c.hero_image = c.hero_poster = c.hero_video = c.hero_video_mobile = None
     c.updated_by = request.user.get_username()
     if not c.pk:
         c.created_by = c.updated_by
@@ -183,6 +185,56 @@ def upload_hero(request, campaign_id: int, image: File[UploadedFile]):
     c.updated_by = request.user.get_username()
     c.save()
     audit(request, "campaign.hero", str(c.pk), kind)
+    return _out(request, c)
+
+
+@router.post("/campaigns/{campaign_id}/hero-video", response=CampaignOut, auth=requires("campaigns.edit"))
+def upload_hero_video(request, campaign_id: int, video: File[UploadedFile]):
+    """The hero video (MP4 or WebM). The poster is uploaded separately: it is what shows before the video loads."""
+    c = _get(campaign_id)
+    _guard_edit(request, c)
+    ext = services.check_video(video, settings.VIDEO_MAX_BYTES)
+    c.hero_video.save(f"{uuid.uuid4().hex}{ext}", video, save=False)
+    c.hero_kind = Campaign.HeroKind.VIDEO
+    c.updated_by = request.user.get_username()
+    c.save()
+    audit(request, "campaign.hero_video", str(c.pk), c.hero_video.name)
+    return _out(request, c)
+
+
+@router.post("/campaigns/{campaign_id}/hero-video-mobile", response=CampaignOut, auth=requires("campaigns.edit"))
+def upload_hero_video_mobile(request, campaign_id: int, video: File[UploadedFile]):
+    """A vertical version for phones. Optional: without it, phones play the main video."""
+    c = _get(campaign_id)
+    _guard_edit(request, c)
+    ext = services.check_video(video, settings.VIDEO_MAX_BYTES)
+    c.hero_video_mobile.save(f"{uuid.uuid4().hex}-mobile{ext}", video, save=False)
+    c.updated_by = request.user.get_username()
+    c.save()
+    audit(request, "campaign.hero_video_mobile", str(c.pk), c.hero_video_mobile.name)
+    return _out(request, c)
+
+
+@router.post("/campaigns/{campaign_id}/hero-poster", response=CampaignOut, auth=requires("campaigns.edit"))
+def upload_hero_poster(request, campaign_id: int, image: File[UploadedFile]):
+    """A still picture (JPG, PNG or WebP) shown before a video loads, on slow connections, or when motion is reduced."""
+    c = _get(campaign_id)
+    _guard_edit(request, c)
+    if image.size > settings.IMAGE_MAX_BYTES:
+        raise HttpError(422, f"รูปใหญ่เกิน {settings.IMAGE_MAX_MB} MB")
+    try:
+        with Image.open(image) as im:
+            fmt = im.format
+            im.verify()
+    except (UnidentifiedImageError, OSError):
+        raise HttpError(422, "ไฟล์นี้ไม่ใช่รูปภาพ") from None
+    image.seek(0)
+    if fmt not in STILL_FORMATS:
+        raise HttpError(422, "ภาพปกต้องเป็น JPG, PNG หรือ WebP")
+    c.hero_poster.save(f"{uuid.uuid4().hex}-poster{IMAGE_EXT[fmt]}", image, save=False)
+    c.updated_by = request.user.get_username()
+    c.save()
+    audit(request, "campaign.hero_poster", str(c.pk), c.hero_poster.name)
     return _out(request, c)
 
 
