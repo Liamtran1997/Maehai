@@ -209,3 +209,20 @@ a { color: var(--leaf); }
 .action-bar { position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 20px; background: var(--surface-200); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-pop); }
 .action-bar .grow { flex: 1 1 200px; font-size: 14px; color: var(--ink-muted); }
 @media (max-width: 899px) { .action-bar .mh-btn { flex: 1 1 100%; } }
+
+/* Product editor page: section list on the left, one card per section, save bar at the bottom. */
+.product-editor { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.product-editor h1 { margin: 0; font: 500 28px/1.4 var(--font-display); }
+.product-editor .page-head p { margin: 2px 0 0; font-size: 14px; color: var(--ink-muted); }
+.product-editor .editor-grid { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; align-items: start; }
+.product-editor .sectionnav { position: sticky; top: 76px; display: flex; flex-direction: column; gap: 2px; }
+.product-editor .sectionnav a { padding: 8px 12px; border-radius: var(--radius-sm); color: var(--ink-muted); text-decoration: none; font: 500 14px/1.4 var(--font-sans); }
+.product-editor .sectionnav a:hover { background: var(--surface-300); color: var(--ink); }
+.product-editor .editor-body { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.product-editor section.panel { gap: 14px; padding: 20px 24px; scroll-margin-top: 80px; }
+.product-editor section.panel > h2 { margin: 0; font: 600 18px/1.5 var(--font-sans); }
+.link-btn { border: 0; background: transparent; padding: 0; color: var(--leaf); font: inherit; cursor: pointer; text-decoration: underline; }
+@media (max-width: 899px) {
+  .product-editor .editor-grid { grid-template-columns: minmax(0, 1fr); }
+  .product-editor .sectionnav { position: static; flex-direction: row; flex-wrap: wrap; }
+}

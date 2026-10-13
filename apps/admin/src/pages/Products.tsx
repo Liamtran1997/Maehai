@@ -118,13 +118,13 @@ export function Products() {
 
   return (
     <>
-      <div className="topbar">
+      {!form && <div className="topbar">
         <h1>สินค้า</h1>
         <Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/categories">จัดการหมวดหมู่</Link>
         <Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/promotions">โปรโมชัน</Link>
         {canEdit && canPrice && <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open(blank(cats.data?.[0]?.slug ?? ""))}>เพิ่มสินค้า</button>}
-      </div>
-      <div className="toolbar">
+      </div>}
+      {!form && <div className="toolbar">
         <div className="searchbox">
           <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
           <label htmlFor="pq" style={{ position: "absolute", left: -9999 }}>ค้นหาสินค้า</label>
@@ -137,16 +137,16 @@ export function Products() {
           {STATUS.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
         </select>
         <span className="sm ink-muted">{shown.length} จาก {products.data?.length ?? 0} รายการ</span>
-      </div>
-      <ErrorNotice error={products.error ?? toggle.error} />
+      </div>}
+      {!form && <ErrorNotice error={products.error ?? toggle.error} />}
 
-      <div className={form ? "cols cols--2-1" : "cols"} style={{ alignItems: "start" }}>
-        <div className="mh-tablewrap">
+      <div className="cols" style={{ alignItems: "start" }}>
+        {!form && <div className="mh-tablewrap">
           <table className="mh-table">
             <thead><tr><th>สินค้า</th><th>หมวดหมู่</th><th className="r">ราคา (ก่อนลด)</th><th>แสดงบนร้าน</th><th><span style={{ position: "absolute", left: -9999 }}>แก้ไข</span></th></tr></thead>
             <tbody>
               {shown.map((p) => (
-                <tr key={p.id} className={form?.id === p.id ? "sel" : ""}>
+                <tr key={p.id}>
                   <td>
                     <div className="name">
                       <span className="thumb-s">{p.image_url ? <img src={p.image_url} alt="" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 6 }} /> : <LogMark />}</span>
@@ -165,14 +165,24 @@ export function Products() {
               {products.data && shown.length === 0 && <tr><td colSpan={5} className="ink-muted">ไม่พบสินค้าตามที่กรอง</td></tr>}
             </tbody>
           </table>
-        </div>
+        </div>}
 
         {form && (
-          <form className="apanel" onSubmit={onSubmit}>
+          <form className="product-editor" onSubmit={onSubmit}>
             {!canEdit && <div className="notice notice--info"><p>ตำแหน่งของคุณดูสินค้าได้อย่างเดียว</p></div>}
             {canEdit && !canPrice && <div className="notice notice--info"><p>ตำแหน่งของคุณแก้ข้อมูลสินค้าได้ แต่แก้ราคาไม่ได้</p></div>}
             <fieldset disabled={!canEdit} style={{ border: 0, margin: 0, padding: 0, display: "contents" }}>
-            <div className="apanel-head"><h2>{form.id ? "แก้ไขสินค้า" : "เพิ่มสินค้า"}</h2><button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setForm(null)}>ปิด</button></div>
+            <nav className="crumbs" aria-label="ตำแหน่ง"><button type="button" className="link-btn" onClick={() => setForm(null)}>สินค้า</button><span aria-hidden="true"> › </span><span>{form.id ? form.name || "แก้ไขสินค้า" : "เพิ่มสินค้า"}</span></nav>
+            <div className="page-head">
+              <div><h1>{form.id ? form.name || "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}</h1><p>{form.id ? "แก้ไขข้อมูลและรูปภาพ ราคาปกติตั้งที่นี่ ส่วนลดตั้งที่โปรโมชัน" : "บันทึกสินค้าก่อน แล้วจึงเพิ่มรูปและประวัติราคาได้"}</p></div>
+            </div>
+            <div className="editor-grid">
+            <nav className="sectionnav" aria-label="หัวข้อในหน้านี้">
+              <a href="#p-photos">รูปภาพ</a><a href="#p-basic">ข้อมูลหลัก</a><a href="#p-detail">รายละเอียดและการเก็บ</a><a href="#p-sizes">ขนาดและราคา</a>{form.id && <a href="#p-history">ประวัติราคา</a>}
+            </nav>
+            <div className="editor-body">
+            <section id="p-photos" className="panel">
+            <h2>รูปภาพ</h2>
 
             <div className="mh-field">
               <span className="mh-label">รูปสินค้า ({form.images?.length ?? 0}/10)</span>
@@ -215,6 +225,9 @@ export function Products() {
               <ErrorNotice error={upload.error ?? removeImage.error ?? reorder.error} />
             </div>
 
+            </section>
+            <section id="p-basic" className="panel">
+            <h2>ข้อมูลหลัก</h2>
             <div className="mh-field"><label className="mh-label" htmlFor="pn">ชื่อสินค้า</label><input className="mh-input" id="pn" value={form.name} onChange={(e) => set("name", e.target.value)} required /></div>
             <div className="mh-field"><label className="mh-label" htmlFor="pen">ชื่อภาษาอังกฤษ (ถ้ามี)</label><input className="mh-input" id="pen" value={form.name_en} onChange={(e) => set("name_en", e.target.value)} /></div>
             <div className="mh-field"><label className="mh-label" htmlFor="ps">slug (ที่อยู่หน้าสินค้า)</label><input className="mh-input" id="ps" value={form.slug} onChange={(e) => set("slug", e.target.value)} placeholder="moo-yo-garlic" required /><span className="mh-help">{form.id ? "เปลี่ยนแล้วลิงก์เดิมของสินค้านี้จะใช้ไม่ได้" : "ตั้งครั้งเดียว ใช้อักษรอังกฤษพิมพ์เล็กและขีดกลาง"}</span></div>
@@ -228,6 +241,9 @@ export function Products() {
               <legend className="mh-label" style={{ marginBottom: 8 }}>สีของยางรัด</legend>
               <div className="mh-chips">{BANDS.map((b) => <button type="button" key={b.v} className="mh-chip" aria-pressed={form.bands.includes(b.v)} onClick={() => set("bands", form.bands.includes(b.v) ? form.bands.filter((x) => x !== b.v) : [...form.bands, b.v])}>{b.l}</button>)}</div>
             </fieldset>
+            </section>
+            <section id="p-detail" className="panel">
+            <h2>รายละเอียดและการเก็บ</h2>
             <div className="mh-field"><label className="mh-label" htmlFor="psub">คำบรรยายสั้น</label><input className="mh-input" id="psub" value={form.subtitle} onChange={(e) => set("subtitle", e.target.value)} /></div>
             <div className="mh-field"><label className="mh-label" htmlFor="pd">รายละเอียด</label><textarea className="mh-textarea" id="pd" value={form.description} onChange={(e) => set("description", e.target.value)} /></div>
             <div className="form-grid">
@@ -235,6 +251,9 @@ export function Products() {
               <div className="mh-field"><label className="mh-label" htmlFor="pst">การเก็บรักษา</label><input className="mh-input" id="pst" value={form.storage_note} onChange={(e) => set("storage_note", e.target.value)} /></div>
             </div>
 
+            </section>
+            <section id="p-sizes" className="panel">
+            <h2>ขนาดและราคา</h2>
             <div>
               <p className="mh-label" style={{ marginBottom: 8 }}>ขนาดและราคา (ราคาปกติก่อนลด)</p>
               <div className="mh-tablewrap">
@@ -257,13 +276,17 @@ export function Products() {
               <p className="xs ink-muted" style={{ marginTop: 8 }}>ใส่ราคาปกติเสมอ ส่วนลดตั้งที่หน้า “โปรโมชัน” ขนาดที่ลบออกจะหยุดขาย แต่ไม่หายจากคำสั่งซื้อเก่า สต็อกจัดการที่หน้า “สต็อก”</p>
             </div>
 
+            </section>
+            {form.id && <section id="p-history" className="panel"><h2>ประวัติราคา</h2><PriceHistory productId={form.id} /></section>}
+            </div>
+            </div>
             </fieldset>
-            {form.id && <PriceHistory productId={form.id} />}
             {formError && <div className="notice notice--warn" role="alert"><p>{formError}</p></div>}
             {save.isSuccess && !formError && <div className="notice notice--ok" role="status"><p>บันทึกแล้ว</p></div>}
-            <div className="mh-row" style={{ justifyContent: "flex-end" }}>
-              <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setForm(null)}>ปิด</button>
-              {canEdit && <button type="submit" className="mh-btn mh-btn--primary mh-btn--sm" disabled={save.isPending}>{save.isPending ? "กำลังบันทึก…" : "บันทึก"}</button>}
+            <div className="action-bar">
+              <span className="grow">{canEdit ? "บันทึกแล้วจะแสดงตามที่ตั้งไว้ทันที" : "ดูอย่างเดียว"}</span>
+              <button type="button" className="mh-btn mh-btn--secondary" onClick={() => setForm(null)}>ยกเลิก</button>
+              {canEdit && <button type="submit" className="mh-btn mh-btn--primary" disabled={save.isPending}>{save.isPending ? "กำลังบันทึก…" : "บันทึก"}</button>}
             </div>
           </form>
         )}
