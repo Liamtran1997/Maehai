@@ -42,7 +42,7 @@ export function Warehouse() {
     <>
       <div className="topbar"><h1>คลังสินค้า</h1></div>
       <p className="sm ink-muted">คลังกลาง (สาขาศรีณรงค์) รับของจากแหล่งสินค้า แล้วส่งไปสาขาด้วยใบส่งสินค้า สาขาต้องตรวจรับ ของที่ไม่รับกลับคลังกลางด้วยใบคืนสินค้า</p>
-      <div className="seg" role="tablist" aria-label="หมวดคลัง" style={{ flexWrap: "wrap" }}>
+      <div className="seg" role="tablist" aria-label="หมวดคลัง">
         {visible.map((t) => (
           <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} aria-pressed={tab === t.key} onClick={() => setTab(t.key)}>{t.label}</button>
         ))}
