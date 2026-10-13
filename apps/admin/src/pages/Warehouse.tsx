@@ -96,7 +96,7 @@ function LineBuilder({ lines, onChange, items, withCost }: {
 /** Turn the builder's lines into the API shape. Sizes are sent by SKU, materials by code. */
 function toApiLines(lines: Line[], withCost: boolean) {
   return lines.filter((l) => l.item).map((l) => {
-    const [kind, key] = [l.item.slice(0, 2), l.item.slice(3)];
+    const [kind, key] = [l.item.slice(0, 2), l.item.slice(2)];
     return {
       sku: kind === "p:" ? key : null,
       material_code: kind === "m:" ? key : null,
