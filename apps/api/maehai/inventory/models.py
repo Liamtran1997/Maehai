@@ -241,6 +241,7 @@ class Document(models.Model):
         RECEIPT = "receipt", "ใบรับสินค้า"
         TRANSFER = "transfer", "ใบส่งสินค้า"
         RETURN = "return", "ใบคืนสินค้า"
+        COUNT = "count", "ใบนับสต็อก"
 
     class Status(models.TextChoices):
         POSTED = "posted", "บันทึกแล้ว"
@@ -251,6 +252,8 @@ class Document(models.Model):
         CANCELLED = "cancelled", "ยกเลิก"
         SENT_BACK = "sent_back", "กำลังส่งคืน"
         CLOSED = "closed", "รับคืนแล้ว"
+        COUNTING = "counting", "กำลังนับ"
+        PENDING_APPROVAL = "pending_approval", "รอการอนุมัติ"
 
     number = models.CharField(max_length=20, unique=True, blank=True)
     kind = models.CharField(max_length=10, choices=Kind.choices)
@@ -265,6 +268,7 @@ class Document(models.Model):
     carrier = models.CharField(max_length=100, blank=True, help_text="Driver or person carrying the goods")
     note = models.CharField(max_length=500, blank=True)
     cancel_reason = models.CharField(max_length=300, blank=True)
+    review_note = models.CharField(max_length=300, blank=True, help_text="Count slips: why a count was sent back")
     created_by = models.CharField(max_length=80)
     created_at = models.DateTimeField(auto_now_add=True)
     sent_at = models.DateTimeField(null=True, blank=True)
@@ -304,6 +308,9 @@ class DocumentLine(models.Model):
     refuse_reason = models.CharField(max_length=20, blank=True, help_text="damaged | wrong | other (refused), missing (lost)")
     refuse_note = models.CharField(max_length=300, blank=True)
     unit_cost_satang = models.PositiveIntegerField(null=True, blank=True, help_text="Optional: cost per unit when received from a source")
+    expected = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True, help_text="Count slips: on hand when the counter's figure was saved")
+    counted = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True, help_text="Count slips: what the counter found")
+    counted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [

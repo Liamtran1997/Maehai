@@ -32,7 +32,7 @@ MAX_LINES = 100
 OVERDUE_AFTER = timedelta(hours=24)
 REFUSE_REASONS = {"damaged": "ชำรุด", "wrong": "ไม่ตรงรายการ", "other": "อื่นๆ"}
 LOST = "missing"                         # a receive-line reason: lost on the way, never comes back
-PREFIX = {Document.Kind.RECEIPT: "IN", Document.Kind.TRANSFER: "TR", Document.Kind.RETURN: "RT"}
+PREFIX = {Document.Kind.RECEIPT: "IN", Document.Kind.TRANSFER: "TR", Document.Kind.RETURN: "RT", Document.Kind.COUNT: "CNT"}
 
 
 # ---------------------------------------------------------------- helpers

@@ -6,13 +6,15 @@ import { ErrorNotice } from "../components/Notice";
 import { api, unwrap } from "../lib/api";
 import { useAuth } from "../lib/auth";
 
-type Tab = "docs" | "receipt" | "transfer" | "return" | "materials" | "sources" | "places" | "report";
+type Tab = "docs" | "receipt" | "transfer" | "return" | "counts" | "dayclose" | "materials" | "sources" | "places" | "report";
 
 const TABS: { key: Tab; label: string; perm: string }[] = [
   { key: "docs", label: "เอกสาร", perm: "inventory.view" },
   { key: "receipt", label: "รับของเข้าคลังกลาง", perm: "inventory.receive" },
   { key: "transfer", label: "ส่งไปสาขา", perm: "inventory.transfer" },
   { key: "return", label: "สาขาส่งคืนคลัง", perm: "inventory.adjust" },
+  { key: "counts", label: "นับสต็อก", perm: "inventory.adjust" },
+  { key: "dayclose", label: "ปิดยอดหน้าร้าน", perm: "inventory.adjust" },
   { key: "materials", label: "วัตถุดิบและวัสดุ", perm: "inventory.view" },
   { key: "sources", label: "แหล่งสินค้า", perm: "inventory.receive" },
   { key: "places", label: "สาขาและกลุ่ม LINE", perm: "inventory.approve" },
@@ -49,6 +51,8 @@ export function Warehouse() {
       {tab === "receipt" && <ReceiptTab />}
       {tab === "transfer" && <TransferTab />}
       {tab === "return" && <StoreReturnTab />}
+      {tab === "counts" && <CountsTab />}
+      {tab === "dayclose" && <DayCloseTab />}
       {tab === "materials" && <MaterialsTab />}
       {tab === "sources" && <SourcesTab />}
       {tab === "places" && <PlacesTab />}
@@ -171,11 +175,13 @@ function DocumentsTab() {
           </table>
         </div>
       </div>
+      {detail.data?.kind === "transfer" && <PrintSlip doc={detail.data} />}
       <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
         {detail.data ? (
           <section className="apanel">
             <div className="apanel-head"><h2>{detail.data.number}</h2><button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setSelected(null)}>ปิด</button></div>
             <p className="sm">{detail.data.kind_label} · <b>{detail.data.status_label}</b></p>
+            {detail.data.kind === "transfer" && <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => window.print()}>พิมพ์ใบส่งสินค้า</button>}
             <p className="xs ink-muted">
               {detail.data.from_branch && <>จาก {detail.data.from_branch} </>}
               {detail.data.to_branch && <>ไป {detail.data.to_branch} </>}
@@ -697,5 +703,228 @@ function ReportTab() {
         </>
       )}
     </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- printable transfer slip (A5)
+
+type FullDoc = NonNullable<Awaited<ReturnType<typeof getDoc>>>;
+async function getDoc(number: string) {
+  return unwrap(await api.GET("/api/admin/inventory/documents/{number}", { params: { path: { number } } }));
+}
+
+/** Shown only when printing: a transfer slip with the number, place, vehicle, lines and signature boxes. */
+function PrintSlip({ doc }: { doc: FullDoc }) {
+  return (
+    <div className="print-slip" aria-hidden="true">
+      <style>{`
+        .print-slip { display: none; }
+        @media print {
+          body * { visibility: hidden; }
+          .print-slip, .print-slip * { visibility: visible; }
+          .print-slip { display: block; position: absolute; left: 0; top: 0; width: 100%; padding: 16mm; font-size: 12pt; color: #000; background: #fff; }
+          .print-slip table { width: 100%; border-collapse: collapse; margin-top: 8mm; }
+          .print-slip th, .print-slip td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
+          .print-slip .sign { display: flex; justify-content: space-between; margin-top: 18mm; }
+          .print-slip .sign div { width: 40%; border-top: 1px solid #000; padding-top: 4px; text-align: center; }
+        }
+      `}</style>
+      <h2 style={{ margin: 0 }}>ใบส่งสินค้า {doc.number}</h2>
+      <p>จาก: {doc.from_branch} &nbsp;→&nbsp; ไป: <b>{doc.to_branch}</b></p>
+      <p>รถที่ใช้ส่ง: {doc.vehicle} {doc.carrier && <>· ผู้นำส่ง: {doc.carrier}</>}</p>
+      <p>วันที่ส่ง: {doc.sent_at ? formatThaiDate(doc.sent_at) : "—"}</p>
+      <table>
+        <thead><tr><th>#</th><th>รายการ</th><th>จำนวน</th></tr></thead>
+        <tbody>{doc.lines.map((l, i) => <tr key={l.id}><td>{i + 1}</td><td>{l.name}</td><td>{l.sent} {l.unit}</td></tr>)}</tbody>
+      </table>
+      {doc.note && <p>หมายเหตุ: {doc.note}</p>}
+      <div className="sign"><div>ผู้ส่ง</div><div>ผู้รับ (ตรวจนับแล้ว)</div></div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- stock counts
+
+function CountsTab() {
+  const qc = useQueryClient();
+  const { can } = useAuth();
+  const branches = useBranches();
+  const [branch, setBranch] = useState("");
+  const [open, setOpen] = useState<string | null>(null);
+  const counts = useQuery({ queryKey: ["counts"], queryFn: async () => unwrap(await api.GET("/api/admin/inventory/documents", { params: { query: { kind: "count", limit: 50 } } })) });
+  const detail = useQuery({
+    queryKey: ["document", open], enabled: !!open,
+    queryFn: async () => unwrap(await api.GET("/api/admin/inventory/documents/{number}", { params: { path: { number: open! } } })),
+  });
+  const refresh = () => { for (const k of ["counts", "document", "stock", "materials", "report", "summary", "todo"]) void qc.invalidateQueries({ queryKey: [k] }); };
+  const start = useMutation({
+    mutationFn: async () => unwrap(await api.POST("/api/admin/inventory/counts", { body: { branch: branch || branches.data?.[0]?.code || "", note: "" } })),
+    onSuccess: (d) => { setOpen(d.number); refresh(); },
+  });
+  return (
+    <div className="cols cols--2-1" style={{ alignItems: "start" }}>
+      <div style={{ display: "grid", gap: 12, minWidth: 0 }}>
+        {can("inventory.adjust") && (
+          <div className="mh-row" style={{ gap: 8 }}>
+            <select className="mh-select" aria-label="สาขาที่จะนับ" style={{ width: "auto" }} value={branch || branches.data?.[0]?.code || ""} onChange={(e) => setBranch(e.target.value)}>
+              {branches.data?.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
+            </select>
+            <button className="mh-btn mh-btn--primary mh-btn--sm" disabled={start.isPending} onClick={() => start.mutate()}>{start.isPending ? "กำลังเปิด…" : "เริ่มนับสต็อก"}</button>
+          </div>
+        )}
+        <ErrorNotice error={start.error ?? counts.error} />
+        <div className="mh-tablewrap">
+          <table className="mh-table">
+            <thead><tr><th>เลขที่</th><th>สาขา</th><th>สถานะ</th><th>วันที่</th></tr></thead>
+            <tbody>
+              {counts.data?.map((d) => (
+                <tr key={d.number} className={d.number === open ? "sel" : ""} onClick={() => setOpen(d.number)} style={{ cursor: "pointer" }}>
+                  <td><span className="mh-code">{d.number}</span></td>
+                  <td>{d.to_branch ?? "—"}</td>
+                  <td className="wrap">{d.status_label}</td>
+                  <td className="xs">{formatThaiDate(d.created_at)}</td>
+                </tr>
+              ))}
+              {counts.data?.length === 0 && <tr><td colSpan={4} className="ink-muted">ยังไม่มีการนับ</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
+        {detail.data?.kind === "count" ? <CountSheet doc={detail.data} onDone={refresh} onClose={() => setOpen(null)} /> : (
+          <div className="apanel"><p className="ink-muted">เริ่มนับหรือเลือกใบนับจากรายการ</p></div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type CountDoc = NonNullable<Awaited<ReturnType<typeof getDoc>>>;
+
+function CountSheet({ doc, onDone, onClose }: { doc: CountDoc; onDone: () => void; onClose: () => void }) {
+  const { can } = useAuth();
+  const approver = can("inventory.approve");
+  const counting = doc.status === "counting";
+  const [values, setValues] = useState<Record<number, string>>({});
+  const [reason, setReason] = useState("");
+  const [result, setResult] = useState<string | null>(null);
+  const record = useMutation({
+    mutationFn: async () => unwrap(await api.PUT("/api/admin/inventory/counts/{number}/lines", {
+      params: { path: { number: doc.number } },
+      body: { lines: Object.entries(values).filter(([, v]) => v.trim() !== "").map(([id, v]) => ({ line_id: Number(id), counted: v.trim() })) },
+    })),
+    onSuccess: () => { setResult("บันทึกการนับแล้ว"); onDone(); },
+  });
+  const submit = useMutation({
+    mutationFn: async () => unwrap(await api.POST("/api/admin/inventory/counts/{number}/submit", { params: { path: { number: doc.number } } })),
+    onSuccess: (d) => { setResult(d.status === "posted" ? "ปรับสต็อกตามที่นับแล้ว" : "ส่งให้ผู้จัดการอนุมัติ เพราะผลต่างเกิน 20 ชิ้น"); onDone(); },
+  });
+  const approve = useMutation({
+    mutationFn: async () => unwrap(await api.POST("/api/admin/inventory/counts/{number}/approve", { params: { path: { number: doc.number } } })),
+    onSuccess: () => { setResult("อนุมัติและปรับสต็อกแล้ว"); onDone(); },
+  });
+  const reject = useMutation({
+    mutationFn: async () => unwrap(await api.POST("/api/admin/inventory/counts/{number}/reject", { params: { path: { number: doc.number } }, body: { reason } })),
+    onSuccess: () => { setResult("ส่งกลับไปนับใหม่แล้ว"); setReason(""); onDone(); },
+  });
+  const pending = doc.status === "pending_approval";
+  return (
+    <section className="apanel">
+      <div className="apanel-head"><h2>{doc.number}</h2><button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" onClick={onClose}>ปิด</button></div>
+      <p className="sm">{doc.to_branch} · <b>{doc.status_label}</b></p>
+      {doc.review_note && <p className="xs">ส่งกลับเพราะ: {doc.review_note}</p>}
+      <div className="mh-tablewrap" style={{ border: 0, maxHeight: 420, overflowY: "auto" }}>
+        <table className="mh-table">
+          <thead><tr><th>รายการ</th><th className="r">นับได้</th>{approver && <><th className="r">ระบบคิดว่ามี</th><th className="r">ต่าง</th></>}</tr></thead>
+          <tbody>
+            {doc.lines.map((l) => (
+              <tr key={l.id}>
+                <td className="wrap">{l.name} <span className="xs ink-muted">{l.unit}</span></td>
+                <td className="r">
+                  {counting ? (
+                    <input className="mh-input num" aria-label={`นับ ${l.name}`} inputMode="decimal" style={{ width: 100 }}
+                      placeholder={l.counted ?? ""} value={values[l.id] ?? ""} onChange={(e) => setValues({ ...values, [l.id]: e.target.value })} />
+                  ) : (l.counted ?? "—")}
+                </td>
+                {approver && <><td className="r">{l.expected ?? "—"}</td><td className="r">{l.variance ?? "—"}</td></>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {result && <div className="notice notice--ok" role="status"><p>{result}</p></div>}
+      <ErrorNotice error={record.error ?? submit.error ?? approve.error ?? reject.error} />
+      {counting && (
+        <div className="mh-row" style={{ gap: 8, marginTop: 12 }}>
+          <button className="mh-btn mh-btn--secondary mh-btn--sm" disabled={record.isPending || !Object.values(values).some((v) => v.trim())} onClick={() => record.mutate()}>บันทึกการนับ</button>
+          <button className="mh-btn mh-btn--primary mh-btn--sm" disabled={submit.isPending} onClick={() => submit.mutate()}>ส่งตรวจ / ปิดการนับ</button>
+        </div>
+      )}
+      {pending && approver && (
+        <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+          <button className="mh-btn mh-btn--primary" disabled={approve.isPending} onClick={() => approve.mutate()}>อนุมัติและปรับสต็อก</button>
+          <div className="mh-row" style={{ gap: 8 }}>
+            <input className="mh-input" aria-label="เหตุผลที่ส่งกลับไปนับ" placeholder="เหตุผลที่ส่งกลับไปนับใหม่" value={reason} onChange={(e) => setReason(e.target.value)} style={{ flex: 1 }} />
+            <button className="mh-btn mh-btn--secondary" disabled={reject.isPending || !reason.trim()} onClick={() => reject.mutate()}>ส่งกลับไปนับ</button>
+          </div>
+        </div>
+      )}
+      {counting && <p className="xs ink-muted">ผลต่างรวมไม่เกิน 20 ชิ้นปรับให้ทันที มากกว่านั้นต้องให้ผู้จัดการอนุมัติ</p>}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------- counter day-close
+
+function DayCloseTab() {
+  const qc = useQueryClient();
+  const branches = useBranches();
+  const stock = useQuery({ queryKey: ["stock", "dayclose"], queryFn: async () => unwrap(await api.GET("/api/admin/inventory/stock", { params: { query: { tracked_only: true } } })) });
+  const [branch, setBranch] = useState("");
+  const [sold, setSold] = useState<Record<string, string>>({});
+  const code = branch || branches.data?.[0]?.code || "";
+  const rows = (stock.data ?? []).filter((r) => r.track_stock);
+  const save = useMutation({
+    mutationFn: async () => unwrap(await api.POST("/api/admin/inventory/branches/{code}/day-close", {
+      params: { path: { code } },
+      body: { branch: code, lines: Object.entries(sold).filter(([, v]) => Number(v) > 0).map(([sku, v]) => ({ sku, sold: Number(v) })) },
+    })),
+    onSuccess: () => { setSold({}); for (const k of ["stock", "report", "summary", "todo"]) void qc.invalidateQueries({ queryKey: [k] }); },
+  });
+  return (
+    <form className="apanel" style={{ maxWidth: 820 }} onSubmit={(e: FormEvent) => { e.preventDefault(); save.mutate(); }}>
+      <h2>ปิดยอดขายหน้าร้านประจำวัน</h2>
+      <p className="sm ink-muted">กรอกจำนวนที่ขายหน้าร้านของแต่ละรายการวันนี้ ระบบจะตัดออกจากสต็อกของสาขานั้น คำสั่งซื้อออนไลน์ที่จองไว้แล้วจะไม่ถูกตัด</p>
+      <div className="mh-field"><label className="mh-label" htmlFor="dcb">สาขา</label>
+        <select className="mh-select" id="dcb" value={code} onChange={(e) => { setBranch(e.target.value); setSold({}); }}>
+          {branches.data?.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
+        </select>
+      </div>
+      <div className="mh-tablewrap" style={{ maxHeight: 420, overflowY: "auto" }}>
+        <table className="mh-table">
+          <thead><tr><th>รายการ</th><th className="r">ว่าง (ขายได้)</th><th className="r">ขายหน้าร้านวันนี้</th></tr></thead>
+          <tbody>
+            {rows.map((r) => {
+              const lvl = r.levels.find((l) => l.branch === code);
+              return (
+                <tr key={r.sku}>
+                  <td className="wrap">{r.product_name} ({r.variant_label})</td>
+                  <td className="r">{lvl?.available ?? 0}</td>
+                  <td className="r"><input className="mh-input num" aria-label={`ขายหน้าร้าน ${r.product_name} ${r.variant_label}`} inputMode="numeric" style={{ width: 100 }}
+                    value={sold[r.sku] ?? ""} onChange={(e) => setSold({ ...sold, [r.sku]: e.target.value })} /></td>
+                </tr>
+              );
+            })}
+            {rows.length === 0 && <tr><td colSpan={3} className="ink-muted">ยังไม่มีสินค้าที่เปิดนับสต็อก</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      <ErrorNotice error={save.error} />
+      {save.isSuccess && <div className="notice notice--ok" role="status"><p>ตัดยอดขายหน้าร้านแล้ว</p></div>}
+      <button className="mh-btn mh-btn--primary" type="submit" disabled={save.isPending || !Object.values(sold).some((v) => Number(v) > 0)} style={{ marginTop: 12 }}>
+        {save.isPending ? "กำลังบันทึก…" : "ปิดยอดวันนี้"}
+      </button>
+    </form>
   );
 }

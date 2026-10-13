@@ -1145,6 +1145,128 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/inventory/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Count */
+        post: operations["maehai_inventory_api_start_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/counts/{number}/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Record Counts */
+        put: operations["maehai_inventory_api_record_counts"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/counts/{number}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Count */
+        post: operations["maehai_inventory_api_submit_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/counts/{number}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Count */
+        post: operations["maehai_inventory_api_approve_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/counts/{number}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Count */
+        post: operations["maehai_inventory_api_reject_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/counts/{number}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Count */
+        post: operations["maehai_inventory_api_cancel_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/branches/{code}/day-close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Day Close
+         * @description Counter sales for the day, taken off the shelf at this branch.
+         */
+        post: operations["maehai_inventory_api_day_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/inventory/reports/reconcile": {
         parameters: {
             query?: never;
@@ -2629,6 +2751,8 @@ export interface components {
             note: string;
             /** Cancel Reason */
             cancel_reason: string;
+            /** Review Note */
+            review_note: string;
             /** Created By */
             created_by: string;
             /** Created At */
@@ -2676,6 +2800,8 @@ export interface components {
             note: string;
             /** Cancel Reason */
             cancel_reason: string;
+            /** Review Note */
+            review_note: string;
             /** Created By */
             created_by: string;
             /** Created At */
@@ -2727,6 +2853,12 @@ export interface components {
             refuse_note: string;
             /** Unit Cost Satang */
             unit_cost_satang: number | null;
+            /** Expected */
+            expected?: string | null;
+            /** Counted */
+            counted?: string | null;
+            /** Variance */
+            variance?: string | null;
         };
         /** LineIn */
         LineIn: {
@@ -2838,6 +2970,47 @@ export interface components {
              * @default 0
              */
             discard: number | string;
+        };
+        /** CountStartIn */
+        CountStartIn: {
+            /** Branch */
+            branch: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** CountEntryIn */
+        CountEntryIn: {
+            /** Line Id */
+            line_id: number;
+            /** Counted */
+            counted: string;
+        };
+        /** RecordCountsIn */
+        RecordCountsIn: {
+            /** Lines */
+            lines: components["schemas"]["CountEntryIn"][];
+        };
+        /** ReasonIn */
+        ReasonIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** DayCloseIn */
+        DayCloseIn: {
+            /** Branch */
+            branch: string;
+            /** Lines */
+            lines: components["schemas"]["SalesLineIn"][];
+        };
+        /** SalesLineIn */
+        SalesLineIn: {
+            /** Sku */
+            sku: string;
+            /** Sold */
+            sold: number;
         };
         /** ReconcileOut */
         ReconcileOut: {
@@ -4868,6 +5041,172 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DocDetailOut"];
                 };
+            };
+        };
+    };
+    maehai_inventory_api_start_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CountStartIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_record_counts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordCountsIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_submit_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_approve_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_reject_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_cancel_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_day_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DayCloseIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

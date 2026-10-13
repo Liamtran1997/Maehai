@@ -13,9 +13,9 @@ from ninja.errors import HttpError
 from maehai.catalog.models import ProductVariant
 from maehai.core.auth import requires
 from maehai.core.models import audit
-from maehai.core.permissions import ALL_BRANCH_ROLES, role_of, visible_branch_ids
+from maehai.core.permissions import ALL_BRANCH_ROLES, has, role_of, visible_branch_ids
 
-from . import documents, reconcile, services
+from . import counts, documents, reconcile, services
 from .models import Branch, Document, DocumentLine, Material, MaterialLevel, MaterialMovement, OnlineSale, Source, StockLevel, StockMovement
 
 router = Router(tags=["admin-inventory"])
@@ -261,6 +261,34 @@ class ReceiveReturnIn(Schema):
     lines: list[ReturnLineIn]
 
 
+class CountEntryIn(Schema):
+    line_id: int
+    counted: str = Field(max_length=20)
+
+
+class RecordCountsIn(Schema):
+    lines: list[CountEntryIn]
+
+
+class CountStartIn(Schema):
+    branch: str
+    note: str = Field(default="", max_length=500)
+
+
+class ReasonIn(Schema):
+    reason: str = Field(min_length=1, max_length=300)
+
+
+class SalesLineIn(Schema):
+    sku: str
+    sold: int = Field(ge=0, le=1_000_000)
+
+
+class DayCloseIn(Schema):
+    branch: str
+    lines: list[SalesLineIn]
+
+
 class DocLineOut(Schema):
     id: int
     item_kind: str
@@ -277,6 +305,9 @@ class DocLineOut(Schema):
     refuse_reason: str
     refuse_note: str
     unit_cost_satang: int | None
+    expected: str | None = None
+    counted: str | None = None
+    variance: str | None = None
 
 
 class DocOut(Schema):
@@ -294,6 +325,7 @@ class DocOut(Schema):
     carrier: str
     note: str
     cancel_reason: str
+    review_note: str
     created_by: str
     created_at: str
     sent_at: str | None
@@ -386,7 +418,7 @@ def _doc_out(doc: Document) -> dict:
         "source": doc.source.name if doc.source_id else None,
         "origin": doc.origin.number if doc.origin_id else None,
         "supplier_ref": doc.supplier_ref, "vehicle": doc.vehicle, "carrier": doc.carrier, "note": doc.note,
-        "cancel_reason": doc.cancel_reason, "created_by": doc.created_by,
+        "cancel_reason": doc.cancel_reason, "review_note": doc.review_note, "created_by": doc.created_by,
         "created_at": doc.created_at.isoformat(), "sent_at": doc.sent_at.isoformat() if doc.sent_at else None,
         "closed_by": doc.closed_by, "closed_at": doc.closed_at.isoformat() if doc.closed_at else None,
         "substitute_reason": doc.substitute_reason, "line_count": doc.lines.count(),
@@ -395,9 +427,13 @@ def _doc_out(doc: Document) -> dict:
     }
 
 
-def _line_out(ln: DocumentLine) -> dict:
+def _line_out(ln: DocumentLine, show_expected: bool = False) -> dict:
     v, m = ln.variant, ln.material
+    var = counts.variance(ln) if ln.counted is not None else None
     return {
+        "expected": str(ln.expected) if show_expected and ln.expected is not None else None,
+        "counted": str(ln.counted) if ln.counted is not None else None,
+        "variance": str(var) if show_expected and var is not None else None,
         "id": ln.id, "item_kind": "product" if v else "material",
         "sku": v.sku if v else None, "material_code": m.code if m else None,
         "name": (f"{v.product.name} ({v.label})" if v else m.name), "unit": "ชิ้น" if v else m.unit,
@@ -408,9 +444,13 @@ def _line_out(ln: DocumentLine) -> dict:
     }
 
 
-def _doc_detail(doc: Document) -> dict:
+def _is_approver(request) -> bool:
+    return has(request.user, "inventory.approve")
+
+
+def _doc_detail(doc: Document, show_expected: bool = False) -> dict:
     lines = doc.lines.select_related("variant__product", "material").order_by("id")
-    return {**_doc_out(doc), "lines": [_line_out(ln) for ln in lines]}
+    return {**_doc_out(doc), "lines": [_line_out(ln, show_expected) for ln in lines]}
 
 
 def _visible_doc(request, number: str) -> Document:
@@ -737,7 +777,67 @@ def receive_return(request, number: str, data: ReceiveReturnIn):
 
 @router.get("/documents/{number}", response=DocDetailOut, auth=requires("inventory.view"))
 def get_document(request, number: str):
-    return _doc_detail(_visible_doc(request, number))
+    return _doc_detail(_visible_doc(request, number), show_expected=_is_approver(request))
+
+
+# ---------------------------------------------------------------- stock counts and counter sales
+
+@router.post("/counts", response={201: DocDetailOut}, auth=requires("inventory.adjust"))
+def start_count(request, data: CountStartIn):
+    branch = _branch(data.branch)
+    _check_branch(request, branch)
+    doc = counts.start_count(branch=branch, actor=request.user.get_username(), note=data.note)
+    return 201, _doc_detail(doc)
+
+
+@router.put("/counts/{number}/lines", response=DocDetailOut, auth=requires("inventory.adjust"))
+def record_counts(request, number: str, data: RecordCountsIn):
+    doc = _visible_doc(request, number)
+    _check_branch(request, doc.to_branch)
+    doc = counts.record_counts(doc, entries=[{"line_id": e.line_id, "counted": e.counted} for e in data.lines])
+    return _doc_detail(doc, show_expected=_is_approver(request))
+
+
+@router.post("/counts/{number}/submit", response=DocDetailOut, auth=requires("inventory.adjust"))
+def submit_count(request, number: str):
+    doc = _visible_doc(request, number)
+    _check_branch(request, doc.to_branch)
+    doc = counts.submit_count(doc, actor=request.user.get_username(), can_approve=_is_approver(request))
+    return _doc_detail(doc, show_expected=_is_approver(request))
+
+
+@router.post("/counts/{number}/approve", response=DocDetailOut, auth=requires("inventory.approve"))
+def approve_count(request, number: str):
+    doc = _visible_doc(request, number)
+    doc = counts.approve_count(doc, actor=request.user.get_username())
+    audit(request, "inventory.count_approve", doc.number, f"ปรับสต็อกตามใบนับ ({doc.to_branch.name})")
+    return _doc_detail(doc, show_expected=True)
+
+
+@router.post("/counts/{number}/reject", response=DocDetailOut, auth=requires("inventory.approve"))
+def reject_count(request, number: str, data: ReasonIn):
+    doc = _visible_doc(request, number)
+    doc = counts.reject_count(doc, actor=request.user.get_username(), reason=data.reason)
+    audit(request, "inventory.count_reject", doc.number, data.reason)
+    return _doc_detail(doc, show_expected=True)
+
+
+@router.post("/counts/{number}/cancel", response=DocDetailOut, auth=requires("inventory.adjust"))
+def cancel_count(request, number: str):
+    doc = _visible_doc(request, number)
+    _check_branch(request, doc.to_branch)
+    return _doc_detail(counts.cancel_count(doc, actor=request.user.get_username()))
+
+
+@router.post("/branches/{code}/day-close", auth=requires("inventory.adjust"))
+def day_close(request, code: str, data: DayCloseIn):
+    """Counter sales for the day, taken off the shelf at this branch."""
+    branch = _branch(code)
+    _check_branch(request, branch)
+    result = counts.day_close(branch=branch, sales=[{"sku": ln.sku, "sold": ln.sold} for ln in data.lines],
+                              actor=request.user.get_username())
+    audit(request, "inventory.day_close", branch.code, f"ขายหน้าร้าน {len(result['lines'])} รายการ")
+    return result
 
 
 # ---------------------------------------------------------------- reports
