@@ -22,4 +22,4 @@ def test_a_failing_job_does_not_stop_the_scheduler(monkeypatch):
 
     monkeypatch.setattr(run_scheduler, "call_command", boom)
     call_command("run_scheduler", "--once")
-    assert calls == ["expire_unpaid_orders"]
+    assert calls == ["expire_unpaid_orders", "alert_overdue_slips"]

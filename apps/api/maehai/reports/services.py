@@ -9,6 +9,7 @@ from django.db.models import Count, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
+from maehai.inventory.models import Document
 from maehai.inventory.services import low_stock_count
 from maehai.orders.models import Order, OrderItem, OrderStatus
 from maehai.payments.models import Payment, PaymentStatus
@@ -71,6 +72,7 @@ def todo() -> dict:
         "waiting_payment": by_status.get(OrderStatus.WAITING_PAYMENT, 0),
         "to_pack": by_status.get(OrderStatus.PAID, 0),
         "low_stock": low_stock_count(),
+        "slips_to_receive": Document.objects.filter(status__in=[Document.Status.SENT, Document.Status.SENT_BACK]).count(),
     }
 
 

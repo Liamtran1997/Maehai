@@ -14,6 +14,7 @@ const NAV = [
   { to: "/promotions", label: "โปรโมชัน", perm: "catalog.view" },
   { to: "/coupons", label: "โค้ดส่วนลด", perm: "coupons.view" },
   { to: "/inventory", label: "สต็อก", perm: "inventory.view", badge: "stock" },
+  { to: "/warehouse", label: "คลังสินค้า", perm: "inventory.view" },
   { to: "/campaigns", label: "รายงานโปรโมชัน", perm: "reports.view" },
 ] as const;
 

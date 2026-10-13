@@ -1,6 +1,19 @@
 # Spec: Kho v2 (kho tổng, chi nhánh, nguồn hàng ra vào)
 
-Trạng thái: giai đoạn 1 **đã triển khai**. Giai đoạn 2 **đã chốt yêu cầu, sẵn sàng làm**. Giai đoạn 3–5 là đề xuất. Cập nhật: 13/10/2026.
+Trạng thái: **giai đoạn 1 và 2 đã triển khai** (13/10/2026). Giai đoạn 3–5 là đề xuất. Cập nhật: 13/10/2026.
+Chưa chạy migration trên Postgres `maehai` local: cần chạy `manage.py migrate` khi được yêu cầu (inventory 0004 và core 0003 có bước dữ liệu: đặt สาขาศรีณรงค์ là kho tổng, tạo สาขาบุ่งหวาย, gán nhân viên kho/bán hàng cũ vào mọi chi nhánh).
+
+## Ghi chú triển khai giai đoạn 2
+- **Hai ledger, một chứng từ.** Sản phẩm giữ ledger cũ (`StockLevel`/`StockMovement`) để không chạm đơn hàng, coupon và báo cáo. Nguyên liệu và vật tư có ledger riêng (`MaterialLevel`/`MaterialMovement`, 3 chữ số thập phân). Cả hai dùng chung `Document` và `DocumentLine`. Báo cáo nhập–xuất–tồn gộp cả hai.
+- **Hàng thiếu và hàng hủy không đi qua tồn kho.** Ghi trên dòng chứng từ (`missing`, `discarded`) và hiện trong báo cáo ở cột "หาย" và "ทิ้ง". Tồn kho chỉ đổi khi hàng thật sự vào hoặc ra khỏi một kho.
+- **Hàng không nhận** (ชำรุด, ไม่ตรงรายการ, อื่นๆ) tạo phiếu hoàn `RT-` tự động, trạng thái `sent_back`. Kho tổng nhận từng dòng: "เข้าสต็อก" hoặc "ทิ้ง", phần thiếu tự thành tổn thất.
+- **Trạng thái phiếu chuyển:** `sent` → `received_full` / `received_partial` / `received_none`; hoặc `cancelled` khi người gửi hoặc quản lý hủy trước khi chi nhánh nhận.
+- **Xác nhận thay:** chủ tiệm và quản lý chung xác nhận được, phải ghi `substitute_reason`.
+- **Đã bỏ:** chuyển kho tức thì (`/inventory/transfer`) và nhập tay qua điều chỉnh "รับของเข้า". Hàng vào kho chỉ qua phiếu nhập; điều chỉnh chỉ còn ตัดของเสีย và นับสต็อก.
+- **Số chứng từ** dùng năm Phật lịch, ví dụ `IN-2569-000001`, `TR-2569-000003`, `RT-2569-000004`.
+- **Phạm vi theo kho** áp cho mọi API kho. Chi tiết ở `staff-permissions.md` mục 8.
+- **Chưa làm:** nhắc chứng từ quá 24 giờ trên dashboard (đã có số đếm, chưa có ô); nhóm LINE riêng chỉ có khi cấu hình `line_group_id` từng kho trong database; giai đoạn 3 (kiểm kê theo phiếu, in phiếu, "ปิดยอดหน้าร้าน").
+
 Phạm vi: trang quản trị mục **สต็อก**, chứng từ nhập/chuyển/hoàn hàng giữa các kho, cách đơn online giữ và trừ hàng, báo cáo và thông báo liên quan.
 
 Mọi quyết định đã được chủ tiệm chốt ngày 13/10/2026 (mục 3). Mã `D…` trong văn bản trỏ về quyết định tương ứng.

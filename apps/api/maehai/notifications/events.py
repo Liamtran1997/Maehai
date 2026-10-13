@@ -53,3 +53,33 @@ def low_stock(variant, branch, available: int) -> None:
 
 def restocked(variant, line_user_id: str) -> None:
     _queue("customer", line_user_id, "restocked", texts.customer_restocked(variant), None)
+
+
+# ---- warehouse documents: a branch group gets its own alerts; without one, the shared staff group gets them
+
+def _to_group(group_id: str, kind: str, text: str) -> None:
+    Outbox.objects.create(audience="staff", recipient=group_id, kind=kind, text=text, order=None)
+
+
+def _branch_group(branch) -> list[str]:
+    return [branch.line_group_id] if branch.line_group_id else list(settings.LINE_STAFF_IDS)
+
+
+def transfer_sent(doc) -> None:
+    for rid in _branch_group(doc.to_branch):
+        _to_group(rid, "transfer_sent", texts.staff_transfer_sent(doc))
+
+
+def transfer_discrepancy(doc, return_doc) -> None:
+    for rid in _branch_group(doc.from_branch):
+        _to_group(rid, "transfer_discrepancy", texts.staff_transfer_discrepancy(doc, return_doc))
+
+
+def return_sent(doc) -> None:
+    for rid in _branch_group(doc.to_branch):
+        _to_group(rid, "return_sent", texts.staff_return_sent(doc))
+
+
+def stock_overdue(doc) -> None:
+    for rid in settings.LINE_STAFF_IDS:
+        _to_group(rid, "stock_overdue", texts.staff_stock_overdue(doc))

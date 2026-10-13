@@ -7,6 +7,7 @@ from maehai.catalog.models import Product
 from maehai.coupons.models import Coupon, CouponRedemption
 from maehai.coupons.services import CouponError, Line, evaluate
 from maehai.orders.models import Order
+from tests.warehouse import stock_in
 
 pytestmark = pytest.mark.django_db
 JSON = "application/json"
@@ -221,7 +222,7 @@ def test_stock_is_not_reserved_when_the_coupon_fails(place, staff_client):
     from maehai.inventory.models import StockLevel
 
     ProductVariant.objects.filter(sku=NAEM).update(track_stock=True)
-    staff_client.post("/api/admin/inventory/adjust", {"branch": "srinarong", "sku": NAEM, "reason": "receive", "quantity": 9}, content_type=JSON)
+    stock_in(staff_client, "srinarong", NAEM, 9)
     order(place, "NOPE")
     assert StockLevel.objects.get(variant__sku=NAEM, branch__code="srinarong").reserved == 0
 

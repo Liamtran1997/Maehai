@@ -14,6 +14,8 @@ from maehai.notifications.models import Outbox
 from maehai.orders.models import Order
 from tests.test_inventory import NAEM, PEPPER, adjust, api_post, level, order_for, paid_packing, set_status, stocked  # noqa: F401
 
+from tests.warehouse import stock_in
+
 pytestmark = pytest.mark.django_db
 JSON = "application/json"
 LEVELS = "/api/admin/inventory/levels"
@@ -131,8 +133,9 @@ def test_alert_comes_from_a_waste_entry_not_only_from_orders(stocked, alerts, se
 
 def test_alert_comes_from_a_transfer_out(stocked, alerts, settings):
     settings.LOW_STOCK_THRESHOLD = 3
-    r = api_post(stocked, "/api/admin/inventory/transfer", {"from_branch": "srinarong", "to_branch": "changsanit", "sku": PEPPER, "quantity": 3})
-    assert r.status_code == 200 and len(alerts()) == 1
+    r = api_post(stocked, "/api/admin/inventory/documents/transfers",
+                 {"to_branch": "changsanit", "vehicle": "กระบะ", "lines": [{"sku": PEPPER, "quantity": 3}]}, content_type=JSON)
+    assert r.status_code == 201 and len(alerts()) == 1                # the central warehouse drops to its line
 
 
 def test_alert_is_sent_again_only_after_stock_was_back_above_the_line(stocked, alerts, settings):
@@ -140,7 +143,7 @@ def test_alert_is_sent_again_only_after_stock_was_back_above_the_line(stocked, a
     adjust(stocked, reason="waste", quantity=3)           # 5 -> 2: alert
     adjust(stocked, reason="waste", quantity=1)           # no second one
     assert len(alerts()) == 1
-    adjust(stocked, reason="receive", quantity=10)        # back above the line
+    stock_in(stocked, "srinarong", PEPPER, 10)            # back above the line
     assert level("srinarong", PEPPER).low_alerted is False
     adjust(stocked, reason="waste", quantity=10)          # down again
     assert len(alerts()) == 2
@@ -148,7 +151,7 @@ def test_alert_is_sent_again_only_after_stock_was_back_above_the_line(stocked, a
 
 def test_receiving_stock_that_is_still_low_is_not_an_alert(stocked, alerts, settings):
     settings.LOW_STOCK_THRESHOLD = 20
-    adjust(stocked, reason="receive", quantity=1)
+    stock_in(stocked, "srinarong", PEPPER, 1)
     assert alerts() == []
 
 
@@ -310,7 +313,7 @@ def test_concurrent_orders_cannot_overspend_the_daily_quota(seeded, staff_client
     if connection.vendor != "postgresql":
         pytest.skip("row locks need Postgres")
     ProductVariant.objects.filter(sku=PEPPER).update(track_stock=True)
-    api_post(staff_client, "/api/admin/inventory/adjust", {"branch": "srinarong", "sku": PEPPER, "reason": "receive", "quantity": 20})
+    stock_in(staff_client, "srinarong", PEPPER, 20)
     put_levels(staff_client, online_quota=3)
     results, barrier = [], threading.Barrier(8)
 

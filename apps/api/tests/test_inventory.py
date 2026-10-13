@@ -10,23 +10,24 @@ from maehai.catalog.models import ProductVariant
 from maehai.inventory.models import Branch, StockLevel, StockMovement, StockReservation
 from maehai.notifications.models import Outbox
 from maehai.orders.models import Order
+from tests.warehouse import send_and_confirm, stock_in
 
 pytestmark = pytest.mark.django_db
 JSON = "application/json"
 PEPPER, NAEM = "moo-yo-black-pepper-2", "naem-pork-1"
 
 
-def api_post(c, url, data):
-    return c.post(url, data, content_type=JSON)
+def api_post(c, url, data, content_type=JSON):
+    return c.post(url, data, content_type=content_type)
 
 
 @pytest.fixture
 def stocked(seeded, staff_client):
     """Track both items; Srinarong has 5 pepper + 5 naem, Changsanit has 5 naem and no pepper."""
     ProductVariant.objects.filter(sku__in=[PEPPER, NAEM]).update(track_stock=True)
-    for branch, sku, qty in [("srinarong", PEPPER, 5), ("srinarong", NAEM, 5), ("changsanit", NAEM, 5)]:
-        r = api_post(staff_client, "/api/admin/inventory/adjust", {"branch": branch, "sku": sku, "reason": "receive", "quantity": qty})
-        assert r.status_code == 200, r.content
+    stock_in(staff_client, "srinarong", PEPPER, 5)
+    stock_in(staff_client, "srinarong", NAEM, 5)
+    stock_in(staff_client, "changsanit", NAEM, 5)
     return staff_client
 
 
@@ -142,8 +143,8 @@ def adjust(c, **kw):
     return api_post(c, "/api/admin/inventory/adjust", {"branch": "srinarong", "sku": PEPPER, **kw})
 
 
-def test_receive_waste_count_and_ledger(stocked):
-    assert adjust(stocked, reason="receive", quantity=10, note="ล็อตเช้า").json()["on_hand"] == 15
+def test_waste_count_and_ledger(stocked):
+    stock_in(stocked, "srinarong", PEPPER, 10)                       # 5 + 10 through a receipt
     assert adjust(stocked, reason="waste", quantity=2, note="หมดอายุ").json()["on_hand"] == 13
     assert adjust(stocked, reason="count", quantity=12).json()["on_hand"] == 12
     deltas = [m["delta"] for m in stocked.get("/api/admin/inventory/movements", {"sku": PEPPER}).json()]
@@ -158,24 +159,35 @@ def test_cannot_drop_below_whats_promised(place, stocked):
     assert adjust(stocked, reason="count", quantity=4).status_code == 200
 
 
-@pytest.mark.parametrize("kw", [{"reason": "receive", "quantity": 0}, {"reason": "waste", "quantity": 99}, {"reason": "sale", "quantity": 1}])
+@pytest.mark.parametrize("kw", [{"reason": "receive", "quantity": 1}, {"reason": "waste", "quantity": 99}, {"reason": "sale", "quantity": 1}])
 def test_bad_adjustments(stocked, kw):
     assert adjust(stocked, **kw).status_code in (409, 422)
 
 
-def test_transfer(stocked):
-    r = api_post(stocked, "/api/admin/inventory/transfer", {"from_branch": "srinarong", "to_branch": "changsanit", "sku": PEPPER, "quantity": 2})
-    assert r.status_code == 200
-    assert (level("srinarong", PEPPER).on_hand, level("changsanit", PEPPER).on_hand) == (3, 2)
-    kinds = sorted(StockMovement.objects.filter(variant__sku=PEPPER).exclude(reason="receive").values_list("reason", flat=True))
-    assert kinds == ["transfer_in", "transfer_out"]
+def on_hand(branch, sku):
+    lv = StockLevel.objects.filter(branch__code=branch, variant__sku=sku).first()
+    return lv.on_hand if lv else 0
 
 
-def test_transfer_cannot_take_reserved_or_missing_stock(place, stocked):
-    order_for(place, [(PEPPER, 4)])
-    t = lambda **kw: api_post(stocked, "/api/admin/inventory/transfer", {"from_branch": "srinarong", "to_branch": "changsanit", "sku": PEPPER, "quantity": 2, **kw})
-    assert t().status_code == 409                                   # only 1 is free
-    assert t(to_branch="srinarong").status_code == 422
+def test_transfer_moves_stock_only_when_the_branch_confirms(stocked):
+    doc = api_post(stocked, "/api/admin/inventory/documents/transfers",
+                   {"to_branch": "changsanit", "vehicle": "กระบะ", "lines": [{"sku": PEPPER, "quantity": 2}]}, content_type=JSON).json()
+    assert (on_hand("srinarong", PEPPER), on_hand("changsanit", PEPPER)) == (3, 0)               # in transit
+    assert doc["status"] == "sent" and doc["number"].startswith("TR-")
+    r = api_post(stocked, f"/api/admin/inventory/documents/{doc['number']}/receive",
+                 {"lines": [{"line_id": doc["lines"][0]["id"], "received": 2}], "substitute_reason": "ทดสอบ"})
+    assert r.status_code == 200, r.content
+    assert (on_hand("srinarong", PEPPER), on_hand("changsanit", PEPPER)) == (3, 2)
+    reasons = set(StockMovement.objects.filter(variant__sku=PEPPER).values_list("reason", flat=True))
+    assert {"transfer_in", "transfer_out"} <= reasons
+
+
+def test_transfer_cannot_take_reserved_stock(place, stocked):
+    order_for(place, [(PEPPER, 4)])                                  # 5 on hand, 4 promised: only 1 can leave
+    r = api_post(stocked, "/api/admin/inventory/documents/transfers",
+                 {"to_branch": "changsanit", "vehicle": "กระบะ", "lines": [{"sku": PEPPER, "quantity": 2}]}, content_type=JSON)
+    assert r.status_code == 409 and "มีให้ส่งได้แค่ 1" in r.json()["detail"]
+    assert level("srinarong", PEPPER).on_hand == 5                   # nothing moved
 
 
 def test_inventory_requires_staff(client, seeded):
@@ -185,7 +197,7 @@ def test_inventory_requires_staff(client, seeded):
 
 def test_stock_table_lists_all_branches(stocked):
     row = next(r for r in stocked.get("/api/admin/inventory/stock").json() if r["sku"] == PEPPER)
-    assert row["track_stock"] and {l["branch"]: l["on_hand"] for l in row["levels"]} == {"srinarong": 5, "changsanit": 0}
+    assert row["track_stock"] and {l["branch"]: l["on_hand"] for l in row["levels"] if l["branch"] in ("srinarong", "changsanit")} == {"srinarong": 5, "changsanit": 0}
 
 
 def test_toggle_tracking(seeded, staff_client):
@@ -278,5 +290,5 @@ def test_low_stock_alert_fires_once_on_crossing(place, stocked, settings):
 def test_dashboard_counts_low_stock(stocked):
     # pepper@srinarong 5 > 5? no: threshold is 5 so 5 counts as low; naem 5 too; changsanit naem 5
     assert stocked.get("/api/admin/reports/summary").json()["todo"]["low_stock"] == 3
-    adjust(stocked, reason="receive", quantity=10)
+    stock_in(stocked, "srinarong", PEPPER, 10)
     assert stocked.get("/api/admin/reports/summary").json()["todo"]["low_stock"] == 2

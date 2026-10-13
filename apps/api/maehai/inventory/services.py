@@ -177,7 +177,9 @@ def adjust(*, branch: Branch, variant, reason: str, actor: str, quantity: int, n
     """Staff stock changes. RECEIVE adds `quantity`. WASTE removes it. COUNT sets on_hand to `quantity`.
     Never drops below what is already promised to orders."""
     R = StockMovement.Reason
-    if reason not in (R.RECEIVE, R.WASTE, R.COUNT):
+    if reason == R.RECEIVE:
+        raise HttpError(422, "รับของเข้าต้องทำผ่านใบรับสินค้าที่คลังกลาง")
+    if reason not in (R.WASTE, R.COUNT):
         raise HttpError(422, "เหตุผลไม่ถูกต้อง")
     if quantity < 0 or (reason != R.COUNT and quantity == 0):
         raise HttpError(422, "จำนวนไม่ถูกต้อง")
@@ -198,22 +200,34 @@ def adjust(*, branch: Branch, variant, reason: str, actor: str, quantity: int, n
 
 
 @transaction.atomic
-def transfer(*, source: Branch, dest: Branch, variant, quantity: int, actor: str, note: str = "") -> None:
-    if source.id == dest.id or quantity <= 0:
-        raise HttpError(422, "ข้อมูลการโอนไม่ถูกต้อง")
-    a = _level_for_update(source, variant)
-    if a.available < quantity:
-        raise HttpError(409, f"{source.name} มีของพร้อมขายแค่ {a.available}")
-    b = _level_for_update(dest, variant)
-    a.on_hand -= quantity
-    b.on_hand += quantity
-    a.save(update_fields=["on_hand"])
-    b.save(update_fields=["on_hand"])
-    R = StockMovement.Reason
-    StockMovement.objects.create(branch=source, variant=variant, delta=-quantity, on_hand_after=a.on_hand, reason=R.TRANSFER_OUT, note=note[:200], actor=actor)
-    StockMovement.objects.create(branch=dest, variant=variant, delta=quantity, on_hand_after=b.on_hand, reason=R.TRANSFER_IN, note=note[:200], actor=actor)
-    refresh_low_alert(source, variant, decreased=True)
-    refresh_low_alert(dest, variant, decreased=False)
+def adjust_material(*, branch: Branch, material, reason: str, quantity, actor: str, note: str = ""):
+    """Materials and supplies: waste, consumption ("เบิกใช้") or a stock count. Receipts go through a document."""
+    from decimal import Decimal
+
+    from .models import MaterialLevel, MaterialMovement
+
+    R = MaterialMovement.Reason
+    if reason not in (R.WASTE, R.CONSUME, R.COUNT):
+        raise HttpError(422, "เหตุผลไม่ถูกต้อง")
+    qty = Decimal(str(quantity)).quantize(Decimal("0.001"))
+    if qty < 0 or (reason != R.COUNT and qty == 0):
+        raise HttpError(422, "จำนวนไม่ถูกต้อง")
+    ml, _ = MaterialLevel.objects.get_or_create(branch=branch, material=material)
+    ml = MaterialLevel.objects.select_for_update().get(pk=ml.pk)
+    if reason == R.COUNT:
+        new = qty
+    else:
+        new = ml.on_hand - qty if reason == R.WASTE or reason == R.CONSUME else ml.on_hand + qty
+    if new < 0:
+        raise HttpError(409, f"{material.name} ที่{branch.name}มีแค่ {ml.on_hand:g} {material.unit}")
+    delta = new - ml.on_hand
+    if delta == 0:
+        return ml
+    ml.on_hand = new
+    ml.save(update_fields=["on_hand"])
+    MaterialMovement.objects.create(branch=branch, material=material, delta=delta, on_hand_after=new, reason=reason,
+                                    note=note[:200], actor=actor)
+    return ml
 
 
 def low_stock_count() -> int:
@@ -294,7 +308,7 @@ def _number(raw: str | None, label: str, errors: list[str]) -> int | None:
     return int(raw)
 
 
-def parse_import(text: str) -> dict:
+def parse_import(text: str, allowed_branch_codes=None) -> dict:
     """Read and check a stock file without writing anything. Returns the rows with their problems."""
     from maehai.catalog.models import ProductVariant
 
@@ -331,6 +345,8 @@ def parse_import(text: str) -> dict:
             errors.append("ไม่พบ SKU นี้")
         if code not in branches:
             errors.append("ไม่พบสาขานี้")
+        elif allowed_branch_codes is not None and code not in allowed_branch_codes:
+            errors.append("ไม่มีสิทธิ์สาขานี้")
         if tracking == "daily":
             errors.append("ยังไม่รองรับ tracking=daily (ใช้ none หรือ stock)")
         elif tracking not in ("none", "stock"):
@@ -362,11 +378,11 @@ def parse_import(text: str) -> dict:
 
 
 @transaction.atomic
-def apply_import(text: str, *, actor: str) -> dict:
+def apply_import(text: str, *, actor: str, allowed_branch_codes=None) -> dict:
     """Write a checked stock file. Refuses the whole file if any row has a problem, so a half-applied file never happens."""
     from maehai.catalog.models import ProductVariant
 
-    parsed = parse_import(text)
+    parsed = parse_import(text, allowed_branch_codes)
     if parsed["error_count"]:
         raise HttpError(422, f"ไฟล์ยังมี {parsed['error_count']} แถวที่ผิด แก้ก่อนแล้วลองใหม่")
     branches = {b.code: b for b in Branch.objects.filter(is_active=True)}
@@ -401,7 +417,7 @@ def apply_import(text: str, *, actor: str) -> dict:
     return {"rows": parsed["total"], "changed": changed}
 
 
-def import_template() -> str:
+def import_template(allowed_branch_codes=None) -> str:
     """A CSV with every active size at every active branch and today's numbers, ready to fill in."""
     from maehai.catalog.models import ProductVariant
 
@@ -409,7 +425,8 @@ def import_template() -> str:
     out = io.StringIO()
     w = csv.writer(out)
     w.writerow(IMPORT_COLUMNS)
-    branches = list(Branch.objects.filter(is_active=True))
+    branches = [b for b in Branch.objects.filter(is_active=True)
+                if allowed_branch_codes is None or b.code in allowed_branch_codes]
     for v in ProductVariant.objects.filter(is_active=True, product__is_active=True).select_related("product") \
             .order_by("product__sort_order", "product__name", "sort_order"):
         for b in branches:

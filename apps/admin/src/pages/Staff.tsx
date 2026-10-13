@@ -13,7 +13,10 @@ const ACTION_LABEL: Record<string, string> = {
   "coupon.end": "ปิดโค้ด", "inventory.import": "นำเข้าสต็อกจากไฟล์", "inventory.level_settings": "ตั้งโควตาออนไลน์/จุดเตือนสต็อก", "coupon.delete": "ลบโค้ด", "order.cancel_paid": "ยกเลิกคำสั่งซื้อที่ชำระแล้ว",
 };
 
-type Form = { id?: number; username: string; display_name: string; role: string; password: string; is_active: boolean };
+type Form = { id?: number; username: string; display_name: string; role: string; password: string; is_active: boolean; branch_codes: string[] };
+
+// Roles that work with particular places. Owners and managers see every place, so no branch is picked for them.
+const PLACE_ROLES = ["branch_manager", "warehouse", "sales"];
 
 export function Staff() {
   const qc = useQueryClient();
@@ -21,6 +24,7 @@ export function Staff() {
   const [tab, setTab] = useState<"people" | "roles" | "audit">("people");
   const staff = useQuery({ queryKey: ["staff"], queryFn: async () => unwrap(await api.GET("/api/admin/staff")) });
   const roles = useQuery({ queryKey: ["roles"], queryFn: async () => unwrap(await api.GET("/api/admin/roles")) });
+  const branches = useQuery({ queryKey: ["branches"], queryFn: async () => unwrap(await api.GET("/api/admin/inventory/branches")) });
   const audit = useQuery({ queryKey: ["audit"], enabled: tab === "audit", queryFn: async () => unwrap(await api.GET("/api/admin/audit", { params: { query: { limit: 200 } } })) });
   const [form, setForm] = useState<Form | null>(null);
   const [resetFor, setResetFor] = useState<StaffMember | null>(null);
@@ -29,8 +33,8 @@ export function Staff() {
 
   const save = useMutation({
     mutationFn: async (f: Form) => f.id
-      ? unwrap(await api.PUT("/api/admin/staff/{user_id}", { params: { path: { user_id: f.id } }, body: { display_name: f.display_name, role: f.role, is_active: f.is_active } }))
-      : unwrap(await api.POST("/api/admin/staff", { body: { username: f.username, display_name: f.display_name, role: f.role, password: f.password } })),
+      ? unwrap(await api.PUT("/api/admin/staff/{user_id}", { params: { path: { user_id: f.id } }, body: { display_name: f.display_name, role: f.role, is_active: f.is_active, branch_codes: f.branch_codes } }))
+      : unwrap(await api.POST("/api/admin/staff", { body: { username: f.username, display_name: f.display_name, role: f.role, password: f.password, branch_codes: f.branch_codes } })),
     onSuccess: () => { setForm(null); refresh(); },
   });
   const reset = useMutation({
@@ -45,7 +49,7 @@ export function Staff() {
     <>
       <div className="topbar">
         <h1>พนักงานและสิทธิ์</h1>
-        <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open({ username: "", display_name: "", role: "sales", password: "", is_active: true })}>เพิ่มพนักงาน</button>
+        <button className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open({ username: "", display_name: "", role: "sales", password: "", is_active: true, branch_codes: [] })}>เพิ่มพนักงาน</button>
       </div>
       <div className="seg" role="group" aria-label="หัวข้อ" style={{ alignSelf: "flex-start" }}>
         <button aria-pressed={tab === "people"} onClick={() => setTab("people")}>พนักงาน</button>
@@ -63,7 +67,7 @@ export function Staff() {
                 {staff.data?.map((s) => (
                   <tr key={s.id} className={form?.id === s.id ? "sel" : ""}>
                     <td><span className="bold">{s.display_name || s.username}</span><br /><span className="xs ink-muted">{s.username}{s.username === user?.username ? " (คุณ)" : ""}</span></td>
-                    <td>{s.role_label}</td>
+                    <td>{s.role_label}{s.branch_codes.length > 0 && <><br /><span className="xs ink-muted">{s.branch_codes.map((c) => branches.data?.find((b) => b.code === c)?.name ?? c).join(", ")}</span></>}</td>
                     <td className="xs">{when(s.last_login)}</td>
                     <td>
                       {!s.is_active ? <span className="mh-status mh-status--cancel" data-glyph="✕">ปิดบัญชี</span>
@@ -71,7 +75,7 @@ export function Staff() {
                         : <span className="mh-status mh-status--done" data-glyph="●">ใช้งานอยู่</span>}
                     </td>
                     <td className="mh-row" style={{ gap: 8 }}>
-                      <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => open({ id: s.id, username: s.username, display_name: s.display_name, role: s.role, password: "", is_active: s.is_active })}>แก้ไข</button>
+                      <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => open({ id: s.id, username: s.username, display_name: s.display_name, role: s.role, password: "", is_active: s.is_active, branch_codes: s.branch_codes })}>แก้ไข</button>
                       {s.username !== user?.username && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { reset.reset(); setResetFor(s); setResetPw(""); }}>รีเซ็ตรหัสผ่าน</button>}
                     </td>
                   </tr>
@@ -99,6 +103,19 @@ export function Staff() {
                   <select className="mh-select" id="sr" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>{roles.data?.roles.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}</select>
                   {roleDesc && <span className="mh-help">{roleDesc}</span>}
                 </div>
+                {PLACE_ROLES.includes(form.role) && (
+                  <div className="mh-field">
+                    <span className="mh-label">{form.role === "branch_manager" ? "สาขาที่ดูแล (เลือกหนึ่งสาขา)" : "สาขาที่ทำงาน"}</span>
+                    {branches.data?.filter((b) => form.role !== "branch_manager" || b.kind === "store").map((b) => (
+                      <label key={b.code} className="mh-row" style={{ gap: 8 }}>
+                        <input type={form.role === "branch_manager" ? "radio" : "checkbox"} name="sb" checked={form.branch_codes.includes(b.code)}
+                          onChange={(e) => setForm({ ...form, branch_codes: form.role === "branch_manager" ? [b.code] : e.target.checked ? [...form.branch_codes, b.code] : form.branch_codes.filter((c) => c !== b.code) })} />
+                        {b.name}{b.kind === "central" ? " (คลังกลาง)" : ""}
+                      </label>
+                    ))}
+                    <span className="mh-help">{form.role === "branch_manager" ? "ผู้จัดการสาขารับของเข้าสาขาและดูแลสาขานี้เท่านั้น" : "เห็นและทำรายการเฉพาะสาขาที่เลือก"}</span>
+                  </div>
+                )}
                 {!form.id && <div className="mh-field"><label className="mh-label" htmlFor="sp">รหัสผ่านชั่วคราว</label><input className="mh-input" id="sp" type="text" autoComplete="off" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={10} /><span className="mh-help">อย่างน้อย 10 ตัวอักษร พนักงานต้องตั้งรหัสใหม่ตอนเข้าครั้งแรก</span></div>}
                 {form.id && <label className="mh-row" style={{ gap: 8 }}><input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} style={{ width: 20, height: 20, accentColor: "var(--leaf)" }} /> เปิดใช้งานบัญชี</label>}
                 {form.id && !form.is_active && <div className="notice notice--warn"><p>ปิดบัญชีแล้ว พนักงานจะถูกออกจากระบบทันที ประวัติที่เขาทำไว้ยังอยู่</p></div>}

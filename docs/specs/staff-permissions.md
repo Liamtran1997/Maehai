@@ -1,6 +1,6 @@
 # Spec: Phân quyền nhân viên
 
-Trạng thái: mục 1–7 đã triển khai. **Mục 8 (ผู้จัดการสาขา, phạm vi theo kho, quyền kho mới) đã chốt, chưa triển khai**: làm cùng giai đoạn 2 của `inventory.md`. Cập nhật: 13/10/2026.
+Trạng thái: đã triển khai (13/10/2026), gồm ผู้จัดการสาขา, phạm vi theo kho và quyền kho mới. Cần chạy migration `core.0003` trên database có sẵn.
 
 ## 1. Vấn đề trước đây
 

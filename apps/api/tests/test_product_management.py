@@ -273,7 +273,9 @@ def say(client, text, user="Ucust"):
 
 
 def receive(staff, sku, qty, branch="srinarong"):
-    return staff.post("/api/admin/inventory/adjust", {"branch": branch, "sku": sku, "reason": "receive", "quantity": qty}, content_type=JSON)
+    from tests.warehouse import stock_in
+
+    stock_in(staff, branch, sku, qty)
 
 
 def test_sold_out_variant_offers_a_line_alert_link(client, line, sold_out):

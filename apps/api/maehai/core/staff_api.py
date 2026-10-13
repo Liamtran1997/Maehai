@@ -10,7 +10,7 @@ from ninja.errors import HttpError
 from .api import password_errors
 from .auth import requires
 from .models import AuditLog, StaffProfile, audit
-from .permissions import PERMISSIONS, ROLES
+from .permissions import ALL_BRANCH_ROLES, PERMISSIONS, ROLES
 
 User = get_user_model()
 router = Router(tags=["admin-staff"])
@@ -29,6 +29,7 @@ class StaffOut(Schema):
     must_change_password: bool
     last_login: str | None
     created_at: str
+    branch_codes: list[str] = []
 
 
 class StaffIn(Schema):
@@ -36,12 +37,14 @@ class StaffIn(Schema):
     display_name: str = Field(default="", max_length=80)
     role: str
     password: str
+    branch_codes: list[str] = []
 
 
 class StaffUpdate(Schema):
     display_name: str = Field(default="", max_length=80)
     role: str
     is_active: bool
+    branch_codes: list[str] = []
 
 
 class ResetIn(Schema):
@@ -78,7 +81,25 @@ def _out(p: StaffProfile) -> dict:
     u = p.user
     return {"id": u.id, "username": u.get_username(), "display_name": p.display_name, "role": p.role,
             "role_label": ROLES[p.role]["label"], "is_active": u.is_active, "must_change_password": p.must_change_password,
-            "last_login": u.last_login.isoformat() if u.last_login else None, "created_at": p.created_at.isoformat()}
+            "last_login": u.last_login.isoformat() if u.last_login else None, "created_at": p.created_at.isoformat(),
+            "branch_codes": sorted(p.branches.values_list("code", flat=True)) if p.pk else []}
+
+
+def _apply_branches(p: StaffProfile, role: str, codes: list[str]) -> None:
+    """Which places a person works with. Owners and managers see all places, so nothing is stored for them.
+    ผู้จัดการสาขา works with exactly one store."""
+    from maehai.inventory.models import Branch
+
+    if role in ALL_BRANCH_ROLES:
+        p.branches.clear()
+        return
+    wanted = list(Branch.objects.filter(code__in=set(codes), is_active=True))
+    if len(wanted) != len(set(codes)):
+        raise HttpError(422, "มีสาขาที่ไม่รู้จัก หรือถูกซ่อนอยู่")
+    if role == "branch_manager":
+        if len(wanted) != 1 or wanted[0].kind != Branch.Kind.STORE:
+            raise HttpError(422, "ผู้จัดการสาขาต้องผูกกับสาขาเดียวที่เป็นสาขาร้าน")
+    p.branches.set(wanted)
 
 
 def _ensure_superuser_profiles() -> None:
@@ -123,6 +144,7 @@ def create_staff(request, data: StaffIn):
     user.save()
     p = StaffProfile.objects.create(user=user, role=data.role, display_name=data.display_name.strip(),
                                     must_change_password=True, created_by=request.user.get_username())
+    _apply_branches(p, data.role, data.branch_codes)
     audit(request, "staff.create", username, f"ตำแหน่ง {ROLES[data.role]['label']}")
     return 201, _out(p)
 
@@ -143,8 +165,13 @@ def update_staff(request, user_id: int, data: StaffUpdate):
         changes.append(f"ตำแหน่ง {ROLES[p.role]['label']} → {ROLES[data.role]['label']}")
     if data.is_active != p.user.is_active:
         changes.append("เปิดบัญชี" if data.is_active else "ปิดบัญชี")
+    before = sorted(p.branches.values_list("code", flat=True))
     p.role, p.display_name = data.role, data.display_name.strip()
     p.save()
+    _apply_branches(p, data.role, data.branch_codes)
+    after = sorted(p.branches.values_list("code", flat=True))
+    if before != after:
+        changes.append(f"สาขา {', '.join(before) or '—'} → {', '.join(after) or '—'}")
     p.user.is_active = data.is_active
     p.user.save(update_fields=["is_active"])
     if changes:

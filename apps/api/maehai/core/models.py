@@ -5,8 +5,8 @@ from django.db import models
 class StaffProfile(models.Model):
     """Role and onboarding state of a back-office user. See permissions.py for what each role may do."""
 
-    ROLE_CHOICES = [("owner", "เจ้าของร้าน"), ("manager", "ผู้จัดการ"), ("sales", "พนักงานขาย"),
-                    ("warehouse", "พนักงานคลัง"), ("content", "พนักงานดูแลสินค้า")]
+    ROLE_CHOICES = [("owner", "เจ้าของร้าน"), ("manager", "ผู้จัดการ"), ("branch_manager", "ผู้จัดการสาขา"),
+                    ("sales", "พนักงานขาย"), ("warehouse", "พนักงานคลัง"), ("content", "พนักงานดูแลสินค้า")]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="staff_profile")
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
@@ -14,6 +14,8 @@ class StaffProfile(models.Model):
     must_change_password = models.BooleanField(default=False, help_text="Set when an owner creates the account or resets the password")
     created_by = models.CharField(max_length=150, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    branches = models.ManyToManyField("inventory.Branch", blank=True, related_name="staff",
+                                      help_text="Branches this person works with. ผู้จัดการสาขา: exactly one")
 
     def __str__(self) -> str:
         return f"{self.user.get_username()} ({self.role})"

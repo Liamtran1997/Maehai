@@ -68,3 +68,32 @@ def restock_in_stock(variant) -> str:
 
 
 LINK_HELP = "ส่งข้อความจากหน้าคำสั่งซื้อบนเว็บเพื่อเชื่อมต่อ LINE (กดปุ่ม “รับแจ้งเตือนทาง LINE”)"
+
+
+def _items_summary(doc, limit: int = 4) -> str:
+    lines = list(doc.lines.select_related("variant__product", "material"))
+    names = [(ln.variant.product.name if ln.variant_id else ln.material.name) for ln in lines]
+    more = f" และอีก {len(names) - limit} รายการ" if len(names) > limit else ""
+    return ", ".join(names[:limit]) + more
+
+
+def staff_transfer_sent(doc) -> str:
+    vehicle = f" · รถ {doc.vehicle}" if doc.vehicle else ""
+    return (f"มีของส่งมาถึง {doc.to_branch.name}\nใบส่ง {doc.number}{vehicle}\n{_items_summary(doc)}\n"
+            f"กรุณาตรวจรับในระบบ: {settings.ADMIN_URL}/inventory")
+
+
+def staff_transfer_discrepancy(doc, return_doc) -> str:
+    back = f"\nของที่ไม่รับกลับคลังกลาง: ใบคืน {return_doc.number}" if return_doc else ""
+    return (f"การรับของไม่ครบ {doc.number} ({doc.to_branch.name})\n"
+            f"สถานะ: {doc.get_status_display()}{back}\nดูรายละเอียด: {settings.ADMIN_URL}/inventory")
+
+
+def staff_return_sent(doc) -> str:
+    return (f"มีของส่งคืนคลังกลาง {doc.number} จาก {doc.from_branch.name}\n{_items_summary(doc)}\n"
+            f"กรุณารับในระบบ: {settings.ADMIN_URL}/inventory")
+
+
+def staff_stock_overdue(doc) -> str:
+    return (f"ใบ {doc.number} ยังไม่ได้รับยืนยันเกิน 24 ชั่วโมง\n"
+            f"{doc.from_branch.name} → {doc.to_branch.name}\nตรวจสอบ: {settings.ADMIN_URL}/inventory")

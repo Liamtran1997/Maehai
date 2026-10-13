@@ -20,10 +20,18 @@ PERMISSIONS: dict[str, str] = {
     "coupons.view": "ดูรายการโค้ดส่วนลดและประวัติการใช้ (โค้ดคือเงิน จึงแยกจากสิทธิ์ดูสินค้า)",
     "catalog.edit": "เพิ่มและแก้ไขสินค้า รูปภาพ และหมวดหมู่",
     "pricing.manage": "แก้ราคา สร้างโปรโมชันและโค้ดส่วนลด",
-    "inventory.view": "ดูสต็อกสินค้า",
-    "inventory.adjust": "รับของเข้า ตัดของเสีย นับสต็อก โอนระหว่างสาขา",
+    "inventory.view": "ดูสต็อกสินค้าและเอกสารคลังของสาขาที่ได้รับมอบหมาย",
+    "inventory.adjust": "ตัดของเสีย เบิกใช้ นับสต็อก หมดหน้าร้าน ตั้งโควตาออนไลน์ และสร้างใบคืนจากสาขา",
+    "inventory.receive": "รับของจากแหล่งสินค้าเข้าคลังกลาง จัดการแหล่งสินค้าและรายการวัตถุดิบ",
+    "inventory.transfer": "สร้างและยกเลิกใบส่งสินค้าจากคลังกลางไปสาขา",
+    "inventory.receive_transfer": "ตรวจรับสินค้าที่ส่งมาถึงสาขาของตัวเอง",
+    "inventory.receive_return": "รับใบคืนสินค้าเข้าคลังกลาง และตัดสินใจเข้าสต็อกหรือทิ้ง",
+    "inventory.approve": "ยืนยันรับแทนสาขา และดูรายงานคลังทั้งหมด",
     "staff.manage": "จัดการพนักงาน กำหนดสิทธิ์ และดูประวัติการใช้งาน",
 }
+
+# Roles that see every branch. Everyone else sees only the branches assigned to them.
+ALL_BRANCH_ROLES = {"owner", "manager"}
 
 ROLES: dict[str, dict] = {
     "owner": {
@@ -44,8 +52,15 @@ ROLES: dict[str, dict] = {
     },
     "warehouse": {
         "label": "พนักงานคลัง",
-        "description": "จัดเตรียมและส่งสินค้า จัดการสต็อก มองไม่เห็นเงินและสลิป",
-        "permissions": {"orders.view", "orders.fulfil", "catalog.view", "inventory.view", "inventory.adjust"},
+        "description": "จัดเตรียมและส่งสินค้า จัดการสต็อกและใบส่งของ มองไม่เห็นเงินและสลิป",
+        "permissions": {"orders.view", "orders.fulfil", "catalog.view", "inventory.view", "inventory.adjust",
+                        "inventory.transfer", "inventory.receive_return"},
+    },
+    "branch_manager": {
+        "label": "ผู้จัดการสาขา",
+        "description": "ดูแลสาขาที่ได้รับมอบหมาย จัดส่งและรับสินค้าเข้าสาขา มองไม่เห็นเงินและสลิป",
+        "permissions": {"orders.view", "orders.fulfil", "catalog.view", "inventory.view", "inventory.adjust",
+                        "inventory.receive_transfer"},
     },
     "content": {
         "label": "พนักงานดูแลสินค้า",
@@ -63,6 +78,17 @@ def role_of(user) -> str | None:
     if profile is not None:
         return profile.role
     return "owner" if user.is_superuser else None
+
+
+def visible_branch_ids(user) -> set[int] | None:
+    """Branches this person may see and act on. None = every branch."""
+    role = role_of(user)
+    if role in ALL_BRANCH_ROLES:
+        return None
+    profile = getattr(user, "staff_profile", None)
+    if profile is None:
+        return set()
+    return set(profile.branches.values_list("id", flat=True))
 
 
 def permissions_of(user) -> set[str]:

@@ -740,23 +740,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/inventory/transfer": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Transfer */
-        post: operations["maehai_inventory_api_transfer"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/admin/inventory/levels": {
         parameters: {
             query?: never;
@@ -877,6 +860,263 @@ export interface paths {
         };
         /** Movements */
         get: operations["maehai_inventory_api_movements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/materials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Materials */
+        get: operations["maehai_inventory_api_materials"];
+        put?: never;
+        /** Create Material */
+        post: operations["maehai_inventory_api_create_material"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/materials/stock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Materials Stock */
+        get: operations["maehai_inventory_api_materials_stock"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/materials/adjust": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Adjust Material */
+        post: operations["maehai_inventory_api_adjust_material"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/materials/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Material */
+        put: operations["maehai_inventory_api_update_material"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sources */
+        get: operations["maehai_inventory_api_sources"];
+        put?: never;
+        /** Create Source */
+        post: operations["maehai_inventory_api_create_source"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/sources/{source_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Source */
+        put: operations["maehai_inventory_api_update_source"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Documents */
+        get: operations["maehai_inventory_api_list_documents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/documents/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Receipt */
+        post: operations["maehai_inventory_api_create_receipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/documents/transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Transfer */
+        post: operations["maehai_inventory_api_create_transfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/documents/{number}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Transfer */
+        post: operations["maehai_inventory_api_cancel_transfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/documents/{number}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Receive Transfer */
+        post: operations["maehai_inventory_api_receive_transfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/documents/returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Store Return */
+        post: operations["maehai_inventory_api_create_store_return"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/documents/{number}/receive-return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Receive Return */
+        post: operations["maehai_inventory_api_receive_return"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/documents/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Document */
+        get: operations["maehai_inventory_api_get_document"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/inventory/reports/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reconcile Report */
+        get: operations["maehai_inventory_api_reconcile_report"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1159,6 +1399,11 @@ export interface components {
             last_login: string | null;
             /** Created At */
             created_at: string;
+            /**
+             * Branch Codes
+             * @default []
+             */
+            branch_codes: string[];
         };
         /** StaffIn */
         StaffIn: {
@@ -1173,6 +1418,11 @@ export interface components {
             role: string;
             /** Password */
             password: string;
+            /**
+             * Branch Codes
+             * @default []
+             */
+            branch_codes: string[];
         };
         /** StaffUpdate */
         StaffUpdate: {
@@ -1185,6 +1435,11 @@ export interface components {
             role: string;
             /** Is Active */
             is_active: boolean;
+            /**
+             * Branch Codes
+             * @default []
+             */
+            branch_codes: string[];
         };
         /** ResetIn */
         ResetIn: {
@@ -1969,6 +2224,15 @@ export interface components {
             /** Phone */
             phone: string;
         };
+        /** StockBranchOut */
+        StockBranchOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+        };
         /** LevelOut */
         LevelOut: {
             /** Branch */
@@ -2020,22 +2284,6 @@ export interface components {
             sku: string;
             /** Reason */
             reason: string;
-            /** Quantity */
-            quantity: number;
-            /**
-             * Note
-             * @default
-             */
-            note: string;
-        };
-        /** TransferIn */
-        TransferIn: {
-            /** From Branch */
-            from_branch: string;
-            /** To Branch */
-            to_branch: string;
-            /** Sku */
-            sku: string;
             /** Quantity */
             quantity: number;
             /**
@@ -2153,8 +2401,433 @@ export interface components {
             note: string;
             /** Order Number */
             order_number: string | null;
+            /** Document Number */
+            document_number: string | null;
             /** Actor */
             actor: string;
+        };
+        /** MaterialOut */
+        MaterialOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Kind Label */
+            kind_label: string;
+            /** Unit */
+            unit: string;
+            /** Low Stock Threshold */
+            low_stock_threshold: string | null;
+            /** Note */
+            note: string;
+            /** Is Active */
+            is_active: boolean;
+            /** In Use */
+            in_use: boolean;
+        };
+        /** MaterialIn */
+        MaterialIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Unit */
+            unit: string;
+            /** Low Stock Threshold */
+            low_stock_threshold?: number | string | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** MaterialLevelOut */
+        MaterialLevelOut: {
+            /** Branch */
+            branch: string;
+            /** On Hand */
+            on_hand: string;
+            /** Low */
+            low: boolean;
+        };
+        /** MaterialStockOut */
+        MaterialStockOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Unit */
+            unit: string;
+            /** Low Stock Threshold */
+            low_stock_threshold: string | null;
+            /** Levels */
+            levels: components["schemas"]["MaterialLevelOut"][];
+        };
+        /** MaterialAdjustIn */
+        MaterialAdjustIn: {
+            /** Branch */
+            branch: string;
+            /** Material Code */
+            material_code: string;
+            /** Reason */
+            reason: string;
+            /** Quantity */
+            quantity: number | string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** MaterialUpdate */
+        MaterialUpdate: {
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Low Stock Threshold */
+            low_stock_threshold?: number | string | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /** SourceOut */
+        SourceOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Kind Label */
+            kind_label: string;
+            /** Phone */
+            phone: string;
+            /** Note */
+            note: string;
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** SourceIn */
+        SourceIn: {
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /** DocOut */
+        DocOut: {
+            /** Number */
+            number: string;
+            /** Kind */
+            kind: string;
+            /** Kind Label */
+            kind_label: string;
+            /** Status */
+            status: string;
+            /** Status Label */
+            status_label: string;
+            /** From Branch */
+            from_branch: string | null;
+            /** To Branch */
+            to_branch: string | null;
+            /** Source */
+            source: string | null;
+            /** Origin */
+            origin: string | null;
+            /** Supplier Ref */
+            supplier_ref: string;
+            /** Vehicle */
+            vehicle: string;
+            /** Carrier */
+            carrier: string;
+            /** Note */
+            note: string;
+            /** Cancel Reason */
+            cancel_reason: string;
+            /** Created By */
+            created_by: string;
+            /** Created At */
+            created_at: string;
+            /** Sent At */
+            sent_at: string | null;
+            /** Closed By */
+            closed_by: string;
+            /** Closed At */
+            closed_at: string | null;
+            /** Substitute Reason */
+            substitute_reason: string;
+            /** Line Count */
+            line_count: number;
+            /** Overdue */
+            overdue: boolean;
+        };
+        /** DocDetailOut */
+        DocDetailOut: {
+            /** Number */
+            number: string;
+            /** Kind */
+            kind: string;
+            /** Kind Label */
+            kind_label: string;
+            /** Status */
+            status: string;
+            /** Status Label */
+            status_label: string;
+            /** From Branch */
+            from_branch: string | null;
+            /** To Branch */
+            to_branch: string | null;
+            /** Source */
+            source: string | null;
+            /** Origin */
+            origin: string | null;
+            /** Supplier Ref */
+            supplier_ref: string;
+            /** Vehicle */
+            vehicle: string;
+            /** Carrier */
+            carrier: string;
+            /** Note */
+            note: string;
+            /** Cancel Reason */
+            cancel_reason: string;
+            /** Created By */
+            created_by: string;
+            /** Created At */
+            created_at: string;
+            /** Sent At */
+            sent_at: string | null;
+            /** Closed By */
+            closed_by: string;
+            /** Closed At */
+            closed_at: string | null;
+            /** Substitute Reason */
+            substitute_reason: string;
+            /** Line Count */
+            line_count: number;
+            /** Overdue */
+            overdue: boolean;
+            /** Lines */
+            lines: components["schemas"]["DocLineOut"][];
+        };
+        /** DocLineOut */
+        DocLineOut: {
+            /** Id */
+            id: number;
+            /** Item Kind */
+            item_kind: string;
+            /** Sku */
+            sku: string | null;
+            /** Material Code */
+            material_code: string | null;
+            /** Name */
+            name: string;
+            /** Unit */
+            unit: string;
+            /** Sent */
+            sent: string;
+            /** Received */
+            received: string | null;
+            /** Refused */
+            refused: string;
+            /** Missing */
+            missing: string;
+            /** Restocked */
+            restocked: string;
+            /** Discarded */
+            discarded: string;
+            /** Refuse Reason */
+            refuse_reason: string;
+            /** Refuse Note */
+            refuse_note: string;
+            /** Unit Cost Satang */
+            unit_cost_satang: number | null;
+        };
+        /** LineIn */
+        LineIn: {
+            /** Sku */
+            sku?: string | null;
+            /** Material Code */
+            material_code?: string | null;
+            /** Quantity */
+            quantity: number | string;
+            /** Unit Cost Satang */
+            unit_cost_satang?: number | null;
+        };
+        /** ReceiptIn */
+        ReceiptIn: {
+            /** Source Id */
+            source_id: number;
+            /**
+             * Supplier Ref
+             * @default
+             */
+            supplier_ref: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Lines */
+            lines: components["schemas"]["LineIn"][];
+        };
+        /** TransferIn */
+        TransferIn: {
+            /** To Branch */
+            to_branch: string;
+            /** Vehicle */
+            vehicle: string;
+            /**
+             * Carrier
+             * @default
+             */
+            carrier: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Lines */
+            lines: components["schemas"]["LineIn"][];
+        };
+        /** CancelIn */
+        CancelIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** ReceiveLineIn */
+        ReceiveLineIn: {
+            /** Line Id */
+            line_id: number;
+            /** Received */
+            received: number | string;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** ReceiveTransferIn */
+        ReceiveTransferIn: {
+            /** Lines */
+            lines: components["schemas"]["ReceiveLineIn"][];
+            /**
+             * Substitute Reason
+             * @default
+             */
+            substitute_reason: string;
+        };
+        /** StoreReturnIn */
+        StoreReturnIn: {
+            /** Branch */
+            branch: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Lines */
+            lines: components["schemas"]["LineIn"][];
+        };
+        /** ReceiveReturnIn */
+        ReceiveReturnIn: {
+            /** Lines */
+            lines: components["schemas"]["ReturnLineIn"][];
+        };
+        /** ReturnLineIn */
+        ReturnLineIn: {
+            /** Line Id */
+            line_id: number;
+            /**
+             * Restock
+             * @default 0
+             */
+            restock: number | string;
+            /**
+             * Discard
+             * @default 0
+             */
+            discard: number | string;
+        };
+        /** ReconcileOut */
+        ReconcileOut: {
+            /** Branch */
+            branch: string;
+            /** Date From */
+            date_from: string;
+            /** Date To */
+            date_to: string;
+            /** Rows */
+            rows: components["schemas"]["ReconcileRowOut"][];
+            /** Unbalanced */
+            unbalanced: number;
+        };
+        /** ReconcileRowOut */
+        ReconcileRowOut: {
+            /** Kind */
+            kind: string;
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Unit */
+            unit: string;
+            /** Opening */
+            opening: string;
+            /** Flows */
+            flows: {
+                [key: string]: string;
+            };
+            /** Closing */
+            closing: string;
+            /** On Hand */
+            on_hand: string;
+            /** Balanced */
+            balanced: boolean;
+            /** In Transit Out */
+            in_transit_out: string;
+            /** In Transit In */
+            in_transit_in: string;
+            /** Lost */
+            lost: string;
+            /** Discarded */
+            discarded: string;
+            /** Refused */
+            refused: string;
         };
         /** Input */
         Input: {
@@ -3488,7 +4161,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BranchOut"][];
+                    "application/json": components["schemas"]["StockBranchOut"][];
                 };
             };
         };
@@ -3537,28 +4210,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LevelOut"];
                 };
-            };
-        };
-    };
-    maehai_inventory_api_transfer: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TransferIn"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
@@ -3724,6 +4375,415 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MovementOut"][];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_materials: {
+        parameters: {
+            query?: {
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialOut"][];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_create_material: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaterialIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_materials_stock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialStockOut"][];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_adjust_material: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaterialAdjustIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialStockOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_update_material: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaterialUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_sources: {
+        parameters: {
+            query?: {
+                include_hidden?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceOut"][];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_create_source: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_update_source: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_list_documents: {
+        parameters: {
+            query?: {
+                kind?: string | null;
+                status?: string | null;
+                branch?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocOut"][];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_create_receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiptIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_create_transfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_cancel_transfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_receive_transfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiveTransferIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_create_store_return: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreReturnIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_receive_return: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiveReturnIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_get_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocDetailOut"];
+                };
+            };
+        };
+    };
+    maehai_inventory_api_reconcile_report: {
+        parameters: {
+            query: {
+                branch: string;
+                date_from: string;
+                date_to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconcileOut"];
                 };
             };
         };
