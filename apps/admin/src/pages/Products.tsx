@@ -217,11 +217,13 @@ export function Products() {
               <span className="mh-label">รูปสินค้า ({form.images?.length ?? 0}/10)</span>
               {form.id ? (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(128px, 1fr))", gap: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16 }}>
                     {form.images?.map((im, idx, all) => (
                       <div key={im.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                         <div style={{ position: "relative" }}>
-                          <img src={im.url} alt={`รูปที่ ${idx + 1}`} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8, display: "block" }} />
+                          <a href={im.url} target="_blank" rel="noreferrer" aria-label={`เปิดรูปที่ ${idx + 1} ขนาดเต็มในแท็บใหม่`} style={{ display: "block", background: "var(--surface-300)", borderRadius: 8 }}>
+                            <img src={im.url} alt={`รูปที่ ${idx + 1}`} style={{ width: "100%", aspectRatio: "1", objectFit: "contain", borderRadius: 8, display: "block" }} />
+                          </a>
                           {idx === 0 && <span className="mh-badge" style={{ position: "absolute", top: 6, left: 6, fontSize: 11, padding: "0 8px" }}>รูปหลัก</span>}
                         </div>
                         <div className="mh-row" style={{ gap: 4, justifyContent: "center", flexWrap: "nowrap" }}>
@@ -252,7 +254,7 @@ export function Products() {
                 </>
               ) : (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(128px, 1fr))", gap: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16 }}>
                     {pending.map((f, idx) => (
                       <div key={`${f.name}-${idx}`} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                         <div style={{ position: "relative" }}>
