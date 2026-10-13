@@ -22,7 +22,7 @@ const GROUPS = [
   { title: "คลัง", items: [
     { to: "/warehouse", label: "คลังสินค้า", icon: "warehouse", perm: "inventory.view", badge: "stock" },
   ] },
-  { title: "รายงาน", items: [{ to: "/campaigns", label: "รายงานโปรโมชัน", icon: "campaign", perm: "reports.view" }] },
+  { title: "หน้าร้าน", items: [{ to: "/campaigns", label: "แคมเปญ", icon: "campaign", perm: "campaigns.edit" }] },
   { title: "ผู้ดูแลระบบ", items: [{ to: "/staff", label: "พนักงานและสิทธิ์", icon: "staff", perm: "staff.manage" }] },
 ] as const;
 

@@ -28,6 +28,8 @@ PERMISSIONS: dict[str, str] = {
     "inventory.receive_return": "รับใบคืนสินค้าเข้าคลังกลาง และตัดสินใจเข้าสต็อกหรือทิ้ง",
     "inventory.approve": "ยืนยันรับแทนสาขา และดูรายงานคลังทั้งหมด",
     "staff.manage": "จัดการพนักงาน กำหนดสิทธิ์ และดูประวัติการใช้งาน",
+    "campaigns.edit": "สร้างและแก้ไขแคมเปญที่ยังเป็นร่าง อัปโหลดรูปและภาพเคลื่อนไหว ดูตัวอย่าง",
+    "campaigns.publish": "เผยแพร่แคมเปญ แก้แคมเปญที่กำลังแสดง และจบแคมเปญก่อนกำหนด",
 }
 
 # Roles that see every branch. Everyone else sees only the branches assigned to them.
@@ -48,7 +50,7 @@ ROLES: dict[str, dict] = {
         "label": "พนักงานขาย",
         "description": "รับออเดอร์ แจ้งค่าส่ง ตรวจสลิป และจัดส่ง ดูสินค้าได้แต่แก้ไม่ได้",
         "permissions": {"orders.view", "orders.quote", "orders.fulfil", "orders.cancel", "payments.review",
-                        "catalog.view", "coupons.view", "inventory.view"},
+                        "catalog.view", "coupons.view", "inventory.view", "campaigns.edit", "campaigns.publish"},
     },
     "warehouse": {
         "label": "พนักงานคลัง",

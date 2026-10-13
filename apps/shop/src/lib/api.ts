@@ -41,3 +41,11 @@ export const BADGE_LABEL: Record<string, { label: string; tone?: "yellow" | "red
   best_seller: { label: "ขายดี" },
   new: { label: "ใหม่" },
 };
+
+export type Campaign = Schemas["PublicCampaignOut"];
+
+/** The campaign to show now, or the one a staff preview token names. Null when nothing is running. */
+export async function getCampaign(preview?: string): Promise<Campaign | null> {
+  const res = await client.GET("/api/shop/campaign/current", { params: { query: { preview: preview ?? "" } } });
+  return res.data ?? null;
+}

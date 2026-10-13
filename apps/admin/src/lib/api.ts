@@ -18,6 +18,8 @@ export type StaffMember = Schemas["StaffOut"];
 export type AuditEntry = Schemas["AuditOut"];
 export type CouponIn = Schemas["CouponIn"];
 export type PromotionIn = Schemas["PromotionIn"];
+export type Campaign = Schemas["CampaignOut"];
+export type CampaignIn = Schemas["CampaignIn"];
 
 export const api = createApiClient(API_URL, { credentials: "include" });
 

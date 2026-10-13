@@ -1,7 +1,9 @@
 import { LogMark, buttonClass } from "@maehai/ui";
 import { ShopHeader } from "../components/ShopHeader";
 import { ProductGrid } from "../components/ProductGrid";
-import { getCategories, getProducts } from "../lib/api";
+import { getCampaign, getCategories, getProducts } from "../lib/api";
+import { CampaignBar } from "../components/CampaignBar";
+import { CampaignHero } from "../components/CampaignHero";
 
 const FACTS = [
   { title: "กระทรวงสาธารณสุขรับรอง", body: "มาตรฐานการผลิตอาหาร ระดับดีมาก" },
@@ -46,14 +48,31 @@ const BRANCHES = [
 // Needs the API at request time; do not prerender at build.
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  const [categories, featured, products] = await Promise.all([getCategories(), getProducts({ featured: true }), getProducts()]);
+// The accent a theme uses when the campaign does not set its own. Default = the shop's green.
+const THEME_ACCENT: Record<string, string> = { candle_festival: "#9a4a10", songkran: "#0b5d82", new_year: "#8a6d1d" };
+
+export default async function Home({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
+  const { preview } = await searchParams;
+  const [categories, featured, products, campaign] = await Promise.all([
+    getCategories(), getProducts({ featured: true }), getProducts(), getCampaign(preview),
+  ]);
   const popular = (featured.length ? featured : products).slice(0, 4);
+  const accent = campaign ? campaign.accent_color || THEME_ACCENT[campaign.theme] || "" : "";
+  const collection = campaign ? campaign.products.map((cp) => products.find((p) => p.slug === cp.slug)).filter((p): p is (typeof products)[number] => !!p) : [];
   return (
     <>
+      {campaign?.bar_enabled && <CampaignBar text={campaign.bar_text} url={campaign.bar_url} accent={accent || "var(--leaf)"} />}
+      {campaign?.preview && <div role="status" className="campaign-preview">โหมดตัวอย่าง: ลูกค้ายังไม่เห็นแคมเปญนี้</div>}
       <ShopHeader />
 
-      <section className="hero">
+      {campaign && campaign.hero_kind !== "none" && campaign.hero_image_url ? (
+        <CampaignHero
+          title={campaign.hero_title || "หมูยอต้นตำรับเมืองอุบลฯ"} subtitle={campaign.hero_subtitle}
+          ctaLabel={campaign.hero_cta_label} ctaUrl={campaign.hero_cta_url} imageUrl={campaign.hero_image_url}
+          posterUrl={campaign.hero_poster_url ?? null} animated={campaign.hero_kind === "animation"} accent={accent || "var(--leaf)"}
+        />
+      ) : (
+      <section className="hero" style={accent ? { background: accent } : undefined}>
         <p className="eyebrow">ร้านหมูยอแม่ฮาย · อุบลราชธานี</p>
         <h1>หมูยอต้นตำรับเมืองอุบลฯ</h1>
         <p>ผลิตสดใหม่ทุกวันจากวัตถุดิบคัดสรร ห่อใบตอง มัดยางสีบอกรส</p>
@@ -67,6 +86,14 @@ export default async function Home() {
           <LogMark bands={["yellow"]} />
         </div>
       </section>
+      )}
+
+      {collection.length > 0 && (
+        <section className="sec" aria-labelledby="campaign-collection">
+          <h2 id="campaign-collection">{campaign?.collection_title || "ของฝากเทศกาล"}</h2>
+          <ProductGrid products={collection} />
+        </section>
+      )}
 
       <div className="cutoff">
         <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>

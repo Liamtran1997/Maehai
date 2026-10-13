@@ -530,6 +530,143 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Campaigns */
+        get: operations["maehai_cms_admin_api_list_campaigns"];
+        put?: never;
+        /** Create Campaign */
+        post: operations["maehai_cms_admin_api_create_campaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/campaigns/{campaign_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Campaign */
+        get: operations["maehai_cms_admin_api_get_campaign"];
+        /** Update Campaign */
+        put: operations["maehai_cms_admin_api_update_campaign"];
+        post?: never;
+        /**
+         * Delete Campaign
+         * @description Only drafts can be deleted. Anything that was shown to customers stays on record.
+         */
+        delete: operations["maehai_cms_admin_api_delete_campaign"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/campaigns/{campaign_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish Campaign */
+        post: operations["maehai_cms_admin_api_publish_campaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/campaigns/{campaign_id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End Campaign
+         * @description Stops a live campaign now. On a scheduled one it cancels the schedule. Its time is kept for the record.
+         */
+        post: operations["maehai_cms_admin_api_end_campaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/campaigns/{campaign_id}/hero": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Hero
+         * @description A still image (JPG, PNG, WebP) or an animation (GIF, animated WebP). An animation gets a still poster made from its first frame.
+         */
+        post: operations["maehai_cms_admin_api_upload_hero"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/campaigns/{campaign_id}/preview-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Token
+         * @description A short-lived token the shop accepts to show this campaign before it goes live.
+         */
+        post: operations["maehai_cms_admin_api_preview_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shop/campaign/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Current Campaign
+         * @description The campaign to show now. With a valid preview token, that campaign even if it is a draft.
+         */
+        get: operations["maehai_cms_api_current_campaign"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/shipping/methods": {
         parameters: {
             query?: never;
@@ -2081,6 +2218,210 @@ export interface components {
             created_at: string;
             /** Released */
             released: boolean;
+        };
+        /** CampaignListOut */
+        CampaignListOut: {
+            /** Items */
+            items: components["schemas"]["CampaignOut"][];
+        };
+        /** CampaignOut */
+        CampaignOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Theme */
+            theme: string;
+            /** Accent Color */
+            accent_color: string;
+            /** Decorations */
+            decorations: boolean;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /** Published At */
+            published_at: string | null;
+            /** Ended At */
+            ended_at: string | null;
+            /** Status */
+            status: string;
+            /** Status Label */
+            status_label: string;
+            /** Hero Kind */
+            hero_kind: string;
+            /** Hero Image Url */
+            hero_image_url: string | null;
+            /** Hero Poster Url */
+            hero_poster_url: string | null;
+            /** Hero Title */
+            hero_title: string;
+            /** Hero Subtitle */
+            hero_subtitle: string;
+            /** Hero Cta Label */
+            hero_cta_label: string;
+            /** Hero Cta Url */
+            hero_cta_url: string;
+            /** Bar Enabled */
+            bar_enabled: boolean;
+            /** Bar Text */
+            bar_text: string;
+            /** Bar Url */
+            bar_url: string;
+            /** Collection Title */
+            collection_title: string;
+            /** Products */
+            products: components["schemas"]["ProductRef"][];
+            /** Created By */
+            created_by: string;
+            /** Updated By */
+            updated_by: string;
+        };
+        /** ProductRef */
+        ProductRef: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+        };
+        /** CampaignIn */
+        CampaignIn: {
+            /** Name */
+            name: string;
+            /**
+             * Theme
+             * @default default
+             */
+            theme: string;
+            /**
+             * Accent Color
+             * @default
+             */
+            accent_color: string;
+            /**
+             * Decorations
+             * @default true
+             */
+            decorations: boolean;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /**
+             * Hero Kind
+             * @default none
+             */
+            hero_kind: string;
+            /**
+             * Hero Title
+             * @default
+             */
+            hero_title: string;
+            /**
+             * Hero Subtitle
+             * @default
+             */
+            hero_subtitle: string;
+            /**
+             * Hero Cta Label
+             * @default
+             */
+            hero_cta_label: string;
+            /**
+             * Hero Cta Url
+             * @default
+             */
+            hero_cta_url: string;
+            /**
+             * Bar Enabled
+             * @default false
+             */
+            bar_enabled: boolean;
+            /**
+             * Bar Text
+             * @default
+             */
+            bar_text: string;
+            /**
+             * Bar Url
+             * @default
+             */
+            bar_url: string;
+            /**
+             * Collection Title
+             * @default
+             */
+            collection_title: string;
+            /**
+             * Product Ids
+             * @default []
+             */
+            product_ids: number[];
+        };
+        /** PreviewTokenOut */
+        PreviewTokenOut: {
+            /** Token */
+            token: string;
+            /** Expires In */
+            expires_in: number;
+        };
+        /** PublicCampaignOut */
+        PublicCampaignOut: {
+            /** Id */
+            id: number;
+            /** Theme */
+            theme: string;
+            /** Accent Color */
+            accent_color: string;
+            /** Decorations */
+            decorations: boolean;
+            /** Hero Kind */
+            hero_kind: string;
+            /** Hero Image Url */
+            hero_image_url: string | null;
+            /** Hero Poster Url */
+            hero_poster_url: string | null;
+            /** Hero Title */
+            hero_title: string;
+            /** Hero Subtitle */
+            hero_subtitle: string;
+            /** Hero Cta Label */
+            hero_cta_label: string;
+            /** Hero Cta Url */
+            hero_cta_url: string;
+            /** Bar Enabled */
+            bar_enabled: boolean;
+            /** Bar Text */
+            bar_text: string;
+            /** Bar Url */
+            bar_url: string;
+            /** Collection Title */
+            collection_title: string;
+            /** Products */
+            products: components["schemas"]["PublicProductOut"][];
+            /** Preview */
+            preview: boolean;
+        };
+        /** PublicProductOut */
+        PublicProductOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Slug */
+            slug: string;
         };
         /** ShippingMethodOut */
         ShippingMethodOut: {
@@ -4164,6 +4505,238 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RedemptionOut"][];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_list_campaigns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignListOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_create_campaign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CampaignIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_get_campaign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_update_campaign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CampaignIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_delete_campaign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    maehai_cms_admin_api_publish_campaign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_end_campaign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_upload_hero: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Image
+                     * Format: binary
+                     */
+                    image: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_admin_api_preview_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewTokenOut"];
+                };
+            };
+        };
+    };
+    maehai_cms_api_current_campaign: {
+        parameters: {
+            query?: {
+                preview?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicCampaignOut"] | null;
                 };
             };
         };

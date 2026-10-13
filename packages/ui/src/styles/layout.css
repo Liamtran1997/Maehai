@@ -250,3 +250,18 @@ a { color: var(--leaf); }
 .appbar-who .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--leaf-soft); color: var(--leaf); display: grid; place-items: center; font: 600 15px/1 var(--font-sans); border: 1.5px solid var(--leaf); flex: none; }
 .appbar-name { display: flex; flex-direction: column; text-align: left; min-width: 0; line-height: 1.3; }
 .appbar-name b { font: 600 14px/1.3 var(--font-sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Campaigns (seasonal storefront). The accent is set per campaign on the page; text on it is white and checked
+   for contrast by the admin. The rest of the shop keeps its own colors. */
+.campaign-bar { padding: 8px 16px; color: #fff; text-align: center; font: 600 14px/1.5 var(--font-sans); }
+.campaign-bar a { color: #fff; text-decoration: underline; }
+.campaign-hero { position: relative; min-height: 420px; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; border-radius: 0; }
+.campaign-media { position: absolute; inset: 0; }
+.campaign-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.campaign-copy { position: relative; margin: 0 16px 32px; padding: 20px; border-radius: 16px; background: rgba(8, 40, 56, 0.82); display: flex; flex-direction: column; gap: 8px; max-width: 560px; box-sizing: border-box; }
+.campaign-copy h1 { margin: 0; font: 500 34px/1.3 var(--font-display); text-wrap: balance; }
+.campaign-copy p { margin: 0; font-size: 16px; line-height: 1.6; }
+.campaign-cta { align-self: flex-start; margin-top: 6px; display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; background: #fff; color: var(--ink); font: 600 16px/1 var(--font-sans); text-decoration: none; }
+.campaign-pause { position: absolute; right: 16px; bottom: 16px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.92); color: var(--ink); font: 600 14px/1 var(--font-sans); cursor: pointer; }
+@media (min-width: 900px) { .campaign-copy h1 { font-size: 44px; } }
+.campaign-preview { padding: 8px 16px; background: #231e17; color: #fff; text-align: center; font: 600 13px/1.5 var(--font-sans); }
