@@ -4,6 +4,16 @@ import type { Campaign } from "../lib/api";
 
 const MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 const TONE: Record<string, string> = { live: "var(--leaf)", scheduled: "#0b5d82", draft: "var(--surface-300)", ended: "var(--ink-muted)" };
+/** Festivals worth a campaign. Months are approximate: lunar dates move every year, so staff set the exact days. */
+const FESTIVALS = [
+  { name: "ตรุษจีน", keyword: "ตรุษจีน", month: 2 },
+  { name: "สงกรานต์", keyword: "สงกรานต์", month: 4 },
+  { name: "แห่เทียนพรรษา", keyword: "เทียนพรรษา", month: 7 },
+  { name: "วันแม่", keyword: "วันแม่", month: 8 },
+  { name: "เทศกาลกินเจ", keyword: "กินเจ", month: 10 },
+  { name: "ลอยกระทง", keyword: "ลอยกระทง", month: 11 },
+  { name: "ปีใหม่", keyword: "ปีใหม่", month: 12 },
+];
 const BKK_YEAR = (iso: string) => Number(new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", year: "numeric" }).format(new Date(iso)));
 
 /** The year at a glance: one row per campaign, a bar over the months it runs. Click a bar to open it. */
@@ -14,6 +24,8 @@ export function CampaignCalendar({ campaigns }: { campaigns: Campaign[] }) {
   const yearEnd = Date.UTC(year + 1, 0, 1) - 7 * 3600_000;
   const span = yearEnd - yearStart;
   const rows = campaigns.filter((c) => BKK_YEAR(c.starts_at) <= year && BKK_YEAR(c.ends_at) >= year);
+  const yearCampaigns = campaigns.filter((c) => BKK_YEAR(c.starts_at) === year);
+  const missing = FESTIVALS.filter((f) => !yearCampaigns.some((c) => c.name.includes(f.keyword)));
   const pct = (t: number) => Math.min(100, Math.max(0, ((t - yearStart) / span) * 100));
 
   return (
@@ -45,6 +57,17 @@ export function CampaignCalendar({ campaigns }: { campaigns: Campaign[] }) {
           );
         })}
       </div>
+      {missing.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <b style={{ fontSize: 14 }}>dịp lễ ปี {year + 543} ที่ยังไม่มีแคมเปญ</b>
+          <p className="small muted" style={{ margin: "4px 0 8px" }}>เดือนโดยประมาณ วันที่แน่นอนของวันลอยกระทงหรือตรุษจีน ขึ้นกับปฏิทินจันทรคติ ให้ระบุเองตอนสร้างแคมเปญ</p>
+          <div className="mh-chips">
+            {missing.map((f) => (
+              <Link key={f.name} className="mh-chip" to="/campaigns/new" style={{ textDecoration: "none" }}>{f.name} · {MONTHS[f.month - 1]} + สร้าง</Link>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="small muted" style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 12 }}>
         <span>● กำลังแสดง</span><span>● ตั้งเวลาแล้ว</span><span>● จบแล้ว</span><span>ร่างมีเส้นประ</span>
       </div>
