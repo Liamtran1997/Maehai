@@ -15,10 +15,11 @@ test("owner sees every menu item including staff management", async ({ page }) =
   await expect(page.getByRole("link", { name: "โค้ดส่วนลด" })).toBeVisible();
 });
 
-test("owner opens the promotion and coupon report", async ({ page }) => {
+test("owner opens the promotion and coupon report from the campaigns page", async ({ page }) => {
   await signIn(page, "owner", "E2e-owner-pass-1");
-  await page.getByRole("link", { name: "รายงานโปรโมชัน" }).click();
-  await expect(page.getByRole("heading", { name: "รายงานโปรโมชันและโค้ด" })).toBeVisible();
+  await page.getByRole("link", { name: "แคมเปญ", exact: true }).click();
+  await page.getByRole("tab", { name: "รายงาน" }).click();
+  await expect(page.getByRole("heading", { name: "โปรโมชันรายสินค้า" })).toBeVisible();
 });
 
 test("warehouse staff: sees products and promotions read-only, never coupons, revenue or staff", async ({ page }) => {
