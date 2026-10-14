@@ -11,7 +11,7 @@ type Variant = {
 
 const soldOut = (v: Variant) => v.available === 0;
 
-export function AddToCart({ slug, productName, variants }: { slug: string; productName: string; variants: Variant[] }) {
+export function AddToCart({ slug, productName, variants, imageUrl }: { slug: string; productName: string; variants: Variant[]; imageUrl?: string | null }) {
   const cart = useCart();
   const firstOk = variants.filter((v) => !soldOut(v));
   const [sku, setSku] = useState((firstOk[Math.min(1, firstOk.length - 1)] ?? variants[0])?.sku ?? "");
@@ -23,7 +23,7 @@ export function AddToCart({ slug, productName, variants }: { slug: string; produ
   const low = v.available != null && v.available > 0 && v.available <= 5;
 
   const addToCart = () => {
-    cart.add({ sku: v.sku, slug, productName, variantLabel: v.label, unitPriceSatang: v.price_satang, quantity: qty });
+    cart.add({ sku: v.sku, slug, productName, variantLabel: v.label, unitPriceSatang: v.price_satang, quantity: qty, imageUrl });
     setAdded(true);
   };
   const total = formatTHB(v.price_satang * qty, { hideZeroSatang: true });

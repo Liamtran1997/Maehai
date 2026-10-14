@@ -9,6 +9,8 @@ export type CartLine = {
   /** For display only. The server prices the order from the catalog. */
   unitPriceSatang: number;
   quantity: number;
+  /** Product photo for the cart page. Older saved carts do not have one. */
+  imageUrl?: string | null;
 };
 
 type State = { lines: CartLine[]; ready: boolean };

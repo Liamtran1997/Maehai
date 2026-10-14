@@ -52,7 +52,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <p><b>{p.promotion.label}</b> · {p.promotion.name}{p.promotion.ends_at && ` ถึง ${formatThaiDate(p.promotion.ends_at)}`}</p>
             </div>
           )}
-          <AddToCart slug={p.slug} productName={p.name} variants={p.variants} />
+          <AddToCart slug={p.slug} productName={p.name} variants={p.variants} imageUrl={p.images[0]?.url ?? null} />
 
           <ul className="promise">
             <li>{ico("M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2")}<div><b>สั่งก่อน 13:00 น. รับของวันถัดไป</b><span>จัดส่งทุกวัน ยกเว้นวันอาทิตย์</span></div></li>
