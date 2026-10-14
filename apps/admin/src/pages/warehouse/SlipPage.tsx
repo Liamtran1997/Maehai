@@ -50,7 +50,8 @@ export function SlipPage() {
     </aside>
   );
   return (
-    <>
+    <div className={receiving ? "slip-receiving" : undefined}>
+      <Link className="slip-back" to="/warehouse?tab=docs">‹ เอกสาร</Link>
       <nav className="crumbs" aria-label="ตำแหน่ง"><Link to="/warehouse?tab=docs">คลังสินค้า</Link><span aria-hidden="true">›</span><Link to="/warehouse?tab=docs">เอกสาร</Link><span aria-hidden="true">›</span><span>{doc.number}</span></nav>
       <div className="page-head">
         <div>
@@ -81,7 +82,7 @@ export function SlipPage() {
             </div>
           )}
       {doc.kind === "transfer" && <PrintSlip doc={doc} />}
-    </>
+    </div>
   );
 }
 
