@@ -303,3 +303,14 @@
   .progress { max-width: 1240px; margin-inline: auto; padding-inline: 24px; }
 }
 @media (min-width: 900px) { .progress { padding-top: 24px; } }
+
+/* ---------- Order page and tracking ---------- */
+.order-grid { display: flex; flex-direction: column; gap: 20px; }
+.order-main, .order-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+@media (min-width: 900px) {
+  .order-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+  .order-side { position: sticky; top: 96px; }
+}
+.track-head { display: flex; gap: 16px; align-items: center; }
+.track-ic { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 999px; background: var(--leaf-soft); color: var(--leaf); }
+.track-ic .ic { width: 28px; height: 28px; }

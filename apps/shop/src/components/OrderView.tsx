@@ -49,7 +49,8 @@ export function OrderView({ number, token }: { number: string; token: string }) 
   if (!order) return <section className="sec sec--narrow"><p className="ink-muted" aria-live="polite">{netError ? "เชื่อมต่อไม่ได้ กำลังลองใหม่…" : "กำลังโหลด…"}</p></section>;
 
   return (
-    <section className="sec sec--tight sec--narrow" style={{ gap: 20 }}>
+    <section className="sec sec--tight order-grid" style={{ gap: 20 }}>
+      <div className="order-main">
       <div className="panel">
         <div className="rowline"><span className="mh-code">{order.number}</span><StatusPill status={PILL[order.status]} /></div>
         <p className="sm ink-muted">{order.status_label} · นัดรับ {formatThaiDate(order.requested_date)} · {order.shipping_method.name}</p>
@@ -70,7 +71,9 @@ export function OrderView({ number, token }: { number: string; token: string }) 
         </div>
       ))}
       {order.tracking_ref && <div className="panel"><p className="sm ink-muted">เลขพัสดุ / ใบฝากส่ง</p><p className="mh-code">{order.tracking_ref}</p></div>}
+      </div>
 
+      <aside className="order-side">
       <div className="panel">
         <h2 style={{ font: "600 18px/1.6 var(--font-sans)" }}>รายการสินค้า</h2>
         {order.items.map((i) => (
@@ -96,6 +99,7 @@ export function OrderView({ number, token }: { number: string; token: string }) 
         </ol>
       </div>
       <div className="panel"><p className="sm ink-muted">มีคำถามเรื่องคำสั่งซื้อ แชทกับร้านทาง LINE @maehai หรือโทร 081-878-5474</p></div>
+      </aside>
     </section>
   );
 }
