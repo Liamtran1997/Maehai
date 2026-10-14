@@ -18,6 +18,7 @@ x-api: &api
     ALLOWED_HOSTS: ${PUBLIC_HOST},api,localhost
     CORS_ORIGINS: ${PUBLIC_ORIGIN}
     PUBLIC_SHOP_URL: ${PUBLIC_ORIGIN}
+    PUBLIC_MEDIA_ORIGIN: ${PUBLIC_ORIGIN}   # photos and campaign files are linked with this origin, not the API's internal host
     ADMIN_URL: ${PUBLIC_ORIGIN}/admin
   volumes: [media:/data/media, private:/data/private]
   depends_on:

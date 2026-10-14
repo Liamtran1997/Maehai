@@ -96,6 +96,8 @@ NO_FULFILLMENT_WEEKDAYS = [6]     # Python weekday(): Monday=0 ... Sunday=6
 NON_WORKING_DATES = [d for d in os.environ.get("NON_WORKING_DATES", "").split(",") if d]  # YYYY-MM-DD, Thai public holidays
 PAYMENT_WINDOW_MINUTES = 15       # PromptPay QR lifetime
 PUBLIC_SHOP_URL = os.environ.get("PUBLIC_SHOP_URL", "http://localhost:3000")
+# Origin that customers' browsers use for uploaded files (e.g. https://maehai.example.com). Empty = this request's host.
+PUBLIC_MEDIA_ORIGIN = os.environ.get("PUBLIC_MEDIA_ORIGIN", "").rstrip("/")
 
 # Slip verification: dotted path of a class with verify(payment) -> SlipResult. ManualReview = staff check by hand.
 SLIP_VERIFIER = os.environ.get("SLIP_VERIFIER", "maehai.payments.providers.ManualReview")

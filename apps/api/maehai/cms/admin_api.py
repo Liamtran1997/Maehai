@@ -16,10 +16,17 @@ from maehai.catalog.models import Product
 from maehai.core.auth import requires
 from maehai.core.models import audit
 from maehai.core.permissions import check
+from maehai.core.urls import public_file_url
 
 from . import services
 from .models import Campaign, CampaignProduct
-from .schemas import CampaignIn, CampaignListOut, CampaignOut, CampaignSummaryListOut, PreviewTokenOut
+from .schemas import (
+    CampaignIn,
+    CampaignListOut,
+    CampaignOut,
+    CampaignSummaryListOut,
+    PreviewTokenOut,
+)
 from .signing import make_preview_token
 
 router = Router(tags=["admin-campaigns"])
@@ -32,7 +39,7 @@ HERO_KINDS = {c for c, _ in Campaign.HeroKind.choices}
 
 
 def _url(request, f) -> str | None:
-    return request.build_absolute_uri(f.url) if f else None
+    return public_file_url(request, f)
 
 
 def _out(request, c: Campaign) -> dict:

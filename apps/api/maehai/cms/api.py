@@ -1,9 +1,11 @@
 """What the shop reads: the campaign on right now, or a preview of one that is not live yet."""
-from django.http import HttpResponseRedirect
 from django.db.models import F
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from ninja import Router, Schema
 from ninja.errors import HttpError
+
+from maehai.core.urls import public_file_url
 
 from . import services
 from .models import Campaign
@@ -42,7 +44,7 @@ class PublicCampaignOut(Schema):
 
 def _public(request, c: Campaign, preview: bool) -> dict:
     def url(f):
-        return request.build_absolute_uri(f.url) if f else None
+        return public_file_url(request, f)
     return {
         "id": c.pk, "theme": c.theme, "accent_color": c.accent_color, "decorations": c.decorations,
         "hero_kind": c.hero_kind, "hero_image_url": url(c.hero_image), "hero_poster_url": url(c.hero_poster),

@@ -5,6 +5,7 @@ from django.conf import settings
 from django.http import Http404
 from ninja import Router
 
+from maehai.core.urls import public_file_url
 from maehai.inventory.services import available_map
 
 from .models import Category, Product
@@ -17,7 +18,7 @@ RESTOCK_PREFIX = "แจ้งเตือนสินค้า"   # the LINE we
 
 
 def _image_urls(request, product: Product) -> list[dict]:
-    return [{"id": im.id, "url": request.build_absolute_uri(im.image.url)} for im in product.images.all()]
+    return [{"id": im.id, "url": public_file_url(request, im.image)} for im in product.images.all()]
 
 
 def _primary_url(request, product: Product) -> str | None:

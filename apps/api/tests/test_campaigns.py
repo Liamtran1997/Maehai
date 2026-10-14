@@ -368,3 +368,16 @@ def test_summary_is_for_people_who_see_reports(as_role, staff_client):
     assert as_role("sales").get("/api/admin/campaign-summary").status_code == 403
     items = staff_client.get("/api/admin/campaign-summary").json()["items"]
     assert items and items[0]["orders"] == 0
+
+
+def test_file_links_use_the_public_origin_when_configured(staff_client, settings):
+    """Behind Docker the API sees its own host (api:8000); customers must get the public address."""
+    settings.PUBLIC_MEDIA_ORIGIN = "https://maehai.example.com"
+    settings.ALLOWED_HOSTS = [*settings.ALLOWED_HOSTS, "api"]
+    c = create(staff_client)
+    staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-video", {"video": video_file()})
+    staff_client.post(f"/api/admin/campaigns/{c['id']}/hero-poster", {"image": image_file("JPEG", name="p.jpg")})
+    Campaign.objects.filter(pk=c["id"]).update(starts_at=now() - timedelta(hours=1), published_at=now())
+    out = Client(HTTP_HOST="api:8000").get("/api/shop/campaign/current").json()
+    assert out["hero_video_url"].startswith("https://maehai.example.com/media/campaigns/")
+    assert out["hero_poster_url"].startswith("https://maehai.example.com/media/campaigns/")
