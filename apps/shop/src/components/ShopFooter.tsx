@@ -1,3 +1,5 @@
+import { LINE_ADD_URL, LINE_OA_ID } from "../lib/site";
+
 export function ShopFooter() {
   return (
     <footer className="footer">
@@ -20,9 +22,9 @@ export function ShopFooter() {
         </nav>
         <div className="footer-col">
           <h2>ติดต่อเรา</h2>
-          <p>LINE @maehai</p>
+          <p>LINE {LINE_OA_ID}</p>
           <p className="num">081-878-5474 · 045-254-763</p>
-          <a className="mh-btn line-btn btn-link" href="https://line.me/R/ti/p/@maehai" target="_blank" rel="noopener noreferrer">เพิ่มเพื่อนใน LINE</a>
+          <a className="mh-btn line-btn btn-link" href={LINE_ADD_URL} target="_blank" rel="noopener noreferrer">เพิ่มเพื่อนใน LINE</a>
         </div>
       </div>
       <p className="footer-legal">© ร้านหมูยอแม่ฮาย อุบลราชธานี</p>
