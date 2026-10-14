@@ -163,7 +163,7 @@ function Qty({ value, onChange, label, max }: { value: string; onChange: (v: str
 
 /** Receiving a transfer. The form sits in the lines card; the confirm bar sits at the bottom of the page. */
 function ReceiveSlip({ doc, isSubstitute, onDone, aside }: { doc: FullDoc; isSubstitute: boolean; onDone: () => void; aside: ReactNode }) {
-  const [rows, setRows] = useState(() => doc.lines.map((l) => ({ line_id: l.id, received: l.sent, reason: "", note: "", sent: l.sent, name: l.name, unit: l.unit })));
+  const [rows, setRows] = useState(() => doc.lines.map((l) => ({ line_id: l.id, received: String(Number(l.sent)), reason: "", note: "", sent: l.sent, name: l.name, unit: l.unit })));
   const [substitute, setSubstitute] = useState("");
   const shortTotal = rows.reduce((t, r) => t + Math.max(0, Number(r.sent) - Number(r.received)), 0);
   const confirm = useMutation({
@@ -228,7 +228,7 @@ function ReceiveSlip({ doc, isSubstitute, onDone, aside }: { doc: FullDoc; isSub
 
 /** Receiving a store return at the central warehouse. Same layout as ReceiveSlip: form in the card, confirm bar at the page bottom. */
 function ReceiveReturnSlip({ doc, onDone, aside }: { doc: FullDoc; onDone: () => void; aside: ReactNode }) {
-  const [rows, setRows] = useState(() => doc.lines.map((l) => ({ line_id: l.id, restock: l.sent, discard: "0", sent: l.sent, name: l.name, unit: l.unit })));
+  const [rows, setRows] = useState(() => doc.lines.map((l) => ({ line_id: l.id, restock: String(Number(l.sent)), discard: "0", sent: l.sent, name: l.name, unit: l.unit })));
   const confirm = useMutation({
     mutationFn: async () => unwrap(await api.POST("/api/admin/inventory/documents/{number}/receive-return", {
       params: { path: { number: doc.number } },
