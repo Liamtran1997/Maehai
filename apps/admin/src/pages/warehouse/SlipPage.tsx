@@ -12,6 +12,7 @@ export function SlipPage() {
   const { number = "" } = useParams();
   const qc = useQueryClient();
   const { can, user } = useAuth();
+  const branches = useBranches();
   const detail = useQuery({
     queryKey: ["document", number],
     queryFn: async () => unwrap(await api.GET("/api/admin/inventory/documents/{number}", { params: { path: { number } } })),
@@ -69,7 +70,7 @@ export function SlipPage() {
       <Steps doc={doc} />
 
       {receiving
-        ? <ReceiveSlip doc={doc} isSubstitute={user?.role !== "branch_manager"} onDone={refresh} aside={aside} />
+        ? <ReceiveSlip doc={doc} toName={branches.data?.find((b) => b.code === doc.to_branch)?.name ?? doc.to_branch ?? ""} isSubstitute={user?.role !== "branch_manager"} onDone={refresh} aside={aside} />
         : returning
           ? <ReceiveReturnSlip doc={doc} onDone={refresh} aside={aside} />
           : (
@@ -163,7 +164,7 @@ function Qty({ value, onChange, label, max }: { value: string; onChange: (v: str
 }
 
 /** Receiving a transfer. The form sits in the lines card; the confirm bar sits at the bottom of the page. */
-function ReceiveSlip({ doc, isSubstitute, onDone, aside }: { doc: FullDoc; isSubstitute: boolean; onDone: () => void; aside: ReactNode }) {
+function ReceiveSlip({ doc, toName, isSubstitute, onDone, aside }: { doc: FullDoc; toName: string; isSubstitute: boolean; onDone: () => void; aside: ReactNode }) {
   const [rows, setRows] = useState(() => doc.lines.map((l) => ({ line_id: l.id, received: String(Number(l.sent)), reason: "", note: "", sent: l.sent, name: l.name, unit: l.unit })));
   const [substitute, setSubstitute] = useState("");
   const shortTotal = rows.reduce((t, r) => t + Math.max(0, Number(r.sent) - Number(r.received)), 0);
@@ -184,6 +185,7 @@ function ReceiveSlip({ doc, isSubstitute, onDone, aside }: { doc: FullDoc; isSub
         <section className="panel" aria-labelledby="lines-h">
           <div className="panel-head"><h2 id="lines-h">รายการ</h2><span className="small muted">{doc.lines.length} รายการ</span></div>
           <form id="receive-form" onSubmit={(e) => { e.preventDefault(); confirm.mutate(); }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <p className="small" style={{ margin: 0 }}>รับที่ <b>{toName}</b></p>
             <p className="small muted" style={{ margin: 0 }}>นับของที่มาถึงจริง ถ้าไม่ครบให้เลือกเหตุผล ของที่ชำรุดหรือไม่ตรงจะกลับคลังกลาง ของที่หายระหว่างทางจะไม่กลับ</p>
             {rows.map((r, i) => {
               const short = Number(r.received) < Number(r.sent);
