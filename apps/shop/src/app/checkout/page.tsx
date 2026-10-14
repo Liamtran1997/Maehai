@@ -103,7 +103,8 @@ export default function CheckoutPage() {
       {loadError ? (
         <section className="sec sec--narrow"><div className="notice notice--warn"><p>โหลดข้อมูลการจัดส่งไม่ได้ ลองรีเฟรชหน้านี้ หรือสั่งทาง LINE @maehai</p></div></section>
       ) : (
-        <form className="sec sec--tight sec--narrow" style={{ gap: 20 }} onSubmit={onSubmit}>
+        <form className="sec sec--tight co-grid" style={{ gap: 20 }} onSubmit={onSubmit}>
+          <div className="co-main">
           <fieldset className="panel" style={{ border: "1px solid var(--line)", margin: 0 }}>
             <legend className="bold" style={{ font: "600 18px/1.6 var(--font-sans)", padding: "0 4px" }}>วิธีรับสินค้า</legend>
             {methods.map((m) => (
@@ -137,6 +138,9 @@ export default function CheckoutPage() {
             <div className="mh-field"><label className="mh-label" htmlFor="note">หมายเหตุถึงร้าน (ถ้ามี)</label><input className="mh-input" id="note" name="note" maxLength={300} /></div>
           </div>
 
+          </div>
+
+          <aside className="co-side">
           <div className="panel">
             <h2 style={{ font: "600 18px/1.6 var(--font-sans)" }}>โค้ดส่วนลด</h2>
             {coupon ? (
@@ -175,6 +179,7 @@ export default function CheckoutPage() {
           </label>
           {error && <div className="notice notice--warn" role="alert"><p>{error}</p></div>}
           <button className="mh-btn mh-btn--primary btn-block" type="submit" disabled={busy || !chosen || !terms}>{busy ? "กำลังส่งคำสั่งซื้อ…" : "ยืนยันคำสั่งซื้อ"}</button>
+          </aside>
         </form>
       )}
     </>

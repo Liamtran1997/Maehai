@@ -92,7 +92,7 @@
 .dot { display: inline-block; width: 12px; height: 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(35,30,23,.2); }
 .c-yellow { background: var(--band-yellow); }
 .c-red { background: var(--band-red); }
-.c-green { background: #3f9a52; }
+.c-green { background: var(--band-green); }
 
 /* ---------- Categories ---------- */
 .catgrid { display: flex; gap: 12px; overflow-x: auto; margin-inline: -16px; padding: 0 16px 4px; scrollbar-width: none; }
@@ -288,3 +288,18 @@
 @media (min-width: 900px) { .pdp-thumbs { padding: 12px 0 0; } }
 
 @media (max-width: 899px) { .pdp { padding-bottom: 72px; } }
+
+/* ---------- Cart and checkout ---------- */
+.cartline .thumb--photo { width: 72px; height: 72px; padding: 0; overflow: hidden; border-radius: var(--radius-md); background: var(--surface-300); display: block; }
+.cartline .thumb--photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; display: block; }
+.cart-grid, .co-grid { display: flex; flex-direction: column; gap: 20px; }
+.co-main, .co-side, .cart-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.co-side > .mh-btn { min-height: 52px; font-size: 17px; }
+@media (min-width: 900px) {
+  .cart-grid, .co-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 32px; align-items: start; }
+  .cart-side, .co-side { position: sticky; top: 96px; }
+  .cartline { gap: 16px; }
+  .cartline .thumb--photo { width: 88px; height: 88px; }
+  .progress { max-width: 1240px; margin-inline: auto; padding-inline: 24px; }
+}
+@media (min-width: 900px) { .progress { padding-top: 24px; } }

@@ -9,7 +9,7 @@ export default function CartPage() {
   return (
     <>
       <ShopHeader />
-      <section className="sec sec--tight sec--narrow" style={{ paddingTop: 24 }}>
+      <section className="sec sec--tight" style={{ paddingTop: 24 }}>
         <h1 style={{ font: "500 32px/1.4 var(--font-display)" }}>ตะกร้าสินค้า</h1>
 
         {cart.ready && cart.lines.length === 0 && (
@@ -20,28 +20,36 @@ export default function CartPage() {
         )}
 
         {cart.lines.length > 0 && (
-          <>
-            <div className="panel">
+          <div className="cart-grid">
+            <div className="panel cart-lines">
               {cart.lines.map((l, i) => (
                 <div key={l.sku}>
                   {i > 0 && <hr className="hr" />}
                   <div className="cartline">
+                    <a className="thumb thumb--photo" href={`/products/${l.slug}`} aria-hidden="true" tabIndex={-1}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {l.imageUrl ? <img src={l.imageUrl} alt="" /> : null}
+                    </a>
                     <div className="grow">
                       <a className="bold" style={{ color: "var(--ink)", textDecoration: "none" }} href={`/products/${l.slug}`}>{l.productName}</a>
                       <p className="sm ink-muted">{l.variantLabel} · {formatTHB(l.unitPriceSatang, { hideZeroSatang: true })}</p>
+                      <p className="sm num bold">{formatTHB(l.unitPriceSatang * l.quantity, { hideZeroSatang: true })}</p>
                     </div>
                     <Stepper small value={l.quantity} onChange={(n) => cart.setQty(l.sku, n)} />
                   </div>
-                  <p className="sm num" style={{ textAlign: "right" }}>{formatTHB(l.unitPriceSatang * l.quantity, { hideZeroSatang: true })}</p>
                 </div>
               ))}
             </div>
-            <div className="panel">
-              <div className="rowline"><span>ยอดสินค้า</span><span className="mh-price num">{formatTHB(cart.subtotalSatang, { hideZeroSatang: true })}</span></div>
-              <p className="sm ink-muted">ค่าจัดส่งร้านจะแจ้งหลังรับคำสั่งซื้อ (รับที่ร้านไม่มีค่าจัดส่ง) ราคาสุดท้ายคิดจากร้านอีกครั้งตอนยืนยัน</p>
-            </div>
-            <a className="mh-btn mh-btn--primary btn-block btn-link" href="/checkout">ไปหน้าสั่งซื้อ</a>
-          </>
+            <aside className="cart-side">
+              <div className="panel">
+                <h2 style={{ font: "600 18px/1.6 var(--font-sans)" }}>สรุปตะกร้า</h2>
+                <div className="rowline"><span>ยอดสินค้า</span><span className="mh-price num">{formatTHB(cart.subtotalSatang, { hideZeroSatang: true })}</span></div>
+                <p className="sm ink-muted">ค่าจัดส่งร้านจะแจ้งหลังรับคำสั่งซื้อ (รับที่ร้านไม่มีค่าจัดส่ง) ราคาสุดท้ายคิดจากร้านอีกครั้งตอนยืนยัน</p>
+                <a className="mh-btn mh-btn--accent btn-block btn-link" href="/checkout">ไปหน้าสั่งซื้อ</a>
+              </div>
+              <p className="sm ink-muted" style={{ textAlign: "center" }}><b>สั่งก่อน 13:00 น.</b> รับของวันถัดไป</p>
+            </aside>
+          </div>
         )}
       </section>
     </>

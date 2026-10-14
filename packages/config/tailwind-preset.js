@@ -7,7 +7,7 @@ module.exports = {
         ink: { DEFAULT: "var(--ink)", muted: "var(--ink-muted)" },
         line: { DEFAULT: "var(--line)", strong: "var(--line-strong)" },
         leaf: { DEFAULT: "var(--leaf)", hover: "var(--leaf-hover)", on: "var(--on-leaf)", soft: "var(--leaf-soft)" },
-        band: { yellow: "var(--band-yellow)", red: "var(--band-red)" },
+        band: { yellow: "var(--band-yellow)", red: "var(--band-red)", green: "var(--band-green)" },
         success: "var(--success)", warning: "var(--warning)", info: "var(--info)", danger: "var(--danger)",
       },
       fontFamily: {
