@@ -216,9 +216,16 @@ export function Products() {
             </div>
             <div className="editor-grid">
             <nav className="sectionnav" aria-label="หัวข้อในหน้านี้">
-              <a href="#p-photos">รูปภาพ</a><a href="#p-basic">ข้อมูลหลัก</a><a href="#p-detail">รายละเอียด อย. การเก็บ</a><a href="#p-sizes">ขนาดและราคา</a>{form.id && <a href="#p-history">ประวัติราคา</a>}
+              <a href="#p-basic">ข้อมูลหลัก</a><a href="#p-photos">รูปภาพ</a><a href="#p-sizes">ขนาดและราคา</a><a href="#p-shop">การแสดงหน้าร้าน</a><a href="#p-detail">รายละเอียด อย. การเก็บ</a>{form.id && <a href="#p-history">ประวัติราคา</a>}
             </nav>
             <div className="editor-body">
+            <section id="p-basic" className="panel">
+            <h2>ข้อมูลหลัก</h2>
+            <div className="mh-field"><label className="mh-label" htmlFor="pn">ชื่อสินค้า</label><input className="mh-input" id="pn" value={form.name} onChange={(e) => set("name", e.target.value)} required /></div>
+            <div className="mh-field"><label className="mh-label" htmlFor="pen">ชื่อภาษาอังกฤษ (ถ้ามี)</label><input className="mh-input" id="pen" value={form.name_en} onChange={(e) => set("name_en", e.target.value)} /></div>
+            <div className="mh-field"><label className="mh-label" htmlFor="ps">slug (ที่อยู่หน้าสินค้า)</label><input className="mh-input" id="ps" value={form.slug} onChange={(e) => set("slug", e.target.value)} placeholder="moo-yo-garlic" required /><span className="mh-help">{form.id ? "เปลี่ยนแล้วลิงก์เดิมของสินค้านี้จะใช้ไม่ได้" : "ตั้งครั้งเดียว ใช้อักษรอังกฤษพิมพ์เล็กและขีดกลาง"}</span></div>
+            <div className="mh-field"><label className="mh-label" htmlFor="pc">หมวดหมู่</label><select className="mh-select" id="pc" value={form.category_slug} onChange={(e) => set("category_slug", e.target.value)}>{cats.data?.map((c) => <option key={c.slug} value={c.slug}>{c.name}{c.is_active ? "" : " (ซ่อนอยู่)"}</option>)}</select></div>
+            </section>
             <section id="p-photos" className="panel">
             <h2>รูปภาพ</h2>
 
@@ -297,32 +304,6 @@ export function Products() {
             </div>
 
             </section>
-            <section id="p-basic" className="panel">
-            <h2>ข้อมูลหลัก</h2>
-            <div className="mh-field"><label className="mh-label" htmlFor="pn">ชื่อสินค้า</label><input className="mh-input" id="pn" value={form.name} onChange={(e) => set("name", e.target.value)} required /></div>
-            <div className="mh-field"><label className="mh-label" htmlFor="pen">ชื่อภาษาอังกฤษ (ถ้ามี)</label><input className="mh-input" id="pen" value={form.name_en} onChange={(e) => set("name_en", e.target.value)} /></div>
-            <div className="mh-field"><label className="mh-label" htmlFor="ps">slug (ที่อยู่หน้าสินค้า)</label><input className="mh-input" id="ps" value={form.slug} onChange={(e) => set("slug", e.target.value)} placeholder="moo-yo-garlic" required /><span className="mh-help">{form.id ? "เปลี่ยนแล้วลิงก์เดิมของสินค้านี้จะใช้ไม่ได้" : "ตั้งครั้งเดียว ใช้อักษรอังกฤษพิมพ์เล็กและขีดกลาง"}</span></div>
-            <div className="form-grid">
-              <div className="mh-field"><label className="mh-label" htmlFor="pc">หมวดหมู่</label><select className="mh-select" id="pc" value={form.category_slug} onChange={(e) => set("category_slug", e.target.value)}>{cats.data?.map((c) => <option key={c.slug} value={c.slug}>{c.name}{c.is_active ? "" : " (ซ่อนอยู่)"}</option>)}</select></div>
-              <div className="mh-field"><label className="mh-label" htmlFor="pb">ป้าย</label><select className="mh-select" id="pb" value={form.badge} onChange={(e) => set("badge", e.target.value)}>{BADGES.map((b) => <option key={b.v} value={b.v}>{b.l}</option>)}</select></div>
-              <div className="mh-field"><label className="mh-label" htmlFor="pso">ลำดับการแสดง</label><input className="mh-input num" id="pso" inputMode="numeric" value={form.sort_order} onChange={(e) => set("sort_order", Math.max(0, parseInt(e.target.value || "0", 10) || 0))} /><span className="mh-help">เลขน้อยแสดงก่อน</span></div>
-            </div>
-            <label className="mh-row" style={{ gap: 8 }}><input type="checkbox" checked={form.is_featured} onChange={(e) => set("is_featured", e.target.checked)} style={{ width: 20, height: 20, accentColor: "var(--leaf)" }} /> แสดงในแถว “รสยอดนิยม” หน้าแรก</label>
-            <fieldset style={{ border: 0, margin: 0, padding: 0 }}>
-              <legend className="mh-label" style={{ marginBottom: 8 }}>สีของยางรัด</legend>
-              <div className="mh-chips">{BANDS.map((b) => <button type="button" key={b.v} className="mh-chip" aria-pressed={form.bands.includes(b.v)} onClick={() => set("bands", form.bands.includes(b.v) ? form.bands.filter((x) => x !== b.v) : [...form.bands, b.v])}>{b.l}</button>)}</div>
-            </fieldset>
-            </section>
-            <section id="p-detail" className="panel">
-            <h2>รายละเอียดและการเก็บ</h2>
-            <div className="mh-field"><label className="mh-label" htmlFor="psub">คำบรรยายสั้น</label><input className="mh-input" id="psub" value={form.subtitle} onChange={(e) => set("subtitle", e.target.value)} /></div>
-            <div className="mh-field"><label className="mh-label" htmlFor="pd">รายละเอียด</label><textarea className="mh-textarea" id="pd" value={form.description} onChange={(e) => set("description", e.target.value)} /></div>
-            <div className="form-grid">
-              <div className="mh-field"><label className="mh-label" htmlFor="pf">เลข อย.</label><input className="mh-input" id="pf" value={form.fda_number} onChange={(e) => set("fda_number", e.target.value)} /></div>
-              <div className="mh-field"><label className="mh-label" htmlFor="pst">การเก็บรักษา</label><input className="mh-input" id="pst" value={form.storage_note} onChange={(e) => set("storage_note", e.target.value)} /></div>
-            </div>
-
-            </section>
             <section id="p-sizes" className="panel">
             <h2>ขนาดและราคา</h2>
             <div>
@@ -345,6 +326,28 @@ export function Products() {
               </div>
               <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" style={{ marginTop: 8 }} onClick={() => set("variants", [...form.variants, blankVariant()])}>เพิ่มขนาด</button>
               <p className="xs ink-muted" style={{ marginTop: 8 }}>ใส่ราคาปกติเสมอ ส่วนลดตั้งที่หน้า “โปรโมชัน” ขนาดที่ลบออกจะหยุดขาย แต่ไม่หายจากคำสั่งซื้อเก่า สต็อกจัดการที่หน้า “สต็อก”</p>
+            </div>
+
+            </section>
+            <section id="p-shop" className="panel">
+            <h2>การแสดงหน้าร้าน</h2>
+            <div className="form-grid">
+              <div className="mh-field"><label className="mh-label" htmlFor="pb">ป้าย</label><select className="mh-select" id="pb" value={form.badge} onChange={(e) => set("badge", e.target.value)}>{BADGES.map((b) => <option key={b.v} value={b.v}>{b.l}</option>)}</select></div>
+              <div className="mh-field"><label className="mh-label" htmlFor="pso">ลำดับการแสดง</label><input className="mh-input num" id="pso" inputMode="numeric" value={form.sort_order} onChange={(e) => set("sort_order", Math.max(0, parseInt(e.target.value || "0", 10) || 0))} /><span className="mh-help">เลขน้อยแสดงก่อน</span></div>
+            </div>
+            <label className="mh-row" style={{ gap: 8 }}><input type="checkbox" checked={form.is_featured} onChange={(e) => set("is_featured", e.target.checked)} style={{ width: 20, height: 20, accentColor: "var(--leaf)" }} /> แสดงในแถว “รสยอดนิยม” หน้าแรก</label>
+            <fieldset style={{ border: 0, margin: 0, padding: 0 }}>
+              <legend className="mh-label" style={{ marginBottom: 8 }}>สีของยางรัด</legend>
+              <div className="mh-chips">{BANDS.map((b) => <button type="button" key={b.v} className="mh-chip" aria-pressed={form.bands.includes(b.v)} onClick={() => set("bands", form.bands.includes(b.v) ? form.bands.filter((x) => x !== b.v) : [...form.bands, b.v])}>{b.l}</button>)}</div>
+            </fieldset>
+            </section>
+            <section id="p-detail" className="panel">
+            <h2>รายละเอียดและการเก็บ</h2>
+            <div className="mh-field"><label className="mh-label" htmlFor="psub">คำบรรยายสั้น</label><input className="mh-input" id="psub" value={form.subtitle} onChange={(e) => set("subtitle", e.target.value)} /></div>
+            <div className="mh-field"><label className="mh-label" htmlFor="pd">รายละเอียด</label><textarea className="mh-textarea" id="pd" value={form.description} onChange={(e) => set("description", e.target.value)} /></div>
+            <div className="form-grid">
+              <div className="mh-field"><label className="mh-label" htmlFor="pf">เลข อย.</label><input className="mh-input" id="pf" value={form.fda_number} onChange={(e) => set("fda_number", e.target.value)} /></div>
+              <div className="mh-field"><label className="mh-label" htmlFor="pst">การเก็บรักษา</label><input className="mh-input" id="pst" value={form.storage_note} onChange={(e) => set("storage_note", e.target.value)} /></div>
             </div>
 
             </section>
