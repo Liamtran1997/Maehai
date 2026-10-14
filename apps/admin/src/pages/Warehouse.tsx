@@ -68,12 +68,27 @@ export function Warehouse() {
   );
 }
 
+const SETTINGS_PARTS = [
+  { key: "materials", label: "วัตถุดิบ" },
+  { key: "adjust", label: "ตัดของเสีย / เบิกใช้ / นับ" },
+  { key: "sources", label: "แหล่งสินค้า" },
+  { key: "places", label: "จุดเก็บและไลน์" },
+] as const;
+
+/** Settings in three parts, one at a time, so each screen stays short. */
 function SettingsTab() {
+  const [part, setPart] = useState<(typeof SETTINGS_PARTS)[number]["key"]>("materials");
   return (
     <div style={{ display: "grid", gap: 24 }}>
-      <MaterialsTab />
-      <SourcesTab />
-      <PlacesTab />
+      <div className="list-tabs" role="tablist" aria-label="ส่วนของการตั้งค่า">
+        {SETTINGS_PARTS.map((p) => (
+          <button key={p.key} type="button" role="tab" className="tab" aria-selected={part === p.key} aria-pressed={part === p.key} onClick={() => setPart(p.key)}>{p.label}</button>
+        ))}
+      </div>
+      {part === "materials" && <MaterialsTab />}
+      {part === "adjust" && <AdjustTab />}
+      {part === "sources" && <SourcesTab />}
+      {part === "places" && <PlacesTab />}
     </div>
   );
 }
@@ -127,7 +142,6 @@ export function MaterialsTab() {
   const branches = useBranches();
   const [editing, setEditing] = useState<MatRow | null>(null);
   const [form, setForm] = useState({ code: "", name: "", kind: "material", unit: "", low: "", note: "" });
-  const [adj, setAdj] = useState({ branch: "", material: "", reason: "waste", quantity: "", note: "" });
   const refresh = () => { for (const k of ["materials", "stock", "report"]) void qc.invalidateQueries({ queryKey: [k] }); };
   const save = useMutation({
     mutationFn: async () => {
@@ -136,12 +150,6 @@ export function MaterialsTab() {
       return unwrap(await api.POST("/api/admin/inventory/materials", { body: { ...body, code: form.code, unit: form.unit, low_stock_threshold: body.low_stock_threshold } }));
     },
     onSuccess: () => { setEditing(null); setForm({ code: "", name: "", kind: "material", unit: "", low: "", note: "" }); refresh(); },
-  });
-  const adjust = useMutation({
-    mutationFn: async () => unwrap(await api.POST("/api/admin/inventory/materials/adjust", {
-      body: { branch: adj.branch || branches.data?.[0]?.code || "", material_code: adj.material, reason: adj.reason, quantity: adj.quantity.trim(), note: adj.note },
-    })),
-    onSuccess: () => { setAdj({ ...adj, quantity: "", note: "" }); refresh(); },
   });
   const onSubmit = (e: FormEvent) => { e.preventDefault(); save.mutate(); };
   return (
@@ -183,7 +191,28 @@ export function MaterialsTab() {
             <button className="mh-btn mh-btn--primary" type="submit" disabled={save.isPending}>{save.isPending ? "กำลังบันทึก…" : "บันทึก"}</button>
           </form>
         )}
-        {can("inventory.adjust") && (
+      </div>
+    </div>
+  );
+}
+
+/** Write-offs, withdrawals and counts of materials, on their own so the materials page stays short. */
+export function AdjustTab() {
+  const qc = useQueryClient();
+  const { can } = useAuth();
+  const mats = useMaterials();
+  const branches = useBranches();
+  const [adj, setAdj] = useState({ branch: "", material: "", reason: "waste", quantity: "", note: "" });
+  const refresh = () => { for (const k of ["materials", "stock", "report"]) void qc.invalidateQueries({ queryKey: [k] }); };
+  const adjust = useMutation({
+    mutationFn: async () => unwrap(await api.POST("/api/admin/inventory/materials/adjust", {
+      body: { branch: adj.branch || branches.data?.[0]?.code || "", material_code: adj.material, reason: adj.reason, quantity: adj.quantity.trim(), note: adj.note },
+    })),
+    onSuccess: () => { setAdj({ ...adj, quantity: "", note: "" }); refresh(); },
+  });
+  if (!can("inventory.adjust")) return <p className="ink-muted">ตำแหน่งของคุณไม่มีสิทธิ์ตัดหรือนับวัตถุดิบ</p>;
+  return (
+    <div style={{ maxWidth: 560 }}>
           <form className="apanel" onSubmit={(e) => { e.preventDefault(); adjust.mutate(); }}>
             <h2>ตัดของเสีย / เบิกใช้ / นับ</h2>
             <div className="form-grid">
@@ -206,8 +235,6 @@ export function MaterialsTab() {
             <ErrorNotice error={adjust.error} />
             <button className="mh-btn mh-btn--primary" type="submit" disabled={adjust.isPending || !adj.material}>{adjust.isPending ? "กำลังบันทึก…" : "บันทึก"}</button>
           </form>
-        )}
-      </div>
     </div>
   );
 }
