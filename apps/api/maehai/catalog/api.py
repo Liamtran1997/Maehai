@@ -69,7 +69,7 @@ def serialize_detail(request, p: Product, *, admin: bool = False) -> dict:
     promo = next((prices[v.id].promotion for v in variants if prices[v.id].discounted), None)
     return {
         **serialize_list(request, p, amap, prices),
-        "description": p.description, "fda_number": p.fda_number, "storage_note": p.storage_note,
+        "description": p.description, "ingredients": p.ingredients, "fda_number": p.fda_number, "storage_note": p.storage_note,
         "variants": out_variants, "images": _image_urls(request, p),
         "promotion": {"name": promo.name, "label": promo.label, "ends_at": promo.ends_at.isoformat() if promo.ends_at else None} if promo else None,
     }

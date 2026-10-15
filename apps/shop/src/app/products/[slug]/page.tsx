@@ -21,6 +21,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const chev = <svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>;
   const info = [
     p.description && { title: "รายละเอียดสินค้า", body: p.description },
+    p.ingredients && { title: "ส่วนผสม", body: p.ingredients },
     p.storage_note && { title: "การเก็บรักษา", body: p.storage_note },
     p.fda_number && { title: "เลข อย.", body: p.fda_number, num: true },
   ].filter((x): x is { title: string; body: string; num?: boolean } => !!x);

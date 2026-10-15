@@ -1947,6 +1947,8 @@ export interface components {
             in_stock: boolean;
             /** Description */
             description: string;
+            /** Ingredients */
+            ingredients: string;
             /** Fda Number */
             fda_number: string;
             /** Storage Note */
@@ -2018,6 +2020,8 @@ export interface components {
             in_stock: boolean;
             /** Description */
             description: string;
+            /** Ingredients */
+            ingredients: string;
             /** Fda Number */
             fda_number: string;
             /** Storage Note */
@@ -2064,6 +2068,11 @@ export interface components {
              * @default
              */
             description: string;
+            /**
+             * Ingredients
+             * @default
+             */
+            ingredients: string;
             /**
              * Bands
              * @default []

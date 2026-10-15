@@ -45,6 +45,7 @@ class PromotionBrief(Schema):
 
 class ProductOut(ProductListOut):
     description: str
+    ingredients: str
     fda_number: str
     storage_note: str
     variants: list[VariantOut]
@@ -67,6 +68,7 @@ class ProductIn(Schema):
     name_en: str = ""
     subtitle: str = ""
     description: str = ""
+    ingredients: str = Field(default="", max_length=2000)
     bands: list[str] = []
     badge: str = ""
     fda_number: str = ""

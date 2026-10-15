@@ -91,6 +91,17 @@ def test_admin_create_update_archive(staff_client, seeded):
     assert Product.objects.get(pk=pid).is_active is False
 
 
+def test_ingredients_are_saved_by_staff_and_shown_to_customers(client, staff_client, seeded):
+    r = staff_client.post("/api/admin/catalog/products", payload(ingredients="เนื้อหมู พริกไทยดำ เกลือ"), content_type="application/json")
+    assert r.status_code == 201, r.content
+    assert r.json()["ingredients"] == "เนื้อหมู พริกไทยดำ เกลือ"
+    assert client.get("/api/catalog/products/test-product").json()["ingredients"] == "เนื้อหมู พริกไทยดำ เกลือ"
+    # a product saved without the field has an empty one, and an overlong text is refused
+    assert client.get("/api/catalog/products/moo-yo-black-pepper").json()["ingredients"] == ""
+    too_long = staff_client.post("/api/admin/catalog/products", payload(slug="long-one", ingredients="ก" * 2001), content_type="application/json")
+    assert too_long.status_code == 422
+
+
 @pytest.mark.parametrize("bad", [
     {"price_satang": 0},            # price must be positive
     {"sku": ""},                    # sku required
