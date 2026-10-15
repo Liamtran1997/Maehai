@@ -17,12 +17,12 @@ const STATUS = [{ v: "", l: "ทุกสถานะ" }, { v: "on", l: "แส�
 
 const blankVariant = (): VariantForm => ({ sku: "", label: "", price: "", weight: "", existing: false });
 const blank = (category: string): Form => ({
-  category_slug: category, slug: "", name: "", name_en: "", subtitle: "", description: "", bands: [], badge: "",
+  category_slug: category, slug: "", name: "", name_en: "", subtitle: "", description: "", ingredients: "", bands: [], badge: "",
   fda_number: "", storage_note: "", is_active: true, is_featured: false, sort_order: 0, variants: [blankVariant()],
 });
 const fromProduct = (p: AdminProduct): Form => ({
   id: p.id, images: p.images, category_slug: p.category.slug, slug: p.slug, name: p.name, name_en: p.name_en,
-  subtitle: p.subtitle, description: p.description, bands: p.bands, badge: p.badge, fda_number: p.fda_number,
+  subtitle: p.subtitle, description: p.description, ingredients: p.ingredients, bands: p.bands, badge: p.badge, fda_number: p.fda_number,
   storage_note: p.storage_note, is_active: p.is_active, is_featured: p.is_featured, sort_order: p.sort_order,
   variants: p.variants.map((v) => ({ sku: v.sku, label: v.label, price: String(v.price_satang / 100), weight: v.weight_grams ? String(v.weight_grams) : "", existing: true })),
 });
@@ -345,6 +345,7 @@ export function Products() {
             <h2>รายละเอียดและการเก็บ</h2>
             <div className="mh-field"><label className="mh-label" htmlFor="psub">คำบรรยายสั้น</label><input className="mh-input" id="psub" value={form.subtitle} onChange={(e) => set("subtitle", e.target.value)} /></div>
             <div className="mh-field"><label className="mh-label" htmlFor="pd">รายละเอียด</label><textarea className="mh-textarea" id="pd" value={form.description} onChange={(e) => set("description", e.target.value)} /></div>
+            <div className="mh-field"><label className="mh-label" htmlFor="pi">ส่วนผสม</label><textarea className="mh-textarea" id="pi" maxLength={2000} value={form.ingredients} onChange={(e) => set("ingredients", e.target.value)} /><span className="mh-help">แสดงในหน้าสินค้า ถ้าเว้นว่างจะไม่แสดงหัวข้อนี้</span></div>
             <div className="form-grid">
               <div className="mh-field"><label className="mh-label" htmlFor="pf">เลข อย.</label><input className="mh-input" id="pf" value={form.fda_number} onChange={(e) => set("fda_number", e.target.value)} /></div>
               <div className="mh-field"><label className="mh-label" htmlFor="pst">การเก็บรักษา</label><input className="mh-input" id="pst" value={form.storage_note} onChange={(e) => set("storage_note", e.target.value)} /></div>

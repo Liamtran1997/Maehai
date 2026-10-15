@@ -53,6 +53,7 @@ class Product(models.Model):
     name_en = models.CharField(max_length=150, blank=True)
     subtitle = models.CharField(max_length=150, blank=True)
     description = models.TextField(blank=True)
+    ingredients = models.TextField("ส่วนผสม", blank=True)
     bands = models.JSONField(default=list, blank=True, help_text="List of Band values, e.g. ['yellow','red']")
     badge = models.CharField(max_length=20, choices=Badge.choices, blank=True, default=Badge.NONE)
     fda_number = models.CharField("เลข อย.", max_length=40, blank=True)
