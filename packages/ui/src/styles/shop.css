@@ -43,6 +43,7 @@
   .hdr-nav a { padding: 10px 2px; color: var(--ink); text-decoration: none; border-bottom: 2px solid transparent; }
   .hdr-nav a:hover { color: var(--leaf); border-bottom-color: var(--leaf); }
   .hdr-nav a[aria-current="page"] { color: var(--leaf); border-bottom-color: var(--leaf); }
+  .hdr-nav a { white-space: nowrap; }
   .hdr-search { display: block; position: relative; width: 260px; margin-right: 8px; }
   .hdr-search .ic { position: absolute; left: 14px; top: 13px; width: 18px; height: 18px; color: var(--ink-muted); }
   .hdr-search input { width: 100%; min-height: 44px; padding: 0 16px 0 40px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface-100); color: var(--ink); font: 400 15px/1.4 var(--font-sans); }
@@ -314,3 +315,13 @@
 .track-head { display: flex; gap: 16px; align-items: center; }
 .track-ic { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 999px; background: var(--leaf-soft); color: var(--leaf); }
 .track-ic .ic { width: 28px; height: 28px; }
+
+/* Between 900 and 1199px the header is tight: fewer category links, a narrower search box. */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .hdr-nav { gap: 16px; font-size: 14px; }
+  .hdr-nav .hdr-extra { display: none; }
+  .hdr-search { width: 180px; }
+  .m-hdr .brand { margin-right: 8px; }
+  .hero h1 { font-size: 42px; }
+  .hero-in { gap: 40px; }
+}

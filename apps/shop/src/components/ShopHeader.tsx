@@ -18,7 +18,7 @@ export function ShopHeader({ categories = DEFAULT_NAV }: { categories?: NavCateg
       </a>
       <nav className="hdr-nav" aria-label="หมวดสินค้า">
         <a href="/products">สินค้าทั้งหมด</a>
-        {categories.slice(0, 4).map((c) => <a key={c.slug} href={`/products?category=${c.slug}`}>{c.name}</a>)}
+        {categories.slice(0, 4).map((c, i) => <a key={c.slug} className={i >= 2 ? "hdr-extra" : undefined} href={`/products?category=${c.slug}`}>{c.name}</a>)}
         <a href="/#branches">สาขา</a>
       </nav>
       <form className="hdr-search" action="/products" role="search">
