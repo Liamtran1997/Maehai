@@ -118,7 +118,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
               <span className="bands" aria-hidden="true"><i className="c-yellow" /><i className="c-red" /><i className="c-green" /></span>
               ร้านหมูยอแม่ฮาย · อุบลราชธานี
             </p>
-            <h1>หมูยอต้นตำรับเมืองอุบลฯ ห่อใบตอง สดใหม่ทุกเช้า</h1>
+            <h1>หมูยอต้นตำรับ<span style={{ whiteSpace: "nowrap" }}>เมืองอุบลฯ</span> ห่อใบตอง สดใหม่ทุกเช้า</h1>
             <p className="hero-lead">ผลิตทุกวันจากวัตถุดิบคัดสรร มัดยางสีบอกรส สั่งออนไลน์ จ่ายผ่าน PromptPay ส่งถึงบ้านหรือรับที่ร้าน</p>
             <div className="hero-actions">
               <a className={`${buttonClass("accent")} btn-link`} href="/products">เลือกซื้อสินค้า</a>
