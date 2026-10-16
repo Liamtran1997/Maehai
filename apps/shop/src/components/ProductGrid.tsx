@@ -1,7 +1,7 @@
 import { ProductCard } from "@maehai/ui";
 import { BADGE_LABEL, toBands, type Product } from "../lib/api";
 
-export function ProductGrid({ products, headingLevel, eagerCount = 4 }: { products: Product[]; headingLevel?: 2 | 3; eagerCount?: number }) {
+export function ProductGrid({ products, headingLevel, eagerCount = 0 }: { products: Product[]; headingLevel?: 2 | 3; eagerCount?: number }) {
   return (
     <div className="pgrid">
       {products.map((p, i) => (
@@ -16,6 +16,7 @@ export function ProductGrid({ products, headingLevel, eagerCount = 4 }: { produc
           bands={toBands(p.bands)}
           bandDots={p.bands}
           imageSrc={p.image_url ?? undefined}
+          thumbSrc={p.thumb_url ?? undefined}
           href={`/products/${p.slug}`}
           headingLevel={headingLevel}
           eager={i < eagerCount}

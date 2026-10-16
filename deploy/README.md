@@ -9,7 +9,7 @@ Một máy chủ, một tên miền, một lệnh. Toàn bộ hệ thống chạ
 | `api` | Django API (gunicorn, 3 worker) |
 | `worker` | Gửi tin LINE trong hàng đợi. **Không chạy thì không ai nhận được thông báo** |
 | `scheduler` | Hủy đơn quá hạn chưa thanh toán (kiểm tra mỗi 5 phút, hủy sau 60 phút) để trả hàng về kho |
-| `migrate` | Chạy migration database rồi thoát, trước khi `api` khởi động |
+| `migrate` | Chạy migration database, tạo ảnh nhỏ (400px) cho ảnh sản phẩm chưa có, rồi thoát, trước khi `api` khởi động |
 | `db` | PostgreSQL 16 |
 | `redis` | Bộ đếm giới hạn tần suất (rate limit) dùng chung giữa các worker |
 

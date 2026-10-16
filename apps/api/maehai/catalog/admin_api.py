@@ -133,9 +133,9 @@ def add_image(request, product_id: int, image: File[UploadedFile]):
 @router.delete("/products/{product_id}/images/{image_id}", response=AdminProductOut, auth=requires("catalog.edit"))
 def delete_image(request, product_id: int, image_id: int):
     im = get_object_or_404(ProductImage, pk=image_id, product_id=product_id)
-    name = im.image.name
+    names = [n for n in (im.image.name, im.thumb.name) if n]
     im.delete()
-    if name:
+    for name in names:
         im.image.storage.delete(name)
     return _admin_out(request, _qs().get(pk=product_id))
 

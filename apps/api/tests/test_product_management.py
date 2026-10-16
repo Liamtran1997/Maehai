@@ -170,9 +170,9 @@ def test_hidden_category_hides_its_products_and_blocks_orders(client, staff_clie
 
 
 # ================================================================ images, featured, ordering
-def img(fmt="PNG", name="p.png", ctype="image/png"):
+def img(fmt="PNG", name="p.png", ctype="image/png", size=(40, 40)):
     b = BytesIO()
-    Image.new("RGB", (40, 40), "red").save(b, fmt)
+    Image.new("RGB", size, "red").save(b, fmt)
     return SimpleUploadedFile(name, b.getvalue(), content_type=ctype)
 
 
@@ -334,3 +334,33 @@ def test_admin_category_list_keeps_sort_order(staff_client, seeded):
         Category.objects.filter(pk=c.pk).update(sort_order=100 - i)   # reverse of insertion order
     got = [c["slug"] for c in staff_client.get("/api/admin/catalog/categories").json()]
     assert got == list(Category.objects.order_by("sort_order", "name").values_list("slug", flat=True))
+
+
+def test_a_small_copy_of_the_photo_is_made_served_and_removed_with_it(client, staff_client, seeded, settings):
+    pid = Product.objects.get(slug=PEPPER).id
+    big = img("PNG", "big.png", "image/png", size=(800, 600))
+    assert staff_client.post(gallery(pid), {"image": big}).status_code == 200
+    photo = ProductImage.objects.get(product_id=pid)
+    assert photo.thumb and photo.thumb.name != photo.image.name
+    with Image.open(settings.MEDIA_ROOT / photo.thumb.name) as t:
+        assert t.size == (400, 300) and t.format == "WEBP"
+    d = detail(client)
+    assert d["thumb_url"] and d["thumb_url"] != d["image_url"]
+    small = settings.MEDIA_ROOT / photo.thumb.name
+    assert small.exists()
+    assert staff_client.delete(f"{gallery(pid)}/{photo.id}").status_code == 200
+    assert not small.exists()
+
+
+def test_make_thumbs_fills_in_old_photos_and_is_safe_to_repeat(client, staff_client, seeded, settings):
+    from django.core.management import call_command
+
+    pid = Product.objects.get(slug=PEPPER).id
+    staff_client.post(gallery(pid), {"image": img("PNG", "old.png", "image/png", size=(800, 600))})
+    ProductImage.objects.filter(product_id=pid).update(thumb="")       # as if the photo was uploaded before thumbnails existed
+    assert detail(client)["thumb_url"] is None                          # the shop falls back to the full photo
+    call_command("make_thumbs")
+    first = detail(client)["thumb_url"]
+    assert first and first != detail(client)["image_url"]
+    call_command("make_thumbs")                                         # nothing left to do, nothing changes
+    assert detail(client)["thumb_url"] == first

@@ -14,6 +14,8 @@ export type ProductCardProps = {
   /** Rubber band colours tied on the log (yellow, red, green), shown as small dots beside the subtitle. */
   bandDots?: string[];
   imageSrc?: string;
+  /** Small (400 px) copy of the photo. When present the browser picks it on narrow cards and saves the download. */
+  thumbSrc?: string;
   href: string;
   /** Heading level of the product name. Use 2 when the card sits directly under the page's h1. */
   headingLevel?: 2 | 3;
@@ -21,14 +23,16 @@ export type ProductCardProps = {
   eager?: boolean;
 };
 
-export function ProductCard({ name, subtitle, priceSatang, originalPriceSatang, promotionLabel, badge, bands, bandDots, imageSrc, href, headingLevel = 3, eager = false }: ProductCardProps) {
+export function ProductCard({ name, subtitle, priceSatang, originalPriceSatang, promotionLabel, badge, bands, bandDots, imageSrc, thumbSrc, href, headingLevel = 3, eager = false }: ProductCardProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const shownBadge = badge ?? (promotionLabel ? { label: promotionLabel, tone: "red" as const } : undefined);
   return (
     <article className="mh-card">
       {shownBadge && <span className={`mh-badge${shownBadge.tone === "red" ? " mh-badge--red" : ""}`}>{shownBadge.label}</span>}
       <div className="mh-card__media">
-        {imageSrc ? <img src={imageSrc} alt="" width={800} height={600} loading={eager ? "eager" : "lazy"} /> : <LogMark bands={bands} />}
+        {imageSrc ? <img src={imageSrc} alt="" width={800} height={600} loading={eager ? "eager" : "lazy"}
+          srcSet={thumbSrc ? `${thumbSrc} 400w, ${imageSrc} 800w` : undefined}
+          sizes={thumbSrc ? "(min-width: 1000px) 25vw, (min-width: 640px) 33vw, 50vw" : undefined} /> : <LogMark bands={bands} />}
       </div>
       <div className="mh-card__body">
         {(!!subtitle || !!bandDots?.length) && (

@@ -52,7 +52,8 @@ services:
     env_file: .env
     environment:
       <<: *api-env
-    command: ["python", "manage.py", "migrate", "--noinput"]
+    # After the migration, make the small copy of any product photo that lacks one (quick and safe to repeat).
+    command: ["sh", "-c", "python manage.py migrate --noinput && python manage.py make_thumbs"]
     volumes: [media:/data/media, private:/data/private]
     depends_on:
       db: { condition: service_healthy }

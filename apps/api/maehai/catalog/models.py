@@ -87,11 +87,19 @@ class ProductImage(models.Model):
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to=product_image_path, storage=product_storage)
+    thumb = models.ImageField(upload_to=product_image_path, storage=product_storage, blank=True, help_text="Small copy for grids; see thumbs.py")
     sort_order = models.PositiveSmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["sort_order", "id"]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image and not self.thumb and kwargs.get("update_fields") is None:
+            from .thumbs import make_thumb
+
+            make_thumb(self)
 
 
 class PriceChange(models.Model):

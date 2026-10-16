@@ -31,6 +31,7 @@ class ProductListOut(Schema):
     badge: str
     bands: list[str]
     image_url: str | None = None
+    thumb_url: str | None = None
     price_from_satang: int
     original_price_from_satang: int | None = None
     promotion_label: str | None = None

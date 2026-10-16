@@ -26,6 +26,12 @@ def _primary_url(request, product: Product) -> str | None:
     return imgs[0]["url"] if imgs else None
 
 
+def _primary_thumb_url(request, product: Product) -> str | None:
+    """Small copy of the main photo, or None while it has not been made yet (the shop then uses the full photo)."""
+    first = next(iter(product.images.all()), None)
+    return public_file_url(request, first.thumb) if first and first.thumb else None
+
+
 def restock_alert_url(sku: str) -> str | None:
     if not (settings.LINE_OA_ID and settings.LINE_CHANNEL_ACCESS_TOKEN):
         return None  # without a working OA the button would lead nowhere
@@ -44,7 +50,7 @@ def serialize_list(request, p: Product, amap: dict, prices: dict[int, Price]) ->
     return {
         "in_stock": any(amap.get(v.id) is None or amap[v.id] > 0 for v in variants),
         "slug": p.slug, "name": p.name, "subtitle": p.subtitle, "category": p.category,
-        "badge": p.badge, "bands": p.bands, "image_url": _primary_url(request, p),
+        "badge": p.badge, "bands": p.bands, "image_url": _primary_url(request, p), "thumb_url": _primary_thumb_url(request, p),
         "price_from_satang": cp.satang if cp else 0,
         "original_price_from_satang": cp.list_satang if cp and cp.discounted else None,
         "promotion_label": best.promotion.label if best and best.discounted else None,

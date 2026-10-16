@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 // Fonts are served from the shop itself: no render-blocking stylesheet from Google, and a size-matched fallback while they load.
-const mitr = Mitr({ weight: ["400", "500"], subsets: ["thai", "latin"], display: "swap" });
+const mitr = Mitr({ weight: ["500"], subsets: ["thai", "latin"], display: "swap" });
 const plexThai = IBM_Plex_Sans_Thai({ weight: ["400", "500", "600"], subsets: ["thai", "latin"], display: "swap" });
 const plexMono = IBM_Plex_Mono({ weight: ["500"], subsets: ["latin"], display: "swap" });
 

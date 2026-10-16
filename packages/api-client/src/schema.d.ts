@@ -1900,6 +1900,8 @@ export interface components {
             bands: string[];
             /** Image Url */
             image_url?: string | null;
+            /** Thumb Url */
+            thumb_url?: string | null;
             /** Price From Satang */
             price_from_satang: number;
             /** Original Price From Satang */
@@ -1934,6 +1936,8 @@ export interface components {
             bands: string[];
             /** Image Url */
             image_url?: string | null;
+            /** Thumb Url */
+            thumb_url?: string | null;
             /** Price From Satang */
             price_from_satang: number;
             /** Original Price From Satang */
@@ -2007,6 +2011,8 @@ export interface components {
             bands: string[];
             /** Image Url */
             image_url?: string | null;
+            /** Thumb Url */
+            thumb_url?: string | null;
             /** Price From Satang */
             price_from_satang: number;
             /** Original Price From Satang */

@@ -79,7 +79,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
   // One photo and a product count per category, taken from the catalog itself.
   const catCards = categories.map((c) => {
     const inCat = products.filter((p) => p.category.slug === c.slug);
-    return { ...c, count: inCat.length, image: inCat.find((p) => p.image_url)?.image_url ?? null };
+    const shown = inCat.find((p) => p.image_url);
+    return { ...c, count: inCat.length, image: shown?.image_url ?? null, thumb: shown?.thumb_url ?? null };
   }).filter((c) => c.count > 0);
 
   // The rubber band guide: one หมูยอ per single band colour, so the page never claims a flavour the catalog lacks.
@@ -161,7 +162,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
           <div className="catgrid">
             {catCards.map((c) => (
               <a key={c.slug} className="cat" href={`/products?category=${c.slug}`}>
-                <span className="cat__img">{c.image && /* eslint-disable-next-line @next/next/no-img-element */ <img src={c.image} alt="" loading="lazy" />}</span>
+                <span className="cat__img">{c.image && /* eslint-disable-next-line @next/next/no-img-element */ <img src={c.image} alt="" width={800} height={600} loading="lazy" srcSet={c.thumb ? `${c.thumb} 400w, ${c.image} 800w` : undefined} sizes={c.thumb ? "(min-width: 900px) 25vw, 104px" : undefined} />}</span>
                 <span className="cat__name">{c.name}</span>
                 <span className="cat__count">{c.count} รายการ</span>
               </a>
