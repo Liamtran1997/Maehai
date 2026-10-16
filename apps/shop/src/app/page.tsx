@@ -133,7 +133,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
           {heroPhoto && (
             <div className="hero-photo">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={heroPhoto} alt="หมูยอห่อใบตอง มัดยางสี" />
+              <img src={heroPhoto} alt="หมูยอห่อใบตอง มัดยางสี" width={800} height={600} fetchPriority="high" />
               {bandGuide.length > 0 && (
                 <div className="band-guide" aria-hidden="true">
                   <b>ดูสียาง รู้รสชาติ</b>

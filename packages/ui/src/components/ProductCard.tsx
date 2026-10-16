@@ -15,15 +15,20 @@ export type ProductCardProps = {
   bandDots?: string[];
   imageSrc?: string;
   href: string;
+  /** Heading level of the product name. Use 2 when the card sits directly under the page's h1. */
+  headingLevel?: 2 | 3;
+  /** Load the photo right away. Set it on the first row, which is what the customer sees first. */
+  eager?: boolean;
 };
 
-export function ProductCard({ name, subtitle, priceSatang, originalPriceSatang, promotionLabel, badge, bands, bandDots, imageSrc, href }: ProductCardProps) {
+export function ProductCard({ name, subtitle, priceSatang, originalPriceSatang, promotionLabel, badge, bands, bandDots, imageSrc, href, headingLevel = 3, eager = false }: ProductCardProps) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   const shownBadge = badge ?? (promotionLabel ? { label: promotionLabel, tone: "red" as const } : undefined);
   return (
     <article className="mh-card">
       {shownBadge && <span className={`mh-badge${shownBadge.tone === "red" ? " mh-badge--red" : ""}`}>{shownBadge.label}</span>}
       <div className="mh-card__media">
-        {imageSrc ? <img src={imageSrc} alt="" loading="lazy" /> : <LogMark bands={bands} />}
+        {imageSrc ? <img src={imageSrc} alt="" width={800} height={600} loading={eager ? "eager" : "lazy"} /> : <LogMark bands={bands} />}
       </div>
       <div className="mh-card__body">
         {(!!subtitle || !!bandDots?.length) && (
@@ -32,7 +37,7 @@ export function ProductCard({ name, subtitle, priceSatang, originalPriceSatang, 
             {subtitle}
           </p>
         )}
-        <h3 className="mh-card__title"><a href={href}>{name}</a></h3>
+        <Heading className="mh-card__title"><a href={href}>{name}</a></Heading>
         <div className="mh-card__foot">
           <span className={`mh-price${originalPriceSatang ? " mh-price--sale" : ""}`}>
             <small>เริ่มต้น </small>{formatTHB(priceSatang, { hideZeroSatang: true })}
