@@ -33,7 +33,7 @@ export default async function Catalog({ searchParams }: { searchParams: Promise<
         {products.length === 0 ? (
           <p className="ink-muted">ไม่พบสินค้าที่ตรงกับที่ค้นหา</p>
         ) : (
-          <ProductGrid products={products} />
+          <ProductGrid products={products} headingLevel={2} />
         )}
       </section>
     </>

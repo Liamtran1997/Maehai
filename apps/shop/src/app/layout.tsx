@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { IBM_Plex_Mono, IBM_Plex_Sans_Thai, Mitr } from "next/font/google";
 import "@maehai/ui/styles.css";
 import { CartProvider } from "../lib/cart";
 import { ShopFooter } from "../components/ShopFooter";
@@ -9,17 +10,21 @@ export const metadata = {
   description: "ต้นตำรับหมูยอเมืองอุบลฯ ห่อใบตอง ผลิตสดใหม่ทุกวัน",
 };
 
+// Fonts are served from the shop itself: no render-blocking stylesheet from Google, and a size-matched fallback while they load.
+const mitr = Mitr({ weight: ["400", "500"], subsets: ["thai", "latin"], display: "swap" });
+const plexThai = IBM_Plex_Sans_Thai({ weight: ["400", "500", "600"], subsets: ["thai", "latin"], display: "swap" });
+const plexMono = IBM_Plex_Mono({ weight: ["500"], subsets: ["latin"], display: "swap" });
+
+// The design tokens name the families; this puts the self-hosted copies first.
+const fontVars = {
+  "--font-display": `${mitr.style.fontFamily}, "IBM Plex Sans Thai", system-ui, sans-serif`,
+  "--font-sans": `${plexThai.style.fontFamily}, "Noto Sans Thai", system-ui, sans-serif`,
+  "--font-mono": `${plexMono.style.fontFamily}, ui-monospace, Menlo, monospace`,
+} as CSSProperties;
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="th">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Mitr:wght@400;500&display=swap"
-        />
-      </head>
+    <html lang="th" style={fontVars}>
       <body><CartProvider>{children}<ShopFooter /><TabBar /></CartProvider></body>
     </html>
   );
