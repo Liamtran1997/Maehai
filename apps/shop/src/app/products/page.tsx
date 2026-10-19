@@ -1,5 +1,6 @@
 import { ShopHeader } from "../../components/ShopHeader";
 import { ProductGrid } from "../../components/ProductGrid";
+import { TrackOnMount } from "../../components/Analytics";
 import { getCategories, getProducts } from "../../lib/api";
 
 export const metadata = { title: "สินค้าของเรา | ร้านหมูยอแม่ฮาย" };
@@ -13,6 +14,7 @@ export default async function Catalog({ searchParams }: { searchParams: Promise<
   return (
     <>
       <ShopHeader categories={categories} />
+      {q && <TrackOnMount key={`${q}-${products.length}`} kind="search" data={{ name: q.slice(0, 40), value: products.length }} />}
       <section className="sec sec--tight catalog-head" style={{ paddingTop: 24 }}>
         <h1 style={{ font: "500 32px/1.4 var(--font-display)" }}>สินค้าของเรา</h1>
         <form className="searchbox" action="/products" role="search">

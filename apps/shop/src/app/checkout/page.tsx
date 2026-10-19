@@ -1,6 +1,8 @@
 "use client";
 import { formatTHB } from "@maehai/ui";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { TrackOnMount } from "../../components/Analytics";
+import { orderAttribution } from "../../lib/analytics";
 import { ShopHeader } from "../../components/ShopHeader";
 import { api, errorText, type ShippingMethod } from "../../lib/client-api";
 import { useCart } from "../../lib/cart";
@@ -62,7 +64,7 @@ export default function CheckoutPage() {
       body: {
         items: cart.lines.map((l) => ({ sku: l.sku, quantity: l.quantity })),
         customer_name: str("name"), phone: str("phone"), shipping_method: method, requested_date: str("date"), note: str("note"),
-        coupon_code: coupon?.code ?? "", accepted_terms: terms,
+        coupon_code: coupon?.code ?? "", accepted_terms: terms, ...orderAttribution(),
         address: { address_line: str("address_line"), subdistrict: str("subdistrict"), district: str("district"), province: str("province"), postal_code: str("postal_code") },
       },
     }).catch(() => null);
@@ -94,6 +96,7 @@ export default function CheckoutPage() {
   return (
     <>
       <ShopHeader />
+      <TrackOnMount kind="checkout_start" data={{ value: cart.subtotalSatang }} />
       <ol className="progress" aria-label="ขั้นตอนการสั่งซื้อ">
         <li className="done"><span className="dot">✓</span>ตะกร้า</li><li className="bar" aria-hidden="true" />
         <li className="on"><span className="dot">2</span>จัดส่ง</li><li className="bar" aria-hidden="true" />

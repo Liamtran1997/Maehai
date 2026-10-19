@@ -25,6 +25,7 @@ DOMAIN_APPS = [
     "maehai.reports",
     "maehai.cms",
     "maehai.notifications",
+    "maehai.analytics",
 ]
 
 INSTALLED_APPS = [
@@ -139,7 +140,14 @@ RATE_LIMITS = {
     "charge_order": (20, 3600),
     "slip_order": (10, 3600),
     "slip_ip": (30, 3600),
+    "analytics_ip": (120, 60),
+    "analytics_visitor": (100, 86400),     # batches per visitor per day
 }
+
+# Usage numbers (see docs/specs/web-analytics.md). Raw events are kept this long.
+WEB_EVENT_RETENTION_DAYS = int(os.environ.get("WEB_EVENT_RETENTION_DAYS", "180"))
+# Off until legal advice allows a bare per-page counter for visitors who have not agreed to measurement.
+ANALYTICS_COUNT_WITHOUT_CONSENT = os.environ.get("ANALYTICS_COUNT_WITHOUT_CONSENT", "0") == "1"
 
 # Inventory
 DEFAULT_FULFILLMENT_BRANCH = os.environ.get("DEFAULT_FULFILLMENT_BRANCH", "srinarong")  # ships delivery orders unless it is out of stock

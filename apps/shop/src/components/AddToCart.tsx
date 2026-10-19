@@ -3,6 +3,7 @@ import { formatTHB } from "@maehai/ui";
 import { useState } from "react";
 import { useCart } from "../lib/cart";
 import { Stepper } from "./Stepper";
+import { track } from "../lib/analytics";
 
 type Variant = {
   sku: string; label: string; price_satang: number; weight_grams: number | null; available?: number | null;
@@ -25,6 +26,7 @@ export function AddToCart({ slug, productName, variants, imageUrl }: { slug: str
   const addToCart = () => {
     cart.add({ sku: v.sku, slug, productName, variantLabel: v.label, unitPriceSatang: v.price_satang, quantity: qty, imageUrl });
     setAdded(true);
+    track("add_to_cart", { slug, qty, value: v.price_satang * qty });
   };
   const total = formatTHB(v.price_satang * qty, { hideZeroSatang: true });
 

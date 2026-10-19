@@ -15,7 +15,12 @@ COPY apps/shop apps/shop
 COPY packages packages
 # "" = the browser calls the API on the same domain (/api/...). Baked into the client bundle at build time.
 ARG NEXT_PUBLIC_API_URL=""
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_TELEMETRY_DISABLED=1
+# Also baked in at build time (see deploy/.env): the shop's LINE ID, the design version stamped on usage events, and
+# whether to count page views of visitors who have not agreed to measurement (only after legal advice allows it).
+ARG NEXT_PUBLIC_LINE_OA_ID="@maehai"
+ARG NEXT_PUBLIC_DESIGN_VERSION="2026-10-redesign"
+ARG NEXT_PUBLIC_ANALYTICS_BASELINE="0"
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_PUBLIC_LINE_OA_ID=$NEXT_PUBLIC_LINE_OA_ID NEXT_PUBLIC_DESIGN_VERSION=$NEXT_PUBLIC_DESIGN_VERSION NEXT_PUBLIC_ANALYTICS_BASELINE=$NEXT_PUBLIC_ANALYTICS_BASELINE NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @maehai/shop build
 
 FROM node:22-alpine AS run

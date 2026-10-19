@@ -1,4 +1,5 @@
 import { Children, Fragment, cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
+import { ConsentSettings } from "./Analytics";
 import { ShopHeader } from "./ShopHeader";
 
 type SectionProps = { id: string; title: string; children: ReactNode };
@@ -67,6 +68,7 @@ export function LegalPage({ title, updated, current, children }: { title: string
             <p className="xs ink-muted">ปรับปรุงล่าสุด {mark(updated)}</p>
           </header>
           {parts.map((c, i) => (isValidElement(c) && c.type === LegalSection ? <Fragment key={i}>{c}</Fragment> : <Fragment key={i}>{mark(c)}</Fragment>))}
+          {current === "privacy" && <ConsentSettings />}
           <aside className="legal-help">
             <p className="bold">มีคำถามเกี่ยวกับหน้านี้?</p>
             <p className="sm">ถามร้านได้ทาง LINE <b>@maehai</b> หรือโทร <span className="num">081-878-5474</span></p>

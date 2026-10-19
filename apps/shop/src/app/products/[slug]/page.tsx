@@ -4,6 +4,7 @@ import { AddToCart } from "../../../components/AddToCart";
 import { notFound } from "next/navigation";
 import { ShopHeader } from "../../../components/ShopHeader";
 import { ProductGrid } from "../../../components/ProductGrid";
+import { TrackOnMount } from "../../../components/Analytics";
 import { BADGE_LABEL, getCategories, getProduct, getProducts, toBands } from "../../../lib/api";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -29,6 +30,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   return (
     <>
       <ShopHeader categories={categories} />
+      <TrackOnMount kind="product_view" data={{ slug: p.slug }} />
       <div className="pdp">
         <nav className="crumbs" aria-label="เส้นทางหน้า">
           <a href="/">หน้าแรก</a> › <a href={`/products?category=${p.category.slug}`}>{p.category.name}</a> › <span aria-current="page">{p.name}</span>

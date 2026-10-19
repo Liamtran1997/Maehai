@@ -4,6 +4,7 @@ import "@maehai/ui/styles.css";
 import { CartProvider } from "../lib/cart";
 import { ShopFooter } from "../components/ShopFooter";
 import { TabBar } from "../components/TabBar";
+import { Analytics } from "../components/Analytics";
 
 export const metadata = {
   title: "ร้านหมูยอแม่ฮาย",
@@ -25,7 +26,7 @@ const fontVars = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="th" style={fontVars}>
-      <body><CartProvider>{children}<ShopFooter /><TabBar /></CartProvider></body>
+      <body><CartProvider><Analytics />{children}<ShopFooter /><TabBar /></CartProvider></body>
     </html>
   );
 }

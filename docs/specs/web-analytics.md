@@ -1,6 +1,6 @@
 # Spec: Đo lường hiệu quả web bán hàng (สถิติการใช้งานเว็บ)
 
-Trạng thái: **kế hoạch, chưa triển khai**. Cập nhật: 19/10/2026 (đã có câu trả lời của chủ tiệm, xem mục 13).
+Trạng thái: **giai đoạn 1 đã làm xong (thu thập dữ liệu)**; giai đoạn 2 trở đi chưa làm. Cập nhật: 19/10/2026 (đã có câu trả lời của chủ tiệm, xem mục 13).
 
 Mục tiêu: theo dõi bằng số liệu **lượng khách có tăng lên sau khi đưa web bán hàng vào dùng không**, và chỉ ra chỗ cần sửa khi chưa tăng. Kết hợp ba nguồn: dữ liệu đơn ở máy chủ (đầy đủ, không cần hỏi khách), số lượt ghé đếm ở máy chủ (không định danh), và hành vi trên trình duyệt của những khách **đồng ý** cho đo. Kết quả hiện trong một trang quản trị cho chủ tiệm.
 
@@ -98,7 +98,7 @@ Một ngày, một tuần (thứ Hai đến Chủ nhật) tính theo giờ Bangk
 
 ### 5.1 Banner đồng ý
 
-- Hiện ở đáy màn hình lần đầu khách vào shop, **không che** nút đặt hàng hay thanh mua dính đáy (thanh mua đẩy lên trên banner).
+- Hiện **ở đầu trang, trong luồng nội dung** (đẩy trang xuống, không phủ lên) lần đầu khách vào shop. Nhờ vậy không bao giờ che nút đặt hàng, thanh mua dính đáy hay thanh tab điện thoại.
 - Hai nút **ngang hàng, cùng cỡ**: "อนุญาต" và "ไม่อนุญาต", cùng link tới chính sách bảo mật. Không đặt sẵn lựa chọn, không làm nút từ chối mờ hơn.
 - Lựa chọn lưu trong `localStorage` (chỉ để nhớ lựa chọn, thuộc loại cần thiết). Hỏi lại khi phiên bản chính sách thay đổi.
 - Trang chính sách có mục đổi lựa chọn bất kỳ lúc nào. Rút lại đồng ý thì xóa mã khách ghé khỏi máy và ngừng gửi ngay.
@@ -254,7 +254,7 @@ Web mở trong tháng 10/2026. Phần đếm khách từ đơn không phụ thu�
 
 | Giai đoạn | Nội dung | Kết quả kiểm tra |
 |---|---|---|
-| **1. Trước ngày mở** | Banner đồng ý (khung, chờ câu chữ pháp lý), nguồn truy cập gắn vào đơn, đếm lượt xem trang ở máy chủ, đếm câu trả lời banner, script sự kiện chỉ chạy sau khi đồng ý, endpoint nhận, xóa sau 180 ngày | Test: không đồng ý thì không có request đo nào; DNT/GPC; đơn có nguồn; lọc bot; không lưu IP; không có tên/SĐT/token trong bảng sự kiện. E2e: từ chối → mua được, không có sự kiện; đồng ý → có sự kiện, đơn mang mã |
+| **1. Trước ngày mở** (**đã làm 19/10/2026**) | Banner đồng ý (khung, chờ câu chữ pháp lý), nguồn truy cập gắn vào đơn, đếm lượt xem trang ở máy chủ, đếm câu trả lời banner, script sự kiện chỉ chạy sau khi đồng ý, endpoint nhận, xóa sau 180 ngày | Test: không đồng ý thì không có request đo nào; DNT/GPC; đơn có nguồn; lọc bot; không lưu IP; không có tên/SĐT/token trong bảng sự kiện. E2e: từ chối → mua được, không có sự kiện; đồng ý → có sự kiện, đơn mang mã |
 | **2. Báo cáo khách** (trong 2 tuần sau khi mở) | Trang "สถิติเว็บ" mục 1–5 và 10: khách mua/mới/quay lại theo tuần, lượt xem trang, đơn và tiền, nguồn, mốc chiến dịch tự động | Test số liệu khách mới/quay lại trên dữ liệu mẫu (cùng SĐT nhiều đơn, đơn huỷ, đơn chưa trả) |
 | **3. Hành vi và chất lượng** | Phễu, sản phẩm, tìm kiếm, tốc độ, `js_error`, mốc nhập tay, khung đặt mục tiêu, form "ยอดช่องทางอื่น" (tuỳ chọn) | Test p75, phễu; xem trên điện thoại |
 | **4. Mở rộng (khi cần)** | Xuất CSV, A/B giao diện, báo LINE cho chủ tiệm khi khách mua tuần giảm mạnh | Theo từng mục |
@@ -306,3 +306,24 @@ Web mở trong tháng 10/2026. Phần đếm khách từ đơn không phụ thu�
 - Đo hành vi trong trang quản trị.
 - So sánh với thời gian trước khi có web (không có dữ liệu, mục 9.2).
 - Tự kết luận nguyên nhân (máy học, mô hình thống kê). Báo cáo đưa số liệu và mốc, người đọc quyết định.
+
+---
+
+## 15. Giai đoạn 1: những gì đã làm
+
+| Phần | Nơi trong code |
+|---|---|
+| Banner đồng ý, mục đổi lựa chọn trong trang chính sách, tôn trọng Do Not Track / Global Privacy Control | `apps/shop/src/components/Analytics.tsx`, `lib/analytics.ts` |
+| Sự kiện: xem trang, xem sản phẩm, thêm giỏ, xem giỏ, vào thanh toán, tìm kiếm, tốc độ (mỗi chỉ số gửi **một lần** khi rời trang) | Như trên; `AddToCart.tsx`, các trang sản phẩm/giỏ/thanh toán dùng `TrackOnMount` |
+| Nhận sự kiện, đếm câu trả lời banner, đếm lượt xem khi bật cờ baseline, lọc bot, giới hạn tần suất, xoá sau 180 ngày | `apps/api/maehai/analytics/` (`api.py`, `models.py`, lệnh `prune_web_events`, chạy trong `scheduler` mỗi ngày) |
+| Nguồn truy cập và mã khách ghé gắn vào đơn | Trường `traffic_source`, `visitor_ref` của `Order`; `POST /api/orders` nhận hai trường tuỳ chọn, kiểm tra lại ở máy chủ |
+| Biến cấu hình truyền được vào bản build Docker | `deploy/Dockerfile.shop`, `deploy/docker-compose.yml`, `deploy/.env.example` |
+| Kiểm thử | `apps/api/tests/test_analytics.py` (11 test); `e2e/tests/shop.spec.ts` (4 test: từ chối, đồng ý, Global Privacy Control, đổi lựa chọn) |
+
+**Cờ baseline** (`ANALYTICS_BASELINE`, mặc định `0`): chỉ bật khi pháp lý đồng ý Q9. Bật thì shop đếm lượt xem trang (không mã) và gắn nhóm nguồn vào đơn ngay cả khi khách chưa đồng ý. Phải đặt cùng giá trị cho shop (lúc build) và API.
+
+**Chờ làm / chờ quyết định**
+- Câu chữ banner đang để `[ระบุ]`, chờ chủ tiệm và tư vấn pháp lý (Q10).
+- Đoạn bổ sung cho mục 6 chính sách bảo mật chưa viết (Q10).
+- Trang quản trị "สถิติเว็บ" (giai đoạn 2) và form "ยอดช่องทางอื่น" (giai đoạn 3) chưa làm.
+- Giới hạn tần suất đang tính theo **lô** (100 lô mỗi khách mỗi ngày), thay cho 300 sự kiện như viết ở mục 5.5.

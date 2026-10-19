@@ -40,10 +40,14 @@ def _validate_postal(code: str) -> str:
     return code
 
 
+_SOURCE = re.compile(r"^[a-z0-9_-]{1,40}$")
+_VISITOR = re.compile(r"^[a-f0-9]{16,32}$")
+
+
 @transaction.atomic
 def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str, shipping_code: str,
                  requested_date: date, address: dict, note: str = "", coupon_code: str = "",
-                 accepted_terms: bool = False) -> Order:
+                 accepted_terms: bool = False, traffic_source: str = "", visitor_ref: str = "") -> Order:
     if not accepted_terms:
         raise HttpError(422, "กรุณายอมรับนโยบายความเป็นส่วนตัวและเงื่อนไขการสั่งซื้อก่อน")
     if not items or len(items) > MAX_LINES:
@@ -94,6 +98,8 @@ def create_order(*, items: list[tuple[str, int]], customer_name: str, phone: str
         requested_date=requested_date, note=note.strip(), subtotal_satang=subtotal,
         coupon_code=evaluation.coupon.code if evaluation else "", coupon_discount_satang=coupon_off,
         terms_accepted_at=timezone.now(),
+        traffic_source=traffic_source.strip().lower() if _SOURCE.match(traffic_source.strip().lower()) else "",
+        visitor_ref=visitor_ref if _VISITOR.match(visitor_ref) else "",
         shipping_fee_satang=None if quoted else 0, shipping_waived=waived,
         vat_satang=0 if quoted else vat_included(goods_total),
         status=OrderStatus.PENDING_QUOTE if quoted else OrderStatus.WAITING_PAYMENT,

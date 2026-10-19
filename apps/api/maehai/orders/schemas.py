@@ -26,6 +26,8 @@ class OrderIn(Schema):
     note: str = Field(default="", max_length=300)
     coupon_code: str = Field(default="", max_length=24)
     accepted_terms: bool = False      # the customer ticked the privacy notice and terms
+    traffic_source: str = Field(default="", max_length=40)   # see docs/specs/web-analytics.md; checked again before saving
+    visitor_ref: str = Field(default="", max_length=32)
 
 
 class ItemOut(Schema):

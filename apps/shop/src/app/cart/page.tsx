@@ -2,6 +2,7 @@
 import { formatTHB } from "@maehai/ui";
 import { ShopHeader } from "../../components/ShopHeader";
 import { Stepper } from "../../components/Stepper";
+import { TrackOnMount } from "../../components/Analytics";
 import { useCart } from "../../lib/cart";
 
 export default function CartPage() {
@@ -19,6 +20,7 @@ export default function CartPage() {
           </div>
         )}
 
+        {cart.lines.length > 0 && <TrackOnMount kind="cart_view" data={{ value: cart.subtotalSatang }} />}
         {cart.lines.length > 0 && (
           <div className="cart-grid">
             <div className="panel cart-lines">

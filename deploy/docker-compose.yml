@@ -20,6 +20,7 @@ x-api: &api
     PUBLIC_SHOP_URL: ${PUBLIC_ORIGIN}
     PUBLIC_MEDIA_ORIGIN: ${PUBLIC_ORIGIN}   # photos and campaign files are linked with this origin, not the API's internal host
     ADMIN_URL: ${PUBLIC_ORIGIN}/admin
+    ANALYTICS_COUNT_WITHOUT_CONSENT: ${ANALYTICS_BASELINE:-0}   # same switch as the shop build; leave 0 until legal advice allows it
   volumes: [media:/data/media, private:/data/private]
   depends_on:
     migrate: { condition: service_completed_successfully }
@@ -83,7 +84,11 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.shop
-      args: { NEXT_PUBLIC_API_URL: "" }
+      args:
+        NEXT_PUBLIC_API_URL: ""
+        NEXT_PUBLIC_LINE_OA_ID: ${LINE_OA_ID:-@maehai}
+        NEXT_PUBLIC_DESIGN_VERSION: ${DESIGN_VERSION:-2026-10-redesign}
+        NEXT_PUBLIC_ANALYTICS_BASELINE: ${ANALYTICS_BASELINE:-0}
     image: maehai-shop
     restart: unless-stopped
     environment:

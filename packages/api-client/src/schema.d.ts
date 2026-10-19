@@ -1738,6 +1738,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/analytics/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Events
+         * @description A batch of up to 20 events from a visitor who agreed to be measured.
+         */
+        post: operations["maehai_analytics_api_events"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analytics/consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Consent
+         * @description Counts one answer to the consent banner. Stores a number per day, nothing about who answered.
+         */
+        post: operations["maehai_analytics_api_consent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analytics/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Count
+         * @description Counts one page view by kind of page. Off unless ANALYTICS_COUNT_WITHOUT_CONSENT is set.
+         */
+        post: operations["maehai_analytics_api_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2887,6 +2947,16 @@ export interface components {
              * @default false
              */
             accepted_terms: boolean;
+            /**
+             * Traffic Source
+             * @default
+             */
+            traffic_source: string;
+            /**
+             * Visitor Ref
+             * @default
+             */
+            visitor_ref: string;
         };
         /** TokenOut */
         TokenOut: {
@@ -6402,6 +6472,60 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CampaignsOut"];
                 };
+            };
+        };
+    };
+    maehai_analytics_api_events: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    maehai_analytics_api_consent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    maehai_analytics_api_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

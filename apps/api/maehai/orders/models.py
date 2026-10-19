@@ -68,6 +68,8 @@ class Order(models.Model):
     shipping_fee_satang = models.PositiveIntegerField(null=True, blank=True, help_text="null = not quoted yet")
     vat_satang = models.PositiveIntegerField(default=0)
     tracking_ref = models.CharField("เลขพัสดุ/ใบฝากส่ง", max_length=60, blank=True)
+    traffic_source = models.CharField(max_length=40, blank=True, help_text="Where the visitor came from: a group like facebook or an utm_source, never a URL")
+    visitor_ref = models.CharField(max_length=32, blank=True, help_text="Random id from the visitor's browser, only when they agreed to measurement")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
