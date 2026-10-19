@@ -2,6 +2,7 @@ import { formatThaiDate } from "@maehai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { EmptyState } from "../components/EmptyState";
 import { ErrorNotice } from "../components/Notice";
 import { api, unwrap, type Campaign } from "../lib/api";
 import { useAuth } from "../lib/auth";
@@ -38,7 +39,7 @@ export function Campaigns() {
           <h1>แคมเปญ</h1>
           <p>เปลี่ยนหน้าตาหน้าร้านตามเทศกาล ตั้งเวลาไว้ล่วงหน้า ระบบเปิดและปิดให้เองตามเวลา</p>
         </div>
-        {view === "list" && <div className="actions"><Link className="mh-btn mh-btn--primary mh-btn--sm" to="/campaigns/new">สร้างแคมเปญ</Link></div>}
+        {view === "list" && <div className="actions"><Link className="mh-btn mh-btn--primary mh-btn--sm btn-link" to="/campaigns/new">สร้างแคมเปญ</Link></div>}
       </div>
       <div className="list-tabs" role="tablist" aria-label="ส่วนของแคมเปญ">
         <button type="button" role="tab" className="tab" aria-selected={view === "list"} aria-pressed={view === "list"} onClick={() => setParams({})}>แคมเปญ</button>
@@ -126,8 +127,8 @@ function CampaignList() {
                 <td><span className={`mh-status ${TONE[c.status]}`} data-glyph={GLYPH[c.status]}>{c.status_label}</span></td>
                 <td>
                   <div className="mh-row" style={{ gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                    <Link className="mh-btn mh-btn--secondary mh-btn--sm" to={`/campaigns/${c.id}`}>{c.status === "ended" ? "ดู" : "แก้ไข"}</Link>
-                    {canEdit && <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" disabled={copy.isPending} onClick={() => copy.mutate(c.id)}>ทำซ้ำ</button>}
+                    <Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to={`/campaigns/${c.id}`} aria-label={`${c.status === "ended" ? "ดู" : "แก้ไข"}แคมเปญ ${c.name}`}>{c.status === "ended" ? "ดู" : "แก้ไข"}</Link>
+                    {canEdit && <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" disabled={copy.isPending} aria-label={`ทำซ้ำแคมเปญ ${c.name}`} onClick={() => copy.mutate(c.id)}>ทำซ้ำ</button>}
                     {canPublish && c.status === "live" && (
                       <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" style={{ color: "var(--danger)" }} disabled={end.isPending}
                         onClick={() => { if (window.confirm(`จบ “${c.name}” ตอนนี้เลยหรือไม่ ลูกค้าจะเห็นหน้าปกติทันที`)) end.mutate(c.id); }}>จบก่อนกำหนด</button>
@@ -136,7 +137,7 @@ function CampaignList() {
                 </td>
               </tr>
             ))}
-            {list.data && items.length === 0 && <tr><td colSpan={6} className="ink-muted">ยังไม่มีแคมเปญในกลุ่มนี้</td></tr>}
+            {list.data && items.length === 0 && <tr><td colSpan={6}>{(list.data?.items.length ?? 0) === 0 ? <EmptyState title="ยังไม่มีแคมเปญ" hint="เปลี่ยนหน้าร้านตามเทศกาล ตั้งเวลาเปิดและปิดล่วงหน้า แล้วระบบจะเปลี่ยนให้เอง">{canEdit && <Link className="mh-btn mh-btn--primary mh-btn--sm btn-link" to="/campaigns/new">สร้างแคมเปญแรก</Link>}</EmptyState> : <p className="ink-muted">ยังไม่มีแคมเปญในกลุ่มนี้</p>}</td></tr>}
           </tbody>
         </table>
       </div>

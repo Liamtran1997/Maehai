@@ -202,7 +202,7 @@ function Editor({ campaign, loading, loadError, products, canPublish, onSaved, o
                 <span className="mh-help">ต้องอ่านตัวอักษรขาวได้ชัด (อัตราส่วนความต่างอย่างน้อย 4.5 : 1)</span>
               </div>
               <label className="mh-row" style={{ gap: 10, alignItems: "flex-start", paddingTop: 24 }}>
-                <input type="checkbox" checked={f.decorations} onChange={(e) => set("decorations", e.target.checked)} style={{ width: 20, height: 20, accentColor: "var(--leaf)" }} />
+                <input type="checkbox" checked={f.decorations} onChange={(e) => set("decorations", e.target.checked)} style={{ width: 24, height: 24, accentColor: "var(--leaf)" }} />
                 <span><b style={{ fontSize: 14 }}>ลายตกแต่ง</b><br /><span className="small muted">ลายจาง ๆ ที่มุมส่วนหัว ไม่ขยับ</span></span>
               </label>
             </div>
@@ -258,7 +258,7 @@ function Editor({ campaign, loading, loadError, products, canPublish, onSaved, o
           <section id="c-bar" className="panel">
             <div className="panel-head"><h2>แถบประกาศ</h2>
               <label className="mh-row" style={{ marginLeft: "auto", gap: 8, fontSize: 14 }}>
-                <input type="checkbox" checked={f.bar_enabled} onChange={(e) => set("bar_enabled", e.target.checked)} style={{ width: 20, height: 20, accentColor: "var(--leaf)" }} />แสดง
+                <input type="checkbox" checked={f.bar_enabled} onChange={(e) => set("bar_enabled", e.target.checked)} style={{ width: 24, height: 24, accentColor: "var(--leaf)" }} />แสดง
               </label>
             </div>
             <div className="form-grid">

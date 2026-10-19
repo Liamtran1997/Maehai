@@ -186,7 +186,7 @@ export function Products() {
                   <td>{p.category.name}</td>
                   <td className="r">{priceRange(p)}</td>
                   <td><button className="mh-chip" style={{ minHeight: 32 }} aria-pressed={p.is_active} disabled={toggle.isPending || !canEdit} onClick={() => toggle.mutate(p)}>{p.is_active ? "แสดง" : "ซ่อน"}</button></td>
-                  <td><button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => open(fromProduct(p))}>{canEdit ? "แก้ไข" : "ดู"}</button></td>
+                  <td><button className="mh-btn mh-btn--secondary mh-btn--sm" aria-label={`${canEdit ? "แก้ไข" : "ดู"}สินค้า ${p.name}`} onClick={() => open(fromProduct(p))}>{canEdit ? "แก้ไข" : "ดู"}</button></td>
                 </tr>
               ))}
               {products.data && shown.length === 0 && <tr><td colSpan={5} className="ink-muted">ไม่พบสินค้าตามที่กรอง</td></tr>}
@@ -315,7 +315,7 @@ export function Products() {
                     {form.variants.map((v, i) => (
                       <tr key={i}>
                         <td><input className="mh-input" aria-label="ชื่อขนาด" style={{ minWidth: 90 }} value={v.label} onChange={(e) => setVariant(i, { label: e.target.value })} /></td>
-                        <td><input className="mh-input" aria-label="SKU" style={{ minWidth: 120 }} value={v.sku} disabled={v.existing} title={v.existing ? "SKU ของขนาดที่มีอยู่แล้วแก้ไม่ได้ เพราะผูกกับคำสั่งซื้อและสต็อก" : undefined} onChange={(e) => setVariant(i, { sku: e.target.value })} /></td>
+                        <td><input className="mh-input" aria-label="SKU" style={{ minWidth: 200 }} value={v.sku} disabled={v.existing} title={v.existing ? "SKU ของขนาดที่มีอยู่แล้วแก้ไม่ได้ เพราะผูกกับคำสั่งซื้อและสต็อก" : undefined} onChange={(e) => setVariant(i, { sku: e.target.value })} /></td>
                         <td><input className="mh-input num" aria-label="ราคา" style={{ minWidth: 90, textAlign: "right" }} inputMode="decimal" disabled={!canPrice || !canEdit} title={canPrice ? undefined : "ต้องมีสิทธิ์แก้ราคา"} value={v.price} onChange={(e) => setVariant(i, { price: e.target.value })} /></td>
                         <td><input className="mh-input num" aria-label="น้ำหนัก" style={{ minWidth: 90, textAlign: "right" }} inputMode="numeric" value={v.weight} onChange={(e) => setVariant(i, { weight: e.target.value })} /></td>
                         <td><button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" disabled={form.variants.length === 1} aria-label={`ลบขนาด ${v.label}`} onClick={() => set("variants", form.variants.filter((_, j) => j !== i))}>ลบ</button></td>
@@ -325,7 +325,7 @@ export function Products() {
                 </table>
               </div>
               <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm" style={{ marginTop: 8 }} onClick={() => set("variants", [...form.variants, blankVariant()])}>เพิ่มขนาด</button>
-              <p className="xs ink-muted" style={{ marginTop: 8 }}>ใส่ราคาปกติเสมอ ส่วนลดตั้งที่หน้า “โปรโมชัน” ขนาดที่ลบออกจะหยุดขาย แต่ไม่หายจากคำสั่งซื้อเก่า สต็อกจัดการที่หน้า “สต็อก”</p>
+              <p className="xs ink-muted" style={{ marginTop: 8 }}>น้ำหนักจะแสดงให้ลูกค้าเห็นในหน้าสินค้า ใส่ราคาปกติเสมอ ส่วนลดตั้งที่หน้า “โปรโมชัน” ขนาดที่ลบออกจะหยุดขาย แต่ไม่หายจากคำสั่งซื้อเก่า สต็อกจัดการที่หน้า “สต็อก”</p>
             </div>
 
             </section>

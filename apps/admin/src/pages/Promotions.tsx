@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
+import { EmptyState } from "../components/EmptyState";
 import { ErrorNotice } from "../components/Notice";
 import { api, bahtToSatang, unwrap, type Promotion, type PromotionIn } from "../lib/api";
 import { useAuth } from "../lib/auth";
@@ -89,12 +90,12 @@ export function Promotions() {
                   <td className="xs">{show(p.starts_at)}<br />ถึง {show(p.ends_at)}</td>
                   <td><span className={`mh-status mh-status--${STATE[p.state].cls}`} data-glyph={STATE[p.state].glyph}>{STATE[p.state].label}</span></td>
                   <td className="mh-row" style={{ gap: 8 }}>
-                    {canManage && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { save.reset(); setForm(fromPromo(p)); }}>แก้ไข</button>}
+                    {canManage && <button className="mh-btn mh-btn--secondary mh-btn--sm" aria-label={`แก้ไขโปรโมชัน ${p.name}`} onClick={() => { save.reset(); setForm(fromPromo(p)); }}>แก้ไข</button>}
                     {canManage && (p.state === "running" || p.state === "scheduled") && <button className="mh-btn mh-btn--secondary mh-btn--sm" disabled={end.isPending} onClick={() => end.mutate(p.id)}>ปิดตอนนี้</button>}
                   </td>
                 </tr>
               ))}
-              {promos.data?.length === 0 && <tr><td colSpan={6} className="ink-muted">ยังไม่มีโปรโมชัน</td></tr>}
+              {promos.data?.length === 0 && <tr><td colSpan={6}><EmptyState title="ยังไม่มีโปรโมชัน" hint="ตั้งราคาลดให้สินค้าหรือทั้งร้านตามช่วงเวลา ราคาที่ลดจะแสดงบนหน้าร้านให้อัตโนมัติ">{canManage && <button type="button" className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => { save.reset(); setForm(blank()); }}>สร้างโปรโมชันแรก</button>}</EmptyState></td></tr>}
             </tbody>
           </table>
         </div>

@@ -1,6 +1,7 @@
 import { formatTHB } from "@maehai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
+import { EmptyState } from "../components/EmptyState";
 import { ErrorNotice } from "../components/Notice";
 import { api, bahtToSatang, unwrap, type Coupon, type CouponIn } from "../lib/api";
 import { useAuth } from "../lib/auth";
@@ -119,12 +120,12 @@ export function Coupons() {
                   <td className="xs">{show(c.starts_at)}<br />ถึง {show(c.ends_at)}</td>
                   <td><span className={`mh-status mh-status--${STATE[c.state].cls}`} data-glyph={STATE[c.state].glyph}>{STATE[c.state].label}</span></td>
                   <td className="mh-row" style={{ gap: 8 }}>
-                    {canManage && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => open(fromCoupon(c))}>แก้ไข</button>}
-                    {c.used_count > 0 && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setHistoryOf(c)}>ประวัติ</button>}
+                    {canManage && <button className="mh-btn mh-btn--secondary mh-btn--sm" aria-label={`แก้ไขโค้ด ${c.code}`} onClick={() => open(fromCoupon(c))}>แก้ไข</button>}
+                    {c.used_count > 0 && <button className="mh-btn mh-btn--secondary mh-btn--sm" aria-label={`ประวัติการใช้โค้ด ${c.code}`} onClick={() => setHistoryOf(c)}>ประวัติ</button>}
                   </td>
                 </tr>
               ))}
-              {list.data?.length === 0 && <tr><td colSpan={7} className="ink-muted">ยังไม่มีโค้ดส่วนลด</td></tr>}
+              {list.data?.length === 0 && <tr><td colSpan={7}><EmptyState title="ยังไม่มีโค้ดส่วนลด" hint="สร้างโค้ดให้ลูกค้ากรอกตอนสั่งซื้อ เช่น ลด 10% หรือส่งฟรี ตั้งขั้นต่ำและวันหมดอายุได้">{canManage && <button type="button" className="mh-btn mh-btn--primary mh-btn--sm" onClick={() => open({ ...blank(), code: randomCode() })}>สร้างโค้ดแรก</button>}</EmptyState></td></tr>}
             </tbody>
           </table>
         </div>

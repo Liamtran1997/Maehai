@@ -55,8 +55,8 @@ export function Categories() {
                   <td className="r">{c.product_count}</td>
                   <td><button className="mh-chip" style={{ minHeight: 32 }} aria-pressed={c.is_active} disabled={toggle.isPending || !canEdit} onClick={() => toggle.mutate(c)}>{c.is_active ? "แสดง" : "ซ่อน"}</button></td>
                   <td className="mh-row" style={{ gap: 8 }}>
-                    {canEdit && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => { save.reset(); setForm({ ...c }); }}>แก้ไข</button>}
-                    {canEdit && c.product_count === 0 && <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setConfirmDelete(c)}>ลบ</button>}
+                    {canEdit && <button className="mh-btn mh-btn--secondary mh-btn--sm" aria-label={`แก้ไขหมวดหมู่ ${c.name}`} onClick={() => { save.reset(); setForm({ ...c }); }}>แก้ไข</button>}
+                    {canEdit && c.product_count === 0 && <button className="mh-btn mh-btn--secondary mh-btn--sm" aria-label={`ลบหมวดหมู่ ${c.name}`} onClick={() => setConfirmDelete(c)}>ลบ</button>}
                   </td>
                 </tr>
               ))}

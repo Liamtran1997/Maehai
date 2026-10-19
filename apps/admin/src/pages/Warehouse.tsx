@@ -7,6 +7,7 @@ import { api, unwrap } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Inventory } from "./Inventory";
 import { REFUSE, today, useBranches, useMaterials, useSources, useStockItems, type MatRow, type FullDoc, getDoc } from "./warehouse/shared";
+import { EmptyState } from "../components/EmptyState";
 
 type CountDoc = FullDoc;
 
@@ -127,7 +128,7 @@ function DocumentsTab() {
                 <td className="xs">{formatThaiDate(d.created_at)}</td>
               </tr>
             ))}
-            {docs.data?.length === 0 && <tr><td colSpan={5} className="ink-muted">ยังไม่มีเอกสาร</td></tr>}
+            {docs.data?.length === 0 && <tr><td colSpan={5}><EmptyState title="ยังไม่มีเอกสาร" hint="กด “สร้างเอกสาร” ด้านบนเพื่อรับของเข้าคลังกลาง ส่งของไปสาขา หรือรับของคืน เอกสารทุกใบจะมารวมกันที่นี่" /></td></tr>}
           </tbody>
         </table>
       </div>

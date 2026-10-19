@@ -57,7 +57,10 @@ export function Layout() {
             <span className="avatar" aria-hidden="true">{(user.display_name || user.username || "?").trim().charAt(0).toUpperCase()}</span>
             <span className="appbar-name"><b>{user.display_name}</b><span className="xs ink-muted">{user.role_label}</span></span>
           </NavLink>
-          <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => void logout()}>ออกจากระบบ</button>
+          <button type="button" className="mh-btn mh-btn--secondary mh-btn--sm appbar-logout" aria-label="ออกจากระบบ" onClick={() => void logout()}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="appbar-logout__ic"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9" /></svg>
+            <span className="appbar-logout__t">ออกจากระบบ</span>
+          </button>
         </div>
       </header>
       <div className="adm-body">

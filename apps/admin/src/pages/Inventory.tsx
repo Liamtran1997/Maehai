@@ -98,6 +98,10 @@ export function Inventory() {
       </form>
       <ErrorNotice error={stock.error ?? track.error} />
 
+      {stock.data && stock.data.length > 0 && trackedCount === 0 && (
+        <div className="notice notice--info" role="note"><p>ยังไม่มีสินค้าที่เปิดนับสต็อก ระบบจึงยังไม่ตัดสต็อกเมื่อขาย เปิดได้ที่ปุ่ม “จัดการ” ของแต่ละสินค้า แล้วรับของเข้าคลังกลางด้วย “สร้างเอกสาร”</p></div>
+      )}
+
       {stock.data && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
           <div className="mh-tile"><span className="mh-tile__label">ใกล้หมด</span><span className="mh-tile__value" style={{ color: lowCount ? "var(--band-red)" : undefined }}>{lowCount} รายการ</span><span className="small muted">ต่ำกว่าจุดเตือนในสาขาใดสาขาหนึ่ง</span></div>

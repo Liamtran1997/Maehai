@@ -310,3 +310,18 @@ a { color: var(--leaf); }
   .cols--order, .cols--order > .col-stack { display: contents; }
   .od-items { order: 1; } .od-customer { order: 2; } .od-fee { order: 3; } .od-pay { order: 4; } .od-actions { order: 5; } .od-history { order: 6; }
 }
+
+/* ---------- Empty lists, and the app bar on phones ---------- */
+.empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 28px 16px; text-align: center; white-space: normal; }
+.empty__t { font: 600 16px/1.6 var(--font-sans); }
+.empty__h { max-width: 440px; font-size: 14px; line-height: 1.7; color: var(--ink-muted); }
+.empty__a { margin-top: 8px; }
+.appbar-logout__ic { display: none; }
+@media (max-width: 599px) {
+  .appbar { gap: 8px; padding-inline: 12px; }
+  .appbar-name { display: none; }
+  .appbar-user { gap: 8px; }
+  .appbar-logout { width: 44px; min-height: 44px; padding: 0; }
+  .appbar-logout__t { display: none; }
+  .appbar-logout__ic { display: block; }
+}
