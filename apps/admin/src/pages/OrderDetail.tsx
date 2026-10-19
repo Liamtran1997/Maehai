@@ -46,7 +46,8 @@ export function OrderDetail() {
   if (q.error || !q.data) return <><Link to="/orders">← กลับ</Link><ErrorNotice error={q.error ?? new Error("ไม่พบคำสั่งซื้อ")} /></>;
   const o: Order = q.data;
   const p = o.payment;
-  const quoteOpen = can("orders.quote") && (o.status === "pending_quote" || o.status === "waiting_payment");
+  // Picking up in a shop has no delivery fee to quote, so the form is only for the other ways of receiving.
+  const quoteOpen = can("orders.quote") && o.shipping_method.kind !== "pickup" && (o.status === "pending_quote" || o.status === "waiting_payment");
   const mayCancel = CAN_CANCEL.has(o.status) && can(o.status === "paid" || o.status === "packing" ? "orders.cancel_paid" : "orders.cancel");
   const feeSatang = bahtToSatang(feeText);
   const mutationError = fee.error ?? status.error ?? confirmPay.error ?? rejectPay.error ?? moveBranch.error;
@@ -62,9 +63,9 @@ export function OrderDetail() {
       </div>
       <ErrorNotice error={mutationError} />
 
-      <div className="cols cols--2-1">
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
-          <section className="apanel">
+      <div className="cols cols--2-1 cols--order">
+        <div className="col-stack">
+          <section className="apanel od-items">
             <h2>รายการสินค้า</h2>
             <div className="mh-tablewrap" style={{ border: 0 }}>
               <table className="mh-table">
@@ -82,7 +83,7 @@ export function OrderDetail() {
           </section>
 
           {quoteOpen && (
-            <section className="apanel">
+            <section className="apanel od-fee">
               <h2>ค่าจัดส่ง</h2>
               {o.status === "waiting_payment" && o.shipping_fee_satang !== null && <div className="notice notice--ok"><p>แจ้งค่าจัดส่งแล้ว ลูกค้าเห็น QR ชำระเงินในหน้าคำสั่งซื้อ แก้ได้จนกว่าลูกค้าจะแนบสลิป แก้แล้ว QR เดิมจะใช้ไม่ได้</p></div>}
               <form className="form-grid" onSubmit={(e) => { e.preventDefault(); if (feeSatang !== null) fee.mutate(feeSatang); }}>
@@ -94,7 +95,7 @@ export function OrderDetail() {
             </section>
           )}
 
-          <section className="apanel">
+          <section className="apanel od-history">
             <h2>ประวัติ</h2>
             <ol className="tl">
               {o.events.map((e, i) => (
@@ -107,8 +108,8 @@ export function OrderDetail() {
           </section>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
-          <section className="apanel">
+        <div className="col-stack">
+          <section className="apanel od-pay">
             <h2>การชำระเงิน</h2>
             {!p && <p className="ink-muted">ยังไม่มีการชำระเงิน</p>}
             {p && !can("payments.review") && <p className="xs ink-muted">ตำแหน่งของคุณไม่เห็นสลิปและไม่ยืนยันการชำระเงิน</p>}
@@ -135,7 +136,7 @@ export function OrderDetail() {
             )}
           </section>
 
-          <section className="apanel">
+          <section className="apanel od-actions">
             <h2>ดำเนินการ</h2>
             {(can("orders.fulfil") ? NEXT_STATUS[o.status] ?? [] : []).map((n) => (
               <div key={n.to} className="mh-field">
@@ -153,7 +154,7 @@ export function OrderDetail() {
             ) : <button className="mh-btn mh-btn--secondary mh-btn--sm" onClick={() => setConfirmCancel(true)}>ยกเลิกคำสั่งซื้อ</button>)}
           </section>
 
-          <section className="apanel">
+          <section className="apanel od-customer">
             <h2>ลูกค้าและการจัดส่ง</h2>
             <dl className="kv">
               <dt>ชื่อ</dt><dd>{o.customer_name}</dd>

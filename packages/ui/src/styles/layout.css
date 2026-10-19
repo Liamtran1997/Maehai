@@ -281,3 +281,32 @@ a { color: var(--leaf); }
 /* Action bars with several buttons: on a phone they wrap side by side instead of stacking full width. */
 .action-bar--wrap .mh-btn { flex: 0 1 auto; }
 .campaign-preview { padding: 8px 16px; background: #231e17; color: #fff; text-align: center; font: 600 13px/1.5 var(--font-sans); }
+
+/* ---------- Admin on narrow screens: orders as cards, the to-do list first, the customer before the money ---------- */
+.order-cards { display: none; }
+.dash { display: flex; flex-direction: column; gap: 24px; }
+.col-stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.tiles--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 1180px) { .tiles--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 899px) {
+  .orders-table { display: none; }
+  .order-cards { display: flex; flex-direction: column; gap: 10px; list-style: none; margin: 0; padding: 0; }
+  .order-card { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: var(--surface-200); border: 1px solid var(--line); border-radius: var(--radius-lg); color: var(--ink); text-decoration: none; }
+  .order-card:hover { background: var(--surface-100); }
+  .order-card:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .oc-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .oc-name { font-weight: 600; }
+  .oc-meta { font-size: 14px; color: var(--ink-muted); }
+  .oc-bottom { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 14px; }
+  .order-cards__empty { padding: 16px; background: var(--surface-200); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+
+  /* Dashboard: what needs doing comes right under the title. */
+  .dash { gap: 16px; }
+  .dash > .topbar { order: -3; }
+  .dash .cols--dash { display: contents; }
+  .dash .dash-todo { order: -2; }
+
+  /* Order page: who and where, then the fee, payment and actions, with the history last. */
+  .cols--order, .cols--order > .col-stack { display: contents; }
+  .od-items { order: 1; } .od-customer { order: 2; } .od-fee { order: 3; } .od-pay { order: 4; } .od-actions { order: 5; } .od-history { order: 6; }
+}

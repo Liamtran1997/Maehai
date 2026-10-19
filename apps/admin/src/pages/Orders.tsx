@@ -44,7 +44,7 @@ export function Orders() {
         <button className="mh-btn mh-btn--secondary mh-btn--sm" type="submit">ค้นหา</button>
       </form>
       <ErrorNotice error={list.error} />
-      <div className="mh-tablewrap">
+      <div className="mh-tablewrap orders-table">
         <table className="mh-table">
           <thead><tr><th>เลขที่สั่งซื้อ</th><th>ลูกค้า</th><th>โทร</th><th>วิธีรับ</th><th>นัดรับ</th><th className="r">ยอดรวม</th><th>สถานะ</th><th>สั่งเมื่อ</th></tr></thead>
           <tbody>
@@ -60,6 +60,20 @@ export function Orders() {
           </tbody>
         </table>
       </div>
+      {/* Phones and small tablets: one card per order, so the status and the amount are never scrolled out of view. */}
+      <ul className="order-cards" aria-label="รายการคำสั่งซื้อ">
+        {list.data?.items.map((o) => (
+          <li key={o.number}>
+            <Link className="order-card" to={`/orders/${o.number}`}>
+              <span className="oc-top"><span className="mh-code">{o.number}</span><StatusPill status={PILL[o.status]} /></span>
+              <span className="oc-name">{o.customer_name} · <span className="num">{o.phone}</span></span>
+              <span className="oc-meta">{o.shipping_method.name}</span>
+              <span className="oc-bottom"><span className="ink-muted">นัดรับ {formatThaiDate(o.requested_date)}</span><span className="bold num">{o.total_satang === null ? "รอแจ้งค่าส่ง" : formatTHB(o.total_satang)}</span></span>
+            </Link>
+          </li>
+        ))}
+        {list.data && list.data.items.length === 0 && <li className="ink-muted order-cards__empty">ไม่พบคำสั่งซื้อ</li>}
+      </ul>
       <div className="pager">
         <p className="sm ink-muted">{total === 0 ? "ไม่มีรายการ" : `แสดง ${offset + 1} ถึง ${Math.min(offset + PAGE, total)} จาก ${total} รายการ`}</p>
         <div className="mh-row" style={{ gap: 8 }}>

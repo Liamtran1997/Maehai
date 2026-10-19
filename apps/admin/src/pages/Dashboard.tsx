@@ -30,7 +30,7 @@ export function Dashboard() {
   const maxShip = Math.max(1, ...(s?.by_shipping.map((p) => p.revenue_satang) ?? [1]));
 
   return (
-    <>
+    <div className="dash">
       <div className="topbar">
         <h1>ภาพรวม</h1>
         {showMoney && <div className="seg" role="group" aria-label="ช่วงเวลา">
@@ -54,16 +54,16 @@ export function Dashboard() {
       {s && (
         <>
           <p className="sm ink-muted">นับยอดขายตามวันที่ยืนยันการชำระเงิน เวลาประเทศไทย ไม่รวมคำสั่งซื้อที่ยกเลิกหรือยังไม่ชำระ</p>
-          <div className="tiles">
+          <div className="tiles tiles--4">
             <StatTile label="ยอดขาย" value={formatTHB(s.current.revenue_satang, { hideZeroSatang: true })} delta={delta(s.current.revenue_satang, s.previous.revenue_satang)} series={s.daily.map((d) => d.revenue_satang)} />
             <StatTile label="คำสั่งซื้อที่ชำระแล้ว" value={String(s.current.paid_orders)} delta={delta(s.current.paid_orders, s.previous.paid_orders)} />
             <StatTile label="ยอดเฉลี่ยต่อคำสั่งซื้อ" value={formatTHB(s.current.avg_order_satang, { hideZeroSatang: true })} delta={delta(s.current.avg_order_satang, s.previous.avg_order_satang)} />
             <StatTile label="สั่งเข้ามาใหม่" value={String(s.orders_created)} />
           </div>
 
-          <div className="cols cols--2-1">
+          <div className="cols cols--2-1 cols--dash">
             <section className="apanel"><h2>ยอดขายรายวัน</h2><RevenueChart daily={s.daily} /></section>
-            <section className="apanel">
+            <section className="apanel dash-todo">
               <h2>ต้องจัดการ</h2>
               <ul className="todo">
                 <li><span className="n num">{s.todo.slips_to_check}</span><span className="grow">สลิปรอตรวจ</span><Link className="mh-btn mh-btn--secondary mh-btn--sm btn-link" to="/orders?status=waiting_payment">ตรวจ</Link></li>
@@ -114,6 +114,6 @@ export function Dashboard() {
           </table>
         </div>
       </section>}
-    </>
+    </div>
   );
 }
